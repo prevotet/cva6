@@ -42,4 +42,4 @@
 	url = git@github.com:malejo97/iDMA.git
 [submodule "corev_apu/rv_iommu"]
 	path = corev_apu/rv_iommu
-	url = git@github.com:zero-day-labs/riscv-iommu.git
+	url = git@github.com:prevotet/riscv-iommu.git
