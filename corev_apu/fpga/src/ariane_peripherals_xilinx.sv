@@ -1,4 +1,4 @@
-
+// Copyright 2018 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the "License"); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -7,74 +7,43 @@
 // this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
-// Xilinx Peripherals
+
+// Xilinx Peripherals — dual autonomous DMA accelerator via IOMMU
 //
 // ============================================================
-//  DUAL ACCELERATOR DMA → IOMMU — MODIFICATIONS OVERVIEW
+//  TOPOLOGIE DMA/IOMMU
 // ============================================================
 //
-//  New parameter : InclDMA2 (bit)
-//  New port      : dma_cfg2 (AXI_BUS.Slave) — MMIO config de l'accélérateur 2
+//  XBAR ─dma_cfg──► accel_wrap #1  (stream_id=1) ─DMA─┐
+//                    (compute + dma_core_wrap)           │
+//                                                        ├─► axi_mux 2:1 ─► IOMMU TR IF
+//  XBAR ─dma_cfg2─► accel_wrap #2  (stream_id=2) ─DMA─┘
+//                    (compute + dma_core_wrap)
 //
-//  Topologie DMA/IOMMU résultante :
+//  XBAR ─iommu_cfg─► IOMMU prog IF
+//  IOMMU comp IF ──► XBAR (requêtes traduites → DRAM)
+//  IOMMU ds IF ────► XBAR (page-table walk → DRAM)
 //
-//   XBAR ──MMIO──► Accel 1  ──DMA mst──┐
-//                                       ├─► axi_mux 2:1 ──► IOMMU TR IF ──► XBAR
-//   XBAR ──MMIO──► Accel 2  ──DMA mst──┘
-//   XBAR ──cfg───► IOMMU prog IF
+//  Bus internes :
+//    accel1_dma  AXI_BUS_MMU  SLV ID=3b  sortie accel_wrap #1
+//    accel2_dma  AXI_BUS_MMU  SLV ID=3b  sortie accel_wrap #2
+//    accel1_std  AXI_BUS      ID=3b      signaux AXI standard (sans champs MMU)
+//    accel2_std  AXI_BUS      ID=3b      idem
+//    dma_muxed   AXI_BUS      ID=4b      sortie axi_mux (IdWidth bits)
+//    axi_iommu_tr_req  req_mmu_t         vers IOMMU TR IF
+//    axi_iommu_tr_rsp  resp_t            retour IOMMU
 //
-//  Remarque sur la largeur d'identifiant AXI :
-//    L'axi_mux préfixe 1 bit au champ ID pour encoder le port source
-//    (0 = Accel 1, 1 = Accel 2).  Côté IOMMU, l'ID de transaction passe
-//    donc de AxiIdWidth à AxiIdWidth+1.
-//
-//    MODIFICATION REQUISE dans ariane_axi_soc_pkg.sv :
-//      Ajouter les types suivants (aw/ar avec ID étendu + req/resp associés) :
-//
-//        typedef struct packed {
-//            logic [ariane_soc::IdWidth:0]  id;          // IdWidth+1 bits
-//            ariane_axi_soc::addr_t         addr;
-//            axi_pkg::len_t                 len;
-//            axi_pkg::size_t                size;
-//            axi_pkg::burst_t               burst;
-//            logic                          lock;
-//            axi_pkg::cache_t               cache;
-//            axi_pkg::prot_t                prot;
-//            axi_pkg::qos_t                 qos;
-//            axi_pkg::region_t              region;
-//            axi_pkg::atop_t                atop;    // AW only
-//            ariane_axi_soc::user_t         user;
-//            // IOMMU-specific
-//            logic [23:0]                   stream_id;
-//            logic                          ss_id_valid;
-//            logic [19:0]                   substream_id;
-//        } aw_mmu_mux_chan_t;
-//        // Idem ar_mmu_mux_chan_t (sans atop)
-//
-//        typedef struct packed {
-//            logic [ariane_soc::IdWidth:0]  id;          // IdWidth+1 bits
-//            ariane_axi_soc::data_t         data;
-//            axi_pkg::resp_t                resp;
-//            logic                          last;
-//            ariane_axi_soc::user_t         user;
-//        } r_mmu_mux_chan_t;
-//
-//        typedef struct packed {
-//            logic [ariane_soc::IdWidth:0]  id;
-//            axi_pkg::resp_t                resp;
-//            ariane_axi_soc::user_t         user;
-//        } b_mmu_mux_chan_t;
-//
-//        `AXI_TYPEDEF_REQ_T(req_mmu_mux_t, aw_mmu_mux_chan_t,
-//                           ariane_axi_soc::w_chan_t, ar_mmu_mux_chan_t)
-//        `AXI_TYPEDEF_RESP_T(resp_mmu_mux_t, b_mmu_mux_chan_t, r_mmu_mux_chan_t)
-//
-//    Le paramètre ID_WIDTH du riscv_iommu passe à AxiIdWidth+1 quand InclDMA2=1.
+//  Largeurs d'ID :
+//    accel_wrap interne : AXI_ID_WIDTH = ariane_soc::IdWidth - 1 = 3b
+//    axi_mux sortie     : MST_AXI_ID_WIDTH = ariane_soc::IdWidth = 4b
+//    IOMMU ID_WIDTH     : ariane_soc::IdWidth = 4b  (inchangé vs original)
 // ============================================================
+
 `include "axi/assign.svh"
 `include "axi/typedef.svh"
 `include "register_interface/assign.svh"
 `include "register_interface/typedef.svh"
+
 module ariane_peripherals #(
     parameter int AxiAddrWidth = -1,
     parameter int AxiDataWidth = -1,
@@ -85,29 +54,27 @@ module ariane_peripherals #(
     parameter bit InclEthernet =  0,
     parameter bit InclGPIO     =  0,
     parameter bit InclTimer    =  1,
-    parameter bit InclDMA      =  0,
-    parameter bit InclDMA2     =  0,  // [NEW] Active le second accélérateur DMA
+    parameter bit InclDMA      =  0,   // Active les deux accélérateurs DMA
+    parameter bit InclDMA2     =  0,   // Active le second accélérateur
     parameter bit InclIOMMU    =  0
 ) (
-    input  logic       clk_i           , // Clock
+    input  logic       clk_i           ,
     input  logic       clk_200MHz_i    ,
-    input  logic       rst_ni          , // Asynchronous reset active low
+    input  logic       rst_ni          ,
     AXI_BUS.Slave      plic            ,
     AXI_BUS.Slave      uart            ,
     AXI_BUS.Slave      spi             ,
     AXI_BUS.Slave      gpio            ,
     AXI_BUS.Slave      ethernet        ,
     AXI_BUS.Slave      timer           ,
-    AXI_BUS.Slave      dma_cfg         , // Accel 1 config IF          (XBAR   => Accel1)
-    AXI_BUS.Slave      dma_cfg2        , // [NEW] Accel 2 config IF    (XBAR   => Accel2)
-    AXI_BUS.Master     iommu_comp      , // IOMMU Completion IF        (IOMMU  => XBAR)
-    AXI_BUS.Master     iommu_ds        , // IOMMU Memory IF            (IOMMU  => XBAR)
-    AXI_BUS.Slave      iommu_cfg       , // IOMMU Programming IF       (XBAR   => IOMMU)
+    AXI_BUS.Slave      dma_cfg         , // Config MMIO Accel 1  (XBAR → accel_wrap #1)
+    AXI_BUS.Slave      dma_cfg2        , // Config MMIO Accel 2  (XBAR → accel_wrap #2)
+    AXI_BUS.Master     iommu_comp      , // IOMMU Completion IF  (IOMMU → XBAR)
+    AXI_BUS.Master     iommu_ds        , // IOMMU Memory IF      (IOMMU → XBAR)
+    AXI_BUS.Slave      iommu_cfg       , // IOMMU Programming IF (XBAR → IOMMU)
     output logic [1:0] irq_o           ,
-    // UART
     input  logic       rx_i            ,
     output logic       tx_o            ,
-    // Ethernet
     input  logic       eth_clk_i       ,
     input  wire        eth_rxck        ,
     input  wire        eth_rxctl       ,
@@ -117,10 +84,8 @@ module ariane_peripherals #(
     output wire [3:0]  eth_txd         ,
     output wire        eth_rst_n       ,
     input  logic       phy_tx_clk_i    ,
-    // MDIO Interface
     inout  wire        eth_mdio        ,
     output logic       eth_mdc         ,
-    // SPI
     output logic       spi_clk_o       ,
     output logic       spi_mosi        ,
     input  logic       spi_miso        ,
@@ -130,884 +95,522 @@ module ariane_peripherals #(
     input  logic       btnl_i          ,
     input  logic       btnr_i          ,
     input  logic       btnc_i          ,
-    // SD Card
     input  logic       sd_clk_i        ,
     output logic [7:0] leds_o          ,
     input  logic [7:0] dip_switches_i
 );
-    // ---------------
-    // 1. PLIC
-    // ---------------
+
+    // -----------------------------------------------------------------------
+    //  1. PLIC
+    // -----------------------------------------------------------------------
     logic [ariane_soc::NumSources-1:0] irq_sources;
     assign irq_sources[ariane_soc::NumSources-1:ariane_soc::LastIntIndex+1] = '0;
-    REG_BUS #(
-        .ADDR_WIDTH ( 32 ),
-        .DATA_WIDTH ( 32 )
-    ) reg_bus (clk_i);
-    logic         plic_penable;
-    logic         plic_pwrite;
-    logic [31:0]  plic_paddr;
-    logic         plic_psel;
-    logic [31:0]  plic_pwdata;
-    logic [31:0]  plic_prdata;
-    logic         plic_pready;
-    logic         plic_pslverr;
+
+    REG_BUS #(.ADDR_WIDTH(32), .DATA_WIDTH(32)) reg_bus (clk_i);
+
+    logic [31:0] plic_paddr, plic_pwdata, plic_prdata;
+    logic        plic_penable, plic_pwrite, plic_psel, plic_pready, plic_pslverr;
+
     axi2apb_64_32 #(
-        .AXI4_ADDRESS_WIDTH ( AxiAddrWidth  ),
-        .AXI4_RDATA_WIDTH   ( AxiDataWidth  ),
-        .AXI4_WDATA_WIDTH   ( AxiDataWidth  ),
-        .AXI4_ID_WIDTH      ( AxiIdWidth    ),
-        .AXI4_USER_WIDTH    ( AxiUserWidth  ),
-        .BUFF_DEPTH_SLAVE   ( 2             ),
-        .APB_ADDR_WIDTH     ( 32            )
+        .AXI4_ADDRESS_WIDTH(AxiAddrWidth), .AXI4_RDATA_WIDTH(AxiDataWidth),
+        .AXI4_WDATA_WIDTH(AxiDataWidth),   .AXI4_ID_WIDTH(AxiIdWidth),
+        .AXI4_USER_WIDTH(AxiUserWidth),    .BUFF_DEPTH_SLAVE(2),
+        .APB_ADDR_WIDTH(32)
     ) i_axi2apb_64_32_plic (
-        .ACLK      ( clk_i          ),
-        .ARESETn   ( rst_ni         ),
-        .test_en_i ( 1'b0           ),
-        .AWID_i    ( plic.aw_id     ),
-        .AWADDR_i  ( plic.aw_addr   ),
-        .AWLEN_i   ( plic.aw_len    ),
-        .AWSIZE_i  ( plic.aw_size   ),
-        .AWBURST_i ( plic.aw_burst  ),
-        .AWLOCK_i  ( plic.aw_lock   ),
-        .AWCACHE_i ( plic.aw_cache  ),
-        .AWPROT_i  ( plic.aw_prot   ),
-        .AWREGION_i( plic.aw_region ),
-        .AWUSER_i  ( plic.aw_user   ),
-        .AWQOS_i   ( plic.aw_qos    ),
-        .AWVALID_i ( plic.aw_valid  ),
-        .AWREADY_o ( plic.aw_ready  ),
-        .WDATA_i   ( plic.w_data    ),
-        .WSTRB_i   ( plic.w_strb    ),
-        .WLAST_i   ( plic.w_last    ),
-        .WUSER_i   ( plic.w_user    ),
-        .WVALID_i  ( plic.w_valid   ),
-        .WREADY_o  ( plic.w_ready   ),
-        .BID_o     ( plic.b_id      ),
-        .BRESP_o   ( plic.b_resp    ),
-        .BVALID_o  ( plic.b_valid   ),
-        .BUSER_o   ( plic.b_user    ),
-        .BREADY_i  ( plic.b_ready   ),
-        .ARID_i    ( plic.ar_id     ),
-        .ARADDR_i  ( plic.ar_addr   ),
-        .ARLEN_i   ( plic.ar_len    ),
-        .ARSIZE_i  ( plic.ar_size   ),
-        .ARBURST_i ( plic.ar_burst  ),
-        .ARLOCK_i  ( plic.ar_lock   ),
-        .ARCACHE_i ( plic.ar_cache  ),
-        .ARPROT_i  ( plic.ar_prot   ),
-        .ARREGION_i( plic.ar_region ),
-        .ARUSER_i  ( plic.ar_user   ),
-        .ARQOS_i   ( plic.ar_qos    ),
-        .ARVALID_i ( plic.ar_valid  ),
-        .ARREADY_o ( plic.ar_ready  ),
-        .RID_o     ( plic.r_id      ),
-        .RDATA_o   ( plic.r_data    ),
-        .RRESP_o   ( plic.r_resp    ),
-        .RLAST_o   ( plic.r_last    ),
-        .RUSER_o   ( plic.r_user    ),
-        .RVALID_o  ( plic.r_valid   ),
-        .RREADY_i  ( plic.r_ready   ),
-        .PENABLE   ( plic_penable   ),
-        .PWRITE    ( plic_pwrite    ),
-        .PADDR     ( plic_paddr     ),
-        .PSEL      ( plic_psel      ),
-        .PWDATA    ( plic_pwdata    ),
-        .PRDATA    ( plic_prdata    ),
-        .PREADY    ( plic_pready    ),
-        .PSLVERR   ( plic_pslverr   )
+        .ACLK(clk_i), .ARESETn(rst_ni), .test_en_i(1'b0),
+        .AWID_i(plic.aw_id),     .AWADDR_i(plic.aw_addr),   .AWLEN_i(plic.aw_len),
+        .AWSIZE_i(plic.aw_size), .AWBURST_i(plic.aw_burst), .AWLOCK_i(plic.aw_lock),
+        .AWCACHE_i(plic.aw_cache),.AWPROT_i(plic.aw_prot),  .AWREGION_i(plic.aw_region),
+        .AWUSER_i(plic.aw_user), .AWQOS_i(plic.aw_qos),     .AWVALID_i(plic.aw_valid),
+        .AWREADY_o(plic.aw_ready),.WDATA_i(plic.w_data),    .WSTRB_i(plic.w_strb),
+        .WLAST_i(plic.w_last),   .WUSER_i(plic.w_user),     .WVALID_i(plic.w_valid),
+        .WREADY_o(plic.w_ready), .BID_o(plic.b_id),         .BRESP_o(plic.b_resp),
+        .BVALID_o(plic.b_valid), .BUSER_o(plic.b_user),     .BREADY_i(plic.b_ready),
+        .ARID_i(plic.ar_id),     .ARADDR_i(plic.ar_addr),   .ARLEN_i(plic.ar_len),
+        .ARSIZE_i(plic.ar_size), .ARBURST_i(plic.ar_burst), .ARLOCK_i(plic.ar_lock),
+        .ARCACHE_i(plic.ar_cache),.ARPROT_i(plic.ar_prot),  .ARREGION_i(plic.ar_region),
+        .ARUSER_i(plic.ar_user), .ARQOS_i(plic.ar_qos),     .ARVALID_i(plic.ar_valid),
+        .ARREADY_o(plic.ar_ready),.RID_o(plic.r_id),        .RDATA_o(plic.r_data),
+        .RRESP_o(plic.r_resp),   .RLAST_o(plic.r_last),     .RUSER_o(plic.r_user),
+        .RVALID_o(plic.r_valid), .RREADY_i(plic.r_ready),
+        .PENABLE(plic_penable),  .PWRITE(plic_pwrite),       .PADDR(plic_paddr),
+        .PSEL(plic_psel),        .PWDATA(plic_pwdata),       .PRDATA(plic_prdata),
+        .PREADY(plic_pready),    .PSLVERR(plic_pslverr)
     );
+
     apb_to_reg i_apb_to_reg (
-        .clk_i     ( clk_i        ),
-        .rst_ni    ( rst_ni       ),
-        .penable_i ( plic_penable ),
-        .pwrite_i  ( plic_pwrite  ),
-        .paddr_i   ( plic_paddr   ),
-        .psel_i    ( plic_psel    ),
-        .pwdata_i  ( plic_pwdata  ),
-        .prdata_o  ( plic_prdata  ),
-        .pready_o  ( plic_pready  ),
-        .pslverr_o ( plic_pslverr ),
-        .reg_o     ( reg_bus      )
+        .clk_i(clk_i), .rst_ni(rst_ni),
+        .penable_i(plic_penable), .pwrite_i(plic_pwrite), .paddr_i(plic_paddr),
+        .psel_i(plic_psel),       .pwdata_i(plic_pwdata), .prdata_o(plic_prdata),
+        .pready_o(plic_pready),   .pslverr_o(plic_pslverr), .reg_o(reg_bus)
     );
+
     `REG_BUS_TYPEDEF_ALL(plic, logic[31:0], logic[31:0], logic[3:0])
-    plic_req_t plic_req;
-    plic_rsp_t plic_rsp;
+    plic_req_t plic_req; plic_rsp_t plic_rsp;
     `REG_BUS_ASSIGN_TO_REQ(plic_req, reg_bus)
     `REG_BUS_ASSIGN_FROM_RSP(reg_bus, plic_rsp)
+
     plic_top #(
-      .N_SOURCE    ( ariane_soc::NumSources  ),
-      .N_TARGET    ( ariane_soc::NumTargets  ),
-      .MAX_PRIO    ( ariane_soc::MaxPriority ),
-      .reg_req_t   ( plic_req_t              ),
-      .reg_rsp_t   ( plic_rsp_t              )
+        .N_SOURCE(ariane_soc::NumSources), .N_TARGET(ariane_soc::NumTargets),
+        .MAX_PRIO(ariane_soc::MaxPriority), .reg_req_t(plic_req_t), .reg_rsp_t(plic_rsp_t)
     ) i_plic (
-      .clk_i,
-      .rst_ni,
-      .req_i         ( plic_req    ),
-      .resp_o        ( plic_rsp    ),
-      .le_i          ( '0          ),
-      .irq_sources_i ( irq_sources ),
-      .eip_targets_o ( irq_o       )
+        .clk_i, .rst_ni,
+        .req_i(plic_req), .resp_o(plic_rsp),
+        .le_i('0), .irq_sources_i(irq_sources), .eip_targets_o(irq_o)
     );
-    // ---------------
-    // 2. UART
-    // ---------------
-    logic         uart_penable;
-    logic         uart_pwrite;
-    logic [31:0]  uart_paddr;
-    logic         uart_psel;
-    logic [31:0]  uart_pwdata;
-    logic [31:0]  uart_prdata;
-    logic         uart_pready;
-    logic         uart_pslverr;
+
+    // -----------------------------------------------------------------------
+    //  2. UART
+    // -----------------------------------------------------------------------
+    logic [31:0] uart_paddr, uart_pwdata, uart_prdata;
+    logic        uart_penable, uart_pwrite, uart_psel, uart_pready, uart_pslverr;
+
     axi2apb_64_32 #(
-        .AXI4_ADDRESS_WIDTH ( AxiAddrWidth ),
-        .AXI4_RDATA_WIDTH   ( AxiDataWidth ),
-        .AXI4_WDATA_WIDTH   ( AxiDataWidth ),
-        .AXI4_ID_WIDTH      ( AxiIdWidth   ),
-        .AXI4_USER_WIDTH    ( AxiUserWidth ),
-        .BUFF_DEPTH_SLAVE   ( 2            ),
-        .APB_ADDR_WIDTH     ( 32           )
+        .AXI4_ADDRESS_WIDTH(AxiAddrWidth), .AXI4_RDATA_WIDTH(AxiDataWidth),
+        .AXI4_WDATA_WIDTH(AxiDataWidth),   .AXI4_ID_WIDTH(AxiIdWidth),
+        .AXI4_USER_WIDTH(AxiUserWidth),    .BUFF_DEPTH_SLAVE(2), .APB_ADDR_WIDTH(32)
     ) i_axi2apb_64_32_uart (
-        .ACLK      ( clk_i          ),
-        .ARESETn   ( rst_ni         ),
-        .test_en_i ( 1'b0           ),
-        .AWID_i    ( uart.aw_id     ),
-        .AWADDR_i  ( uart.aw_addr   ),
-        .AWLEN_i   ( uart.aw_len    ),
-        .AWSIZE_i  ( uart.aw_size   ),
-        .AWBURST_i ( uart.aw_burst  ),
-        .AWLOCK_i  ( uart.aw_lock   ),
-        .AWCACHE_i ( uart.aw_cache  ),
-        .AWPROT_i  ( uart.aw_prot   ),
-        .AWREGION_i( uart.aw_region ),
-        .AWUSER_i  ( uart.aw_user   ),
-        .AWQOS_i   ( uart.aw_qos    ),
-        .AWVALID_i ( uart.aw_valid  ),
-        .AWREADY_o ( uart.aw_ready  ),
-        .WDATA_i   ( uart.w_data    ),
-        .WSTRB_i   ( uart.w_strb    ),
-        .WLAST_i   ( uart.w_last    ),
-        .WUSER_i   ( uart.w_user    ),
-        .WVALID_i  ( uart.w_valid   ),
-        .WREADY_o  ( uart.w_ready   ),
-        .BID_o     ( uart.b_id      ),
-        .BRESP_o   ( uart.b_resp    ),
-        .BVALID_o  ( uart.b_valid   ),
-        .BUSER_o   ( uart.b_user    ),
-        .BREADY_i  ( uart.b_ready   ),
-        .ARID_i    ( uart.ar_id     ),
-        .ARADDR_i  ( uart.ar_addr   ),
-        .ARLEN_i   ( uart.ar_len    ),
-        .ARSIZE_i  ( uart.ar_size   ),
-        .ARBURST_i ( uart.ar_burst  ),
-        .ARLOCK_i  ( uart.ar_lock   ),
-        .ARCACHE_i ( uart.ar_cache  ),
-        .ARPROT_i  ( uart.ar_prot   ),
-        .ARREGION_i( uart.ar_region ),
-        .ARUSER_i  ( uart.ar_user   ),
-        .ARQOS_i   ( uart.ar_qos    ),
-        .ARVALID_i ( uart.ar_valid  ),
-        .ARREADY_o ( uart.ar_ready  ),
-        .RID_o     ( uart.r_id      ),
-        .RDATA_o   ( uart.r_data    ),
-        .RRESP_o   ( uart.r_resp    ),
-        .RLAST_o   ( uart.r_last    ),
-        .RUSER_o   ( uart.r_user    ),
-        .RVALID_o  ( uart.r_valid   ),
-        .RREADY_i  ( uart.r_ready   ),
-        .PENABLE   ( uart_penable   ),
-        .PWRITE    ( uart_pwrite    ),
-        .PADDR     ( uart_paddr     ),
-        .PSEL      ( uart_psel      ),
-        .PWDATA    ( uart_pwdata    ),
-        .PRDATA    ( uart_prdata    ),
-        .PREADY    ( uart_pready    ),
-        .PSLVERR   ( uart_pslverr   )
+        .ACLK(clk_i), .ARESETn(rst_ni), .test_en_i(1'b0),
+        .AWID_i(uart.aw_id),     .AWADDR_i(uart.aw_addr),   .AWLEN_i(uart.aw_len),
+        .AWSIZE_i(uart.aw_size), .AWBURST_i(uart.aw_burst), .AWLOCK_i(uart.aw_lock),
+        .AWCACHE_i(uart.aw_cache),.AWPROT_i(uart.aw_prot),  .AWREGION_i(uart.aw_region),
+        .AWUSER_i(uart.aw_user), .AWQOS_i(uart.aw_qos),     .AWVALID_i(uart.aw_valid),
+        .AWREADY_o(uart.aw_ready),.WDATA_i(uart.w_data),    .WSTRB_i(uart.w_strb),
+        .WLAST_i(uart.w_last),   .WUSER_i(uart.w_user),     .WVALID_i(uart.w_valid),
+        .WREADY_o(uart.w_ready), .BID_o(uart.b_id),         .BRESP_o(uart.b_resp),
+        .BVALID_o(uart.b_valid), .BUSER_o(uart.b_user),     .BREADY_i(uart.b_ready),
+        .ARID_i(uart.ar_id),     .ARADDR_i(uart.ar_addr),   .ARLEN_i(uart.ar_len),
+        .ARSIZE_i(uart.ar_size), .ARBURST_i(uart.ar_burst), .ARLOCK_i(uart.ar_lock),
+        .ARCACHE_i(uart.ar_cache),.ARPROT_i(uart.ar_prot),  .ARREGION_i(uart.ar_region),
+        .ARUSER_i(uart.ar_user), .ARQOS_i(uart.ar_qos),     .ARVALID_i(uart.ar_valid),
+        .ARREADY_o(uart.ar_ready),.RID_o(uart.r_id),        .RDATA_o(uart.r_data),
+        .RRESP_o(uart.r_resp),   .RLAST_o(uart.r_last),     .RUSER_o(uart.r_user),
+        .RVALID_o(uart.r_valid), .RREADY_i(uart.r_ready),
+        .PENABLE(uart_penable),  .PWRITE(uart_pwrite),       .PADDR(uart_paddr),
+        .PSEL(uart_psel),        .PWDATA(uart_pwdata),       .PRDATA(uart_prdata),
+        .PREADY(uart_pready),    .PSLVERR(uart_pslverr)
     );
+
     if (InclUART) begin : gen_uart
         apb_uart i_apb_uart (
-            .CLK     ( clk_i           ),
-            .RSTN    ( rst_ni          ),
-            .PSEL    ( uart_psel       ),
-            .PENABLE ( uart_penable    ),
-            .PWRITE  ( uart_pwrite     ),
-            .PADDR   ( uart_paddr[4:2] ),
-            .PWDATA  ( uart_pwdata     ),
-            .PRDATA  ( uart_prdata     ),
-            .PREADY  ( uart_pready     ),
-            .PSLVERR ( uart_pslverr    ),
-            .INT     ( irq_sources[0]  ),
-            .OUT1N   (                 ),
-            .OUT2N   (                 ),
-            .RTSN    (                 ),
-            .DTRN    (                 ),
-            .CTSN    ( 1'b0            ),
-            .DSRN    ( 1'b0            ),
-            .DCDN    ( 1'b0            ),
-            .RIN     ( 1'b0            ),
-            .SIN     ( rx_i            ),
-            .SOUT    ( tx_o            )
+            .CLK(clk_i), .RSTN(rst_ni),
+            .PSEL(uart_psel), .PENABLE(uart_penable), .PWRITE(uart_pwrite),
+            .PADDR(uart_paddr[4:2]), .PWDATA(uart_pwdata), .PRDATA(uart_prdata),
+            .PREADY(uart_pready), .PSLVERR(uart_pslverr),
+            .INT(irq_sources[0]),
+            .OUT1N(), .OUT2N(), .RTSN(), .DTRN(),
+            .CTSN(1'b0), .DSRN(1'b0), .DCDN(1'b0), .RIN(1'b0),
+            .SIN(rx_i), .SOUT(tx_o)
         );
     end else begin
         /* pragma translate_off */
         `ifndef VERILATOR
         mock_uart i_mock_uart (
-            .clk_i     ( clk_i        ),
-            .rst_ni    ( rst_ni       ),
-            .penable_i ( uart_penable ),
-            .pwrite_i  ( uart_pwrite  ),
-            .paddr_i   ( uart_paddr   ),
-            .psel_i    ( uart_psel    ),
-            .pwdata_i  ( uart_pwdata  ),
-            .prdata_o  ( uart_prdata  ),
-            .pready_o  ( uart_pready  ),
-            .pslverr_o ( uart_pslverr )
+            .clk_i(clk_i), .rst_ni(rst_ni),
+            .penable_i(uart_penable), .pwrite_i(uart_pwrite), .paddr_i(uart_paddr),
+            .psel_i(uart_psel), .pwdata_i(uart_pwdata), .prdata_o(uart_prdata),
+            .pready_o(uart_pready), .pslverr_o(uart_pslverr)
         );
         `endif
         /* pragma translate_on */
     end
-    // ---------------
-    // 3. SPI
-    // ---------------
+
+    // -----------------------------------------------------------------------
+    //  3. SPI (inchangé)
+    // -----------------------------------------------------------------------
     assign spi.b_user = 1'b0;
     assign spi.r_user = 1'b0;
+
     if (InclSPI) begin : gen_spi
-        logic [31:0] s_axi_spi_awaddr;
-        logic [7:0]  s_axi_spi_awlen;
-        logic [2:0]  s_axi_spi_awsize;
-        logic [1:0]  s_axi_spi_awburst;
-        logic [0:0]  s_axi_spi_awlock;
-        logic [3:0]  s_axi_spi_awcache;
-        logic [2:0]  s_axi_spi_awprot;
-        logic [3:0]  s_axi_spi_awregion;
-        logic [3:0]  s_axi_spi_awqos;
-        logic        s_axi_spi_awvalid;
-        logic        s_axi_spi_awready;
-        logic [31:0] s_axi_spi_wdata;
+        logic [31:0] s_axi_spi_awaddr, s_axi_spi_araddr, s_axi_spi_wdata, s_axi_spi_rdata;
+        logic [7:0]  s_axi_spi_awlen,  s_axi_spi_arlen;
+        logic [2:0]  s_axi_spi_awsize, s_axi_spi_arsize;
+        logic [1:0]  s_axi_spi_awburst,s_axi_spi_arburst,s_axi_spi_bresp, s_axi_spi_rresp;
+        logic [0:0]  s_axi_spi_awlock, s_axi_spi_arlock;
+        logic [3:0]  s_axi_spi_awcache,s_axi_spi_arcache,s_axi_spi_awprot,s_axi_spi_awregion;
+        logic [3:0]  s_axi_spi_awqos,  s_axi_spi_arqos,  s_axi_spi_arprot,s_axi_spi_arregion;
         logic [3:0]  s_axi_spi_wstrb;
-        logic        s_axi_spi_wlast;
-        logic        s_axi_spi_wvalid;
-        logic        s_axi_spi_wready;
-        logic [1:0]  s_axi_spi_bresp;
-        logic        s_axi_spi_bvalid;
-        logic        s_axi_spi_bready;
-        logic [31:0] s_axi_spi_araddr;
-        logic [7:0]  s_axi_spi_arlen;
-        logic [2:0]  s_axi_spi_arsize;
-        logic [1:0]  s_axi_spi_arburst;
-        logic [0:0]  s_axi_spi_arlock;
-        logic [3:0]  s_axi_spi_arcache;
-        logic [2:0]  s_axi_spi_arprot;
-        logic [3:0]  s_axi_spi_arregion;
-        logic [3:0]  s_axi_spi_arqos;
-        logic        s_axi_spi_arvalid;
-        logic        s_axi_spi_arready;
-        logic [31:0] s_axi_spi_rdata;
-        logic [1:0]  s_axi_spi_rresp;
-        logic        s_axi_spi_rlast;
-        logic        s_axi_spi_rvalid;
-        logic        s_axi_spi_rready;
+        logic        s_axi_spi_awvalid,s_axi_spi_awready,s_axi_spi_wlast,s_axi_spi_wvalid;
+        logic        s_axi_spi_wready, s_axi_spi_bvalid, s_axi_spi_bready,s_axi_spi_arvalid;
+        logic        s_axi_spi_arready,s_axi_spi_rlast,  s_axi_spi_rvalid,s_axi_spi_rready;
+
         xlnx_axi_dwidth_converter i_xlnx_axi_dwidth_converter_spi (
-            .s_axi_aclk     ( clk_i              ),
-            .s_axi_aresetn  ( rst_ni             ),
-            .s_axi_awid     ( spi.aw_id          ),
-            .s_axi_awaddr   ( spi.aw_addr[31:0]  ),
-            .s_axi_awlen    ( spi.aw_len         ),
-            .s_axi_awsize   ( spi.aw_size        ),
-            .s_axi_awburst  ( spi.aw_burst       ),
-            .s_axi_awlock   ( spi.aw_lock        ),
-            .s_axi_awcache  ( spi.aw_cache       ),
-            .s_axi_awprot   ( spi.aw_prot        ),
-            .s_axi_awregion ( spi.aw_region      ),
-            .s_axi_awqos    ( spi.aw_qos         ),
-            .s_axi_awvalid  ( spi.aw_valid       ),
-            .s_axi_awready  ( spi.aw_ready       ),
-            .s_axi_wdata    ( spi.w_data         ),
-            .s_axi_wstrb    ( spi.w_strb         ),
-            .s_axi_wlast    ( spi.w_last         ),
-            .s_axi_wvalid   ( spi.w_valid        ),
-            .s_axi_wready   ( spi.w_ready        ),
-            .s_axi_bid      ( spi.b_id           ),
-            .s_axi_bresp    ( spi.b_resp         ),
-            .s_axi_bvalid   ( spi.b_valid        ),
-            .s_axi_bready   ( spi.b_ready        ),
-            .s_axi_arid     ( spi.ar_id          ),
-            .s_axi_araddr   ( spi.ar_addr[31:0]  ),
-            .s_axi_arlen    ( spi.ar_len         ),
-            .s_axi_arsize   ( spi.ar_size        ),
-            .s_axi_arburst  ( spi.ar_burst       ),
-            .s_axi_arlock   ( spi.ar_lock        ),
-            .s_axi_arcache  ( spi.ar_cache       ),
-            .s_axi_arprot   ( spi.ar_prot        ),
-            .s_axi_arregion ( spi.ar_region      ),
-            .s_axi_arqos    ( spi.ar_qos         ),
-            .s_axi_arvalid  ( spi.ar_valid       ),
-            .s_axi_arready  ( spi.ar_ready       ),
-            .s_axi_rid      ( spi.r_id           ),
-            .s_axi_rdata    ( spi.r_data         ),
-            .s_axi_rresp    ( spi.r_resp         ),
-            .s_axi_rlast    ( spi.r_last         ),
-            .s_axi_rvalid   ( spi.r_valid        ),
-            .s_axi_rready   ( spi.r_ready        ),
-            .m_axi_awaddr   ( s_axi_spi_awaddr   ),
-            .m_axi_awlen    ( s_axi_spi_awlen    ),
-            .m_axi_awsize   ( s_axi_spi_awsize   ),
-            .m_axi_awburst  ( s_axi_spi_awburst  ),
-            .m_axi_awlock   ( s_axi_spi_awlock   ),
-            .m_axi_awcache  ( s_axi_spi_awcache  ),
-            .m_axi_awprot   ( s_axi_spi_awprot   ),
-            .m_axi_awregion ( s_axi_spi_awregion ),
-            .m_axi_awqos    ( s_axi_spi_awqos    ),
-            .m_axi_awvalid  ( s_axi_spi_awvalid  ),
-            .m_axi_awready  ( s_axi_spi_awready  ),
-            .m_axi_wdata    ( s_axi_spi_wdata    ),
-            .m_axi_wstrb    ( s_axi_spi_wstrb    ),
-            .m_axi_wlast    ( s_axi_spi_wlast    ),
-            .m_axi_wvalid   ( s_axi_spi_wvalid   ),
-            .m_axi_wready   ( s_axi_spi_wready   ),
-            .m_axi_bresp    ( s_axi_spi_bresp    ),
-            .m_axi_bvalid   ( s_axi_spi_bvalid   ),
-            .m_axi_bready   ( s_axi_spi_bready   ),
-            .m_axi_araddr   ( s_axi_spi_araddr   ),
-            .m_axi_arlen    ( s_axi_spi_arlen    ),
-            .m_axi_arsize   ( s_axi_spi_arsize   ),
-            .m_axi_arburst  ( s_axi_spi_arburst  ),
-            .m_axi_arlock   ( s_axi_spi_arlock   ),
-            .m_axi_arcache  ( s_axi_spi_arcache  ),
-            .m_axi_arprot   ( s_axi_spi_arprot   ),
-            .m_axi_arregion ( s_axi_spi_arregion ),
-            .m_axi_arqos    ( s_axi_spi_arqos    ),
-            .m_axi_arvalid  ( s_axi_spi_arvalid  ),
-            .m_axi_arready  ( s_axi_spi_arready  ),
-            .m_axi_rdata    ( s_axi_spi_rdata    ),
-            .m_axi_rresp    ( s_axi_spi_rresp    ),
-            .m_axi_rlast    ( s_axi_spi_rlast    ),
-            .m_axi_rvalid   ( s_axi_spi_rvalid   ),
-            .m_axi_rready   ( s_axi_spi_rready   )
+            .s_axi_aclk(clk_i),          .s_axi_aresetn(rst_ni),
+            .s_axi_awid(spi.aw_id),       .s_axi_awaddr(spi.aw_addr[31:0]),
+            .s_axi_awlen(spi.aw_len),     .s_axi_awsize(spi.aw_size),
+            .s_axi_awburst(spi.aw_burst), .s_axi_awlock(spi.aw_lock),
+            .s_axi_awcache(spi.aw_cache), .s_axi_awprot(spi.aw_prot),
+            .s_axi_awregion(spi.aw_region),.s_axi_awqos(spi.aw_qos),
+            .s_axi_awvalid(spi.aw_valid), .s_axi_awready(spi.aw_ready),
+            .s_axi_wdata(spi.w_data),     .s_axi_wstrb(spi.w_strb),
+            .s_axi_wlast(spi.w_last),     .s_axi_wvalid(spi.w_valid),
+            .s_axi_wready(spi.w_ready),   .s_axi_bid(spi.b_id),
+            .s_axi_bresp(spi.b_resp),     .s_axi_bvalid(spi.b_valid),
+            .s_axi_bready(spi.b_ready),   .s_axi_arid(spi.ar_id),
+            .s_axi_araddr(spi.ar_addr[31:0]),.s_axi_arlen(spi.ar_len),
+            .s_axi_arsize(spi.ar_size),   .s_axi_arburst(spi.ar_burst),
+            .s_axi_arlock(spi.ar_lock),   .s_axi_arcache(spi.ar_cache),
+            .s_axi_arprot(spi.ar_prot),   .s_axi_arregion(spi.ar_region),
+            .s_axi_arqos(spi.ar_qos),     .s_axi_arvalid(spi.ar_valid),
+            .s_axi_arready(spi.ar_ready), .s_axi_rid(spi.r_id),
+            .s_axi_rdata(spi.r_data),     .s_axi_rresp(spi.r_resp),
+            .s_axi_rlast(spi.r_last),     .s_axi_rvalid(spi.r_valid),
+            .s_axi_rready(spi.r_ready),
+            .m_axi_awaddr(s_axi_spi_awaddr),  .m_axi_awlen(s_axi_spi_awlen),
+            .m_axi_awsize(s_axi_spi_awsize),  .m_axi_awburst(s_axi_spi_awburst),
+            .m_axi_awlock(s_axi_spi_awlock),  .m_axi_awcache(s_axi_spi_awcache),
+            .m_axi_awprot(s_axi_spi_awprot),  .m_axi_awregion(s_axi_spi_awregion),
+            .m_axi_awqos(s_axi_spi_awqos),    .m_axi_awvalid(s_axi_spi_awvalid),
+            .m_axi_awready(s_axi_spi_awready),.m_axi_wdata(s_axi_spi_wdata),
+            .m_axi_wstrb(s_axi_spi_wstrb),    .m_axi_wlast(s_axi_spi_wlast),
+            .m_axi_wvalid(s_axi_spi_wvalid),  .m_axi_wready(s_axi_spi_wready),
+            .m_axi_bresp(s_axi_spi_bresp),    .m_axi_bvalid(s_axi_spi_bvalid),
+            .m_axi_bready(s_axi_spi_bready),  .m_axi_araddr(s_axi_spi_araddr),
+            .m_axi_arlen(s_axi_spi_arlen),    .m_axi_arsize(s_axi_spi_arsize),
+            .m_axi_arburst(s_axi_spi_arburst),.m_axi_arlock(s_axi_spi_arlock),
+            .m_axi_arcache(s_axi_spi_arcache),.m_axi_arprot(s_axi_spi_arprot),
+            .m_axi_arregion(s_axi_spi_arregion),.m_axi_arqos(s_axi_spi_arqos),
+            .m_axi_arvalid(s_axi_spi_arvalid),.m_axi_arready(s_axi_spi_arready),
+            .m_axi_rdata(s_axi_spi_rdata),    .m_axi_rresp(s_axi_spi_rresp),
+            .m_axi_rlast(s_axi_spi_rlast),    .m_axi_rvalid(s_axi_spi_rvalid),
+            .m_axi_rready(s_axi_spi_rready)
         );
+
         xlnx_axi_quad_spi i_xlnx_axi_quad_spi (
-            .ext_spi_clk    ( clk_i                  ),
-            .s_axi4_aclk    ( clk_i                  ),
-            .s_axi4_aresetn ( rst_ni                 ),
-            .s_axi4_awaddr  ( s_axi_spi_awaddr[23:0] ),
-            .s_axi4_awlen   ( s_axi_spi_awlen        ),
-            .s_axi4_awsize  ( s_axi_spi_awsize       ),
-            .s_axi4_awburst ( s_axi_spi_awburst      ),
-            .s_axi4_awlock  ( s_axi_spi_awlock       ),
-            .s_axi4_awcache ( s_axi_spi_awcache      ),
-            .s_axi4_awprot  ( s_axi_spi_awprot       ),
-            .s_axi4_awvalid ( s_axi_spi_awvalid      ),
-            .s_axi4_awready ( s_axi_spi_awready      ),
-            .s_axi4_wdata   ( s_axi_spi_wdata        ),
-            .s_axi4_wstrb   ( s_axi_spi_wstrb        ),
-            .s_axi4_wlast   ( s_axi_spi_wlast        ),
-            .s_axi4_wvalid  ( s_axi_spi_wvalid       ),
-            .s_axi4_wready  ( s_axi_spi_wready       ),
-            .s_axi4_bresp   ( s_axi_spi_bresp        ),
-            .s_axi4_bvalid  ( s_axi_spi_bvalid       ),
-            .s_axi4_bready  ( s_axi_spi_bready       ),
-            .s_axi4_araddr  ( s_axi_spi_araddr[23:0] ),
-            .s_axi4_arlen   ( s_axi_spi_arlen        ),
-            .s_axi4_arsize  ( s_axi_spi_arsize       ),
-            .s_axi4_arburst ( s_axi_spi_arburst      ),
-            .s_axi4_arlock  ( s_axi_spi_arlock       ),
-            .s_axi4_arcache ( s_axi_spi_arcache      ),
-            .s_axi4_arprot  ( s_axi_spi_arprot       ),
-            .s_axi4_arvalid ( s_axi_spi_arvalid      ),
-            .s_axi4_arready ( s_axi_spi_arready      ),
-            .s_axi4_rdata   ( s_axi_spi_rdata        ),
-            .s_axi4_rresp   ( s_axi_spi_rresp        ),
-            .s_axi4_rlast   ( s_axi_spi_rlast        ),
-            .s_axi4_rvalid  ( s_axi_spi_rvalid       ),
-            .s_axi4_rready  ( s_axi_spi_rready       ),
-            .io0_i          ( '0                     ),
-            .io0_o          ( spi_mosi               ),
-            .io0_t          (                        ),
-            .io1_i          ( spi_miso               ),
-            .io1_o          (                        ),
-            .io1_t          (                        ),
-            .ss_i           ( '0                     ),
-            .ss_o           ( spi_ss                 ),
-            .ss_t           (                        ),
-            .sck_o          ( spi_clk_o              ),
-            .sck_i          ( '0                     ),
-            .sck_t          (                        ),
-            .ip2intc_irpt   ( irq_sources[1]         )
+            .ext_spi_clk(clk_i), .s_axi4_aclk(clk_i), .s_axi4_aresetn(rst_ni),
+            .s_axi4_awaddr(s_axi_spi_awaddr[23:0]),
+            .s_axi4_awlen(s_axi_spi_awlen),   .s_axi4_awsize(s_axi_spi_awsize),
+            .s_axi4_awburst(s_axi_spi_awburst),.s_axi4_awlock(s_axi_spi_awlock),
+            .s_axi4_awcache(s_axi_spi_awcache),.s_axi4_awprot(s_axi_spi_awprot),
+            .s_axi4_awvalid(s_axi_spi_awvalid),.s_axi4_awready(s_axi_spi_awready),
+            .s_axi4_wdata(s_axi_spi_wdata),   .s_axi4_wstrb(s_axi_spi_wstrb),
+            .s_axi4_wlast(s_axi_spi_wlast),   .s_axi4_wvalid(s_axi_spi_wvalid),
+            .s_axi4_wready(s_axi_spi_wready), .s_axi4_bresp(s_axi_spi_bresp),
+            .s_axi4_bvalid(s_axi_spi_bvalid), .s_axi4_bready(s_axi_spi_bready),
+            .s_axi4_araddr(s_axi_spi_araddr[23:0]),
+            .s_axi4_arlen(s_axi_spi_arlen),   .s_axi4_arsize(s_axi_spi_arsize),
+            .s_axi4_arburst(s_axi_spi_arburst),.s_axi4_arlock(s_axi_spi_arlock),
+            .s_axi4_arcache(s_axi_spi_arcache),.s_axi4_arprot(s_axi_spi_arprot),
+            .s_axi4_arvalid(s_axi_spi_arvalid),.s_axi4_arready(s_axi_spi_arready),
+            .s_axi4_rdata(s_axi_spi_rdata),   .s_axi4_rresp(s_axi_spi_rresp),
+            .s_axi4_rlast(s_axi_spi_rlast),   .s_axi4_rvalid(s_axi_spi_rvalid),
+            .s_axi4_rready(s_axi_spi_rready),
+            .io0_i('0), .io0_o(spi_mosi), .io0_t(),
+            .io1_i(spi_miso), .io1_o(), .io1_t(),
+            .ss_i('0), .ss_o(spi_ss), .ss_t(),
+            .sck_o(spi_clk_o), .sck_i('0), .sck_t(),
+            .ip2intc_irpt(irq_sources[1])
         );
     end else begin
         assign spi_clk_o = 1'b0;
         assign spi_mosi  = 1'b0;
         assign spi_ss    = 1'b0;
-        assign spi.aw_ready = 1'b1;
-        assign spi.ar_ready = 1'b1;
-        assign spi.w_ready  = 1'b1;
-        assign spi.b_valid = spi.aw_valid;
-        assign spi.b_id    = spi.aw_id;
-        assign spi.b_resp  = axi_pkg::RESP_SLVERR;
-        assign spi.b_user  = '0;
-        assign spi.r_valid = spi.ar_valid;
-        assign spi.r_resp  = axi_pkg::RESP_SLVERR;
-        assign spi.r_data  = 'hdeadbeef;
-        assign spi.r_last  = 1'b1;
+        assign spi.aw_ready = 1'b1; assign spi.ar_ready = 1'b1; assign spi.w_ready = 1'b1;
+        assign spi.b_valid = spi.aw_valid; assign spi.b_id = spi.aw_id;
+        assign spi.b_resp = axi_pkg::RESP_SLVERR; assign spi.b_user = '0;
+        assign spi.r_valid = spi.ar_valid; assign spi.r_resp = axi_pkg::RESP_SLVERR;
+        assign spi.r_data = 'hdeadbeef; assign spi.r_last = 1'b1;
     end
-    // ---------------
-    // 4. Ethernet
-    // ---------------
+
+    // -----------------------------------------------------------------------
+    //  4. Ethernet (inchangé)
+    // -----------------------------------------------------------------------
     if (InclEthernet) begin : gen_ethernet
-        logic                      clk_200_int, clk_rgmii, clk_rgmii_quad;
-        logic                      eth_en, eth_we, eth_int_n, eth_pme_n;
-        logic                      eth_mdio_i, eth_mdio_o, eth_mdio_oe;
+        logic eth_en, eth_we, eth_int_n, eth_pme_n, eth_mdio_i, eth_mdio_o, eth_mdio_oe;
         logic [AxiAddrWidth-1:0]   eth_addr;
         logic [AxiDataWidth-1:0]   eth_wrdata, eth_rdata;
         logic [AxiDataWidth/8-1:0] eth_be;
+
         axi2mem #(
-            .AXI_ID_WIDTH   ( AxiIdWidth   ),
-            .AXI_ADDR_WIDTH ( AxiAddrWidth ),
-            .AXI_DATA_WIDTH ( AxiDataWidth ),
-            .AXI_USER_WIDTH ( AxiUserWidth )
+            .AXI_ID_WIDTH(AxiIdWidth), .AXI_ADDR_WIDTH(AxiAddrWidth),
+            .AXI_DATA_WIDTH(AxiDataWidth), .AXI_USER_WIDTH(AxiUserWidth)
         ) i_axi2rom (
-            .clk_i  ( clk_i    ),
-            .rst_ni ( rst_ni   ),
-            .slave  ( ethernet ),
-            .req_o  ( eth_en   ),
-            .we_o   ( eth_we   ),
-            .addr_o ( eth_addr ),
-            .be_o   ( eth_be   ),
-            .data_o ( eth_wrdata ),
-            .data_i ( eth_rdata  )
+            .clk_i(clk_i), .rst_ni(rst_ni), .slave(ethernet),
+            .req_o(eth_en), .we_o(eth_we), .addr_o(eth_addr),
+            .be_o(eth_be), .data_o(eth_wrdata), .data_i(eth_rdata)
         );
+
         framing_top eth_rgmii (
-           .msoc_clk       ( clk_i           ),
-           .core_lsu_addr  ( eth_addr[14:0]  ),
-           .core_lsu_wdata ( eth_wrdata      ),
-           .core_lsu_be    ( eth_be          ),
-           .ce_d           ( eth_en          ),
-           .we_d           ( eth_en & eth_we ),
-           .framing_sel    ( eth_en          ),
-           .framing_rdata  ( eth_rdata       ),
-           .rst_int        ( !rst_ni         ),
-           .clk_int        ( phy_tx_clk_i   ),
-           .clk90_int      ( eth_clk_i      ),
-           .clk_200_int    ( clk_200MHz_i   ),
-           .phy_rx_clk     ( eth_rxck       ),
-           .phy_rxd        ( eth_rxd        ),
-           .phy_rx_ctl     ( eth_rxctl      ),
-           .phy_tx_clk     ( eth_txck       ),
-           .phy_txd        ( eth_txd        ),
-           .phy_tx_ctl     ( eth_txctl      ),
-           .phy_reset_n    ( eth_rst_n      ),
-           .phy_int_n      ( eth_int_n      ),
-           .phy_pme_n      ( eth_pme_n      ),
-           .phy_mdc        ( eth_mdc        ),
-           .phy_mdio_i     ( eth_mdio_i     ),
-           .phy_mdio_o     ( eth_mdio_o     ),
-           .phy_mdio_oe    ( eth_mdio_oe    ),
-           .eth_irq        ( irq_sources[2] )
+            .msoc_clk(clk_i),         .core_lsu_addr(eth_addr[14:0]),
+            .core_lsu_wdata(eth_wrdata),.core_lsu_be(eth_be),
+            .ce_d(eth_en),            .we_d(eth_en & eth_we),
+            .framing_sel(eth_en),     .framing_rdata(eth_rdata),
+            .rst_int(!rst_ni),        .clk_int(phy_tx_clk_i),
+            .clk90_int(eth_clk_i),    .clk_200_int(clk_200MHz_i),
+            .phy_rx_clk(eth_rxck),    .phy_rxd(eth_rxd),
+            .phy_rx_ctl(eth_rxctl),   .phy_tx_clk(eth_txck),
+            .phy_txd(eth_txd),        .phy_tx_ctl(eth_txctl),
+            .phy_reset_n(eth_rst_n),  .phy_int_n(eth_int_n),
+            .phy_pme_n(eth_pme_n),    .phy_mdc(eth_mdc),
+            .phy_mdio_i(eth_mdio_i),  .phy_mdio_o(eth_mdio_o),
+            .phy_mdio_oe(eth_mdio_oe),.eth_irq(irq_sources[2])
         );
-        IOBUF #(
-           .DRIVE(12),
-           .IBUF_LOW_PWR("TRUE"),
-           .IOSTANDARD("DEFAULT"),
-           .SLEW("SLOW")
-        ) IOBUF_inst (
-           .O  ( eth_mdio_i  ),
-           .IO ( eth_mdio    ),
-           .I  ( eth_mdio_o  ),
-           .T  ( ~eth_mdio_oe )
-        );
+
+        IOBUF #(.DRIVE(12), .IBUF_LOW_PWR("TRUE"), .IOSTANDARD("DEFAULT"), .SLEW("SLOW"))
+        IOBUF_inst (.O(eth_mdio_i), .IO(eth_mdio), .I(eth_mdio_o), .T(~eth_mdio_oe));
+
     end else begin
-        assign irq_sources[2]   = 1'b0;
-        assign ethernet.aw_ready = 1'b1;
-        assign ethernet.ar_ready = 1'b1;
+        assign irq_sources[2]    = 1'b0;
+        assign ethernet.aw_ready = 1'b1; assign ethernet.ar_ready = 1'b1;
         assign ethernet.w_ready  = 1'b1;
-        assign ethernet.b_valid = ethernet.aw_valid;
-        assign ethernet.b_id    = ethernet.aw_id;
-        assign ethernet.b_resp  = axi_pkg::RESP_SLVERR;
-        assign ethernet.b_user  = '0;
-        assign ethernet.r_valid = ethernet.ar_valid;
-        assign ethernet.r_resp  = axi_pkg::RESP_SLVERR;
-        assign ethernet.r_data  = 'hdeadbeef;
-        assign ethernet.r_last  = 1'b1;
+        assign ethernet.b_valid  = ethernet.aw_valid;
+        assign ethernet.b_id     = ethernet.aw_id;
+        assign ethernet.b_resp   = axi_pkg::RESP_SLVERR; assign ethernet.b_user = '0;
+        assign ethernet.r_valid  = ethernet.ar_valid;
+        assign ethernet.r_resp   = axi_pkg::RESP_SLVERR;
+        assign ethernet.r_data   = 'hdeadbeef; assign ethernet.r_last = 1'b1;
     end
-    // ---------------
-    // 5. GPIO
-    // ---------------
+
+    // -----------------------------------------------------------------------
+    //  5. GPIO (inchangé)
+    // -----------------------------------------------------------------------
     assign gpio.b_user = 1'b0;
     assign gpio.r_user = 1'b0;
+
     if (InclGPIO) begin : gen_gpio
-        logic [31:0] s_axi_gpio_awaddr;
-        logic [7:0]  s_axi_gpio_awlen;
-        logic [2:0]  s_axi_gpio_awsize;
-        logic [1:0]  s_axi_gpio_awburst;
-        logic [3:0]  s_axi_gpio_awcache;
-        logic        s_axi_gpio_awvalid;
-        logic        s_axi_gpio_awready;
-        logic [31:0] s_axi_gpio_wdata;
-        logic [3:0]  s_axi_gpio_wstrb;
-        logic        s_axi_gpio_wvalid;
-        logic        s_axi_gpio_wready;
-        logic [1:0]  s_axi_gpio_bresp;
-        logic        s_axi_gpio_bvalid;
-        logic        s_axi_gpio_bready;
-        logic [31:0] s_axi_gpio_araddr;
-        logic [7:0]  s_axi_gpio_arlen;
-        logic [2:0]  s_axi_gpio_arsize;
-        logic [1:0]  s_axi_gpio_arburst;
-        logic [3:0]  s_axi_gpio_arcache;
-        logic        s_axi_gpio_arvalid;
-        logic        s_axi_gpio_arready;
-        logic [31:0] s_axi_gpio_rdata;
-        logic [1:0]  s_axi_gpio_rresp;
-        logic        s_axi_gpio_rlast;
-        logic        s_axi_gpio_rvalid;
-        logic        s_axi_gpio_rready;
+        logic [31:0] s_axi_gpio_awaddr, s_axi_gpio_araddr, s_axi_gpio_wdata, s_axi_gpio_rdata;
+        logic [7:0]  s_axi_gpio_awlen, s_axi_gpio_arlen;
+        logic [2:0]  s_axi_gpio_awsize, s_axi_gpio_arsize;
+        logic [1:0]  s_axi_gpio_awburst, s_axi_gpio_arburst, s_axi_gpio_bresp, s_axi_gpio_rresp;
+        logic [3:0]  s_axi_gpio_awcache, s_axi_gpio_arcache, s_axi_gpio_wstrb;
+        logic        s_axi_gpio_awvalid, s_axi_gpio_awready, s_axi_gpio_wvalid, s_axi_gpio_wready;
+        logic        s_axi_gpio_bvalid,  s_axi_gpio_bready,  s_axi_gpio_arvalid, s_axi_gpio_arready;
+        logic        s_axi_gpio_rlast,   s_axi_gpio_rvalid,  s_axi_gpio_rready;
+
         xlnx_axi_dwidth_converter i_xlnx_axi_dwidth_converter_gpio (
-            .s_axi_aclk     ( clk_i              ),
-            .s_axi_aresetn  ( rst_ni             ),
-            .s_axi_awid     ( gpio.aw_id         ),
-            .s_axi_awaddr   ( gpio.aw_addr[31:0] ),
-            .s_axi_awlen    ( gpio.aw_len        ),
-            .s_axi_awsize   ( gpio.aw_size       ),
-            .s_axi_awburst  ( gpio.aw_burst      ),
-            .s_axi_awlock   ( gpio.aw_lock       ),
-            .s_axi_awcache  ( gpio.aw_cache      ),
-            .s_axi_awprot   ( gpio.aw_prot       ),
-            .s_axi_awregion ( gpio.aw_region     ),
-            .s_axi_awqos    ( gpio.aw_qos        ),
-            .s_axi_awvalid  ( gpio.aw_valid      ),
-            .s_axi_awready  ( gpio.aw_ready      ),
-            .s_axi_wdata    ( gpio.w_data        ),
-            .s_axi_wstrb    ( gpio.w_strb        ),
-            .s_axi_wlast    ( gpio.w_last        ),
-            .s_axi_wvalid   ( gpio.w_valid       ),
-            .s_axi_wready   ( gpio.w_ready       ),
-            .s_axi_bid      ( gpio.b_id          ),
-            .s_axi_bresp    ( gpio.b_resp        ),
-            .s_axi_bvalid   ( gpio.b_valid       ),
-            .s_axi_bready   ( gpio.b_ready       ),
-            .s_axi_arid     ( gpio.ar_id         ),
-            .s_axi_araddr   ( gpio.ar_addr[31:0] ),
-            .s_axi_arlen    ( gpio.ar_len        ),
-            .s_axi_arsize   ( gpio.ar_size       ),
-            .s_axi_arburst  ( gpio.ar_burst      ),
-            .s_axi_arlock   ( gpio.ar_lock       ),
-            .s_axi_arcache  ( gpio.ar_cache      ),
-            .s_axi_arprot   ( gpio.ar_prot       ),
-            .s_axi_arregion ( gpio.ar_region     ),
-            .s_axi_arqos    ( gpio.ar_qos        ),
-            .s_axi_arvalid  ( gpio.ar_valid      ),
-            .s_axi_arready  ( gpio.ar_ready      ),
-            .s_axi_rid      ( gpio.r_id          ),
-            .s_axi_rdata    ( gpio.r_data        ),
-            .s_axi_rresp    ( gpio.r_resp        ),
-            .s_axi_rlast    ( gpio.r_last        ),
-            .s_axi_rvalid   ( gpio.r_valid       ),
-            .s_axi_rready   ( gpio.r_ready       ),
-            .m_axi_awaddr   ( s_axi_gpio_awaddr  ),
-            .m_axi_awlen    ( s_axi_gpio_awlen   ),
-            .m_axi_awsize   ( s_axi_gpio_awsize  ),
-            .m_axi_awburst  ( s_axi_gpio_awburst ),
-            .m_axi_awlock   (                    ),
-            .m_axi_awcache  ( s_axi_gpio_awcache ),
-            .m_axi_awprot   (                    ),
-            .m_axi_awregion (                    ),
-            .m_axi_awqos    (                    ),
-            .m_axi_awvalid  ( s_axi_gpio_awvalid ),
-            .m_axi_awready  ( s_axi_gpio_awready ),
-            .m_axi_wdata    ( s_axi_gpio_wdata   ),
-            .m_axi_wstrb    ( s_axi_gpio_wstrb   ),
-            .m_axi_wlast    (                    ),
-            .m_axi_wvalid   ( s_axi_gpio_wvalid  ),
-            .m_axi_wready   ( s_axi_gpio_wready  ),
-            .m_axi_bresp    ( s_axi_gpio_bresp   ),
-            .m_axi_bvalid   ( s_axi_gpio_bvalid  ),
-            .m_axi_bready   ( s_axi_gpio_bready  ),
-            .m_axi_araddr   ( s_axi_gpio_araddr  ),
-            .m_axi_arlen    ( s_axi_gpio_arlen   ),
-            .m_axi_arsize   ( s_axi_gpio_arsize  ),
-            .m_axi_arburst  ( s_axi_gpio_arburst ),
-            .m_axi_arlock   (                    ),
-            .m_axi_arcache  ( s_axi_gpio_arcache ),
-            .m_axi_arprot   (                    ),
-            .m_axi_arregion (                    ),
-            .m_axi_arqos    (                    ),
-            .m_axi_arvalid  ( s_axi_gpio_arvalid ),
-            .m_axi_arready  ( s_axi_gpio_arready ),
-            .m_axi_rdata    ( s_axi_gpio_rdata   ),
-            .m_axi_rresp    ( s_axi_gpio_rresp   ),
-            .m_axi_rlast    ( s_axi_gpio_rlast   ),
-            .m_axi_rvalid   ( s_axi_gpio_rvalid  ),
-            .m_axi_rready   ( s_axi_gpio_rready  )
+            .s_axi_aclk(clk_i),          .s_axi_aresetn(rst_ni),
+            .s_axi_awid(gpio.aw_id),      .s_axi_awaddr(gpio.aw_addr[31:0]),
+            .s_axi_awlen(gpio.aw_len),    .s_axi_awsize(gpio.aw_size),
+            .s_axi_awburst(gpio.aw_burst),.s_axi_awlock(gpio.aw_lock),
+            .s_axi_awcache(gpio.aw_cache),.s_axi_awprot(gpio.aw_prot),
+            .s_axi_awregion(gpio.aw_region),.s_axi_awqos(gpio.aw_qos),
+            .s_axi_awvalid(gpio.aw_valid),.s_axi_awready(gpio.aw_ready),
+            .s_axi_wdata(gpio.w_data),    .s_axi_wstrb(gpio.w_strb),
+            .s_axi_wlast(gpio.w_last),    .s_axi_wvalid(gpio.w_valid),
+            .s_axi_wready(gpio.w_ready),  .s_axi_bid(gpio.b_id),
+            .s_axi_bresp(gpio.b_resp),    .s_axi_bvalid(gpio.b_valid),
+            .s_axi_bready(gpio.b_ready),  .s_axi_arid(gpio.ar_id),
+            .s_axi_araddr(gpio.ar_addr[31:0]),.s_axi_arlen(gpio.ar_len),
+            .s_axi_arsize(gpio.ar_size),  .s_axi_arburst(gpio.ar_burst),
+            .s_axi_arlock(gpio.ar_lock),  .s_axi_arcache(gpio.ar_cache),
+            .s_axi_arprot(gpio.ar_prot),  .s_axi_arregion(gpio.ar_region),
+            .s_axi_arqos(gpio.ar_qos),    .s_axi_arvalid(gpio.ar_valid),
+            .s_axi_arready(gpio.ar_ready),.s_axi_rid(gpio.r_id),
+            .s_axi_rdata(gpio.r_data),    .s_axi_rresp(gpio.r_resp),
+            .s_axi_rlast(gpio.r_last),    .s_axi_rvalid(gpio.r_valid),
+            .s_axi_rready(gpio.r_ready),
+            .m_axi_awaddr(s_axi_gpio_awaddr),  .m_axi_awlen(s_axi_gpio_awlen),
+            .m_axi_awsize(s_axi_gpio_awsize),  .m_axi_awburst(s_axi_gpio_awburst),
+            .m_axi_awlock(),                    .m_axi_awcache(s_axi_gpio_awcache),
+            .m_axi_awprot(),                    .m_axi_awregion(),
+            .m_axi_awqos(),                     .m_axi_awvalid(s_axi_gpio_awvalid),
+            .m_axi_awready(s_axi_gpio_awready), .m_axi_wdata(s_axi_gpio_wdata),
+            .m_axi_wstrb(s_axi_gpio_wstrb),     .m_axi_wlast(),
+            .m_axi_wvalid(s_axi_gpio_wvalid),   .m_axi_wready(s_axi_gpio_wready),
+            .m_axi_bresp(s_axi_gpio_bresp),     .m_axi_bvalid(s_axi_gpio_bvalid),
+            .m_axi_bready(s_axi_gpio_bready),   .m_axi_araddr(s_axi_gpio_araddr),
+            .m_axi_arlen(s_axi_gpio_arlen),     .m_axi_arsize(s_axi_gpio_arsize),
+            .m_axi_arburst(s_axi_gpio_arburst),  .m_axi_arlock(),
+            .m_axi_arcache(s_axi_gpio_arcache),  .m_axi_arprot(),
+            .m_axi_arregion(),                   .m_axi_arqos(),
+            .m_axi_arvalid(s_axi_gpio_arvalid),  .m_axi_arready(s_axi_gpio_arready),
+            .m_axi_rdata(s_axi_gpio_rdata),      .m_axi_rresp(s_axi_gpio_rresp),
+            .m_axi_rlast(s_axi_gpio_rlast),      .m_axi_rvalid(s_axi_gpio_rvalid),
+            .m_axi_rready(s_axi_gpio_rready)
         );
+
         xlnx_axi_gpio i_xlnx_axi_gpio (
-            .s_axi_aclk    ( clk_i                  ),
-            .s_axi_aresetn ( rst_ni                 ),
-            .s_axi_awaddr  ( s_axi_gpio_awaddr[8:0] ),
-            .s_axi_awvalid ( s_axi_gpio_awvalid     ),
-            .s_axi_awready ( s_axi_gpio_awready     ),
-            .s_axi_wdata   ( s_axi_gpio_wdata       ),
-            .s_axi_wstrb   ( s_axi_gpio_wstrb       ),
-            .s_axi_wvalid  ( s_axi_gpio_wvalid      ),
-            .s_axi_wready  ( s_axi_gpio_wready      ),
-            .s_axi_bresp   ( s_axi_gpio_bresp       ),
-            .s_axi_bvalid  ( s_axi_gpio_bvalid      ),
-            .s_axi_bready  ( s_axi_gpio_bready      ),
-            .s_axi_araddr  ( s_axi_gpio_araddr[8:0] ),
-            .s_axi_arvalid ( s_axi_gpio_arvalid     ),
-            .s_axi_arready ( s_axi_gpio_arready     ),
-            .s_axi_rdata   ( s_axi_gpio_rdata       ),
-            .s_axi_rresp   ( s_axi_gpio_rresp       ),
-            .s_axi_rvalid  ( s_axi_gpio_rvalid      ),
-            .s_axi_rready  ( s_axi_gpio_rready      ),
-            .gpio_io_i     ( '0             ),
-            .gpio_io_o     ( leds_o         ),
-            .gpio_io_t     (                ),
-            .gpio2_io_i    ( dip_switches_i )
+            .s_axi_aclk(clk_i), .s_axi_aresetn(rst_ni),
+            .s_axi_awaddr(s_axi_gpio_awaddr[8:0]), .s_axi_awvalid(s_axi_gpio_awvalid),
+            .s_axi_awready(s_axi_gpio_awready),    .s_axi_wdata(s_axi_gpio_wdata),
+            .s_axi_wstrb(s_axi_gpio_wstrb),        .s_axi_wvalid(s_axi_gpio_wvalid),
+            .s_axi_wready(s_axi_gpio_wready),      .s_axi_bresp(s_axi_gpio_bresp),
+            .s_axi_bvalid(s_axi_gpio_bvalid),      .s_axi_bready(s_axi_gpio_bready),
+            .s_axi_araddr(s_axi_gpio_araddr[8:0]), .s_axi_arvalid(s_axi_gpio_arvalid),
+            .s_axi_arready(s_axi_gpio_arready),    .s_axi_rdata(s_axi_gpio_rdata),
+            .s_axi_rresp(s_axi_gpio_rresp),        .s_axi_rvalid(s_axi_gpio_rvalid),
+            .s_axi_rready(s_axi_gpio_rready),
+            .gpio_io_i('0), .gpio_io_o(leds_o), .gpio_io_t(),
+            .gpio2_io_i(dip_switches_i)
         );
         assign s_axi_gpio_rlast = 1'b1;
     end
-    // ---------------
-    // 6. Timer
-    // ---------------
+
+    // -----------------------------------------------------------------------
+    //  6. Timer (inchangé)
+    // -----------------------------------------------------------------------
     if (InclTimer) begin : gen_timer
-        logic         timer_penable;
-        logic         timer_pwrite;
-        logic [31:0]  timer_paddr;
-        logic         timer_psel;
-        logic [31:0]  timer_pwdata;
-        logic [31:0]  timer_prdata;
-        logic         timer_pready;
-        logic         timer_pslverr;
+        logic [31:0] timer_paddr, timer_pwdata, timer_prdata;
+        logic        timer_penable, timer_pwrite, timer_psel, timer_pready, timer_pslverr;
+
         axi2apb_64_32 #(
-            .AXI4_ADDRESS_WIDTH ( AxiAddrWidth ),
-            .AXI4_RDATA_WIDTH   ( AxiDataWidth ),
-            .AXI4_WDATA_WIDTH   ( AxiDataWidth ),
-            .AXI4_ID_WIDTH      ( AxiIdWidth   ),
-            .AXI4_USER_WIDTH    ( AxiUserWidth ),
-            .BUFF_DEPTH_SLAVE   ( 2            ),
-            .APB_ADDR_WIDTH     ( 32           )
+            .AXI4_ADDRESS_WIDTH(AxiAddrWidth), .AXI4_RDATA_WIDTH(AxiDataWidth),
+            .AXI4_WDATA_WIDTH(AxiDataWidth),   .AXI4_ID_WIDTH(AxiIdWidth),
+            .AXI4_USER_WIDTH(AxiUserWidth),    .BUFF_DEPTH_SLAVE(2), .APB_ADDR_WIDTH(32)
         ) i_axi2apb_64_32_timer (
-            .ACLK      ( clk_i           ),
-            .ARESETn   ( rst_ni          ),
-            .test_en_i ( 1'b0            ),
-            .AWID_i    ( timer.aw_id     ),
-            .AWADDR_i  ( timer.aw_addr   ),
-            .AWLEN_i   ( timer.aw_len    ),
-            .AWSIZE_i  ( timer.aw_size   ),
-            .AWBURST_i ( timer.aw_burst  ),
-            .AWLOCK_i  ( timer.aw_lock   ),
-            .AWCACHE_i ( timer.aw_cache  ),
-            .AWPROT_i  ( timer.aw_prot   ),
-            .AWREGION_i( timer.aw_region ),
-            .AWUSER_i  ( timer.aw_user   ),
-            .AWQOS_i   ( timer.aw_qos    ),
-            .AWVALID_i ( timer.aw_valid  ),
-            .AWREADY_o ( timer.aw_ready  ),
-            .WDATA_i   ( timer.w_data    ),
-            .WSTRB_i   ( timer.w_strb    ),
-            .WLAST_i   ( timer.w_last    ),
-            .WUSER_i   ( timer.w_user    ),
-            .WVALID_i  ( timer.w_valid   ),
-            .WREADY_o  ( timer.w_ready   ),
-            .BID_o     ( timer.b_id      ),
-            .BRESP_o   ( timer.b_resp    ),
-            .BVALID_o  ( timer.b_valid   ),
-            .BUSER_o   ( timer.b_user    ),
-            .BREADY_i  ( timer.b_ready   ),
-            .ARID_i    ( timer.ar_id     ),
-            .ARADDR_i  ( timer.ar_addr   ),
-            .ARLEN_i   ( timer.ar_len    ),
-            .ARSIZE_i  ( timer.ar_size   ),
-            .ARBURST_i ( timer.ar_burst  ),
-            .ARLOCK_i  ( timer.ar_lock   ),
-            .ARCACHE_i ( timer.ar_cache  ),
-            .ARPROT_i  ( timer.ar_prot   ),
-            .ARREGION_i( timer.ar_region ),
-            .ARUSER_i  ( timer.ar_user   ),
-            .ARQOS_i   ( timer.ar_qos    ),
-            .ARVALID_i ( timer.ar_valid  ),
-            .ARREADY_o ( timer.ar_ready  ),
-            .RID_o     ( timer.r_id      ),
-            .RDATA_o   ( timer.r_data    ),
-            .RRESP_o   ( timer.r_resp    ),
-            .RLAST_o   ( timer.r_last    ),
-            .RUSER_o   ( timer.r_user    ),
-            .RVALID_o  ( timer.r_valid   ),
-            .RREADY_i  ( timer.r_ready   ),
-            .PENABLE   ( timer_penable   ),
-            .PWRITE    ( timer_pwrite    ),
-            .PADDR     ( timer_paddr     ),
-            .PSEL      ( timer_psel      ),
-            .PWDATA    ( timer_pwdata    ),
-            .PRDATA    ( timer_prdata    ),
-            .PREADY    ( timer_pready    ),
-            .PSLVERR   ( timer_pslverr   )
+            .ACLK(clk_i), .ARESETn(rst_ni), .test_en_i(1'b0),
+            .AWID_i(timer.aw_id),     .AWADDR_i(timer.aw_addr),   .AWLEN_i(timer.aw_len),
+            .AWSIZE_i(timer.aw_size), .AWBURST_i(timer.aw_burst), .AWLOCK_i(timer.aw_lock),
+            .AWCACHE_i(timer.aw_cache),.AWPROT_i(timer.aw_prot),  .AWREGION_i(timer.aw_region),
+            .AWUSER_i(timer.aw_user), .AWQOS_i(timer.aw_qos),     .AWVALID_i(timer.aw_valid),
+            .AWREADY_o(timer.aw_ready),.WDATA_i(timer.w_data),    .WSTRB_i(timer.w_strb),
+            .WLAST_i(timer.w_last),   .WUSER_i(timer.w_user),     .WVALID_i(timer.w_valid),
+            .WREADY_o(timer.w_ready), .BID_o(timer.b_id),         .BRESP_o(timer.b_resp),
+            .BVALID_o(timer.b_valid), .BUSER_o(timer.b_user),     .BREADY_i(timer.b_ready),
+            .ARID_i(timer.ar_id),     .ARADDR_i(timer.ar_addr),   .ARLEN_i(timer.ar_len),
+            .ARSIZE_i(timer.ar_size), .ARBURST_i(timer.ar_burst), .ARLOCK_i(timer.ar_lock),
+            .ARCACHE_i(timer.ar_cache),.ARPROT_i(timer.ar_prot),  .ARREGION_i(timer.ar_region),
+            .ARUSER_i(timer.ar_user), .ARQOS_i(timer.ar_qos),     .ARVALID_i(timer.ar_valid),
+            .ARREADY_o(timer.ar_ready),.RID_o(timer.r_id),        .RDATA_o(timer.r_data),
+            .RRESP_o(timer.r_resp),   .RLAST_o(timer.r_last),     .RUSER_o(timer.r_user),
+            .RVALID_o(timer.r_valid), .RREADY_i(timer.r_ready),
+            .PENABLE(timer_penable),  .PWRITE(timer_pwrite),       .PADDR(timer_paddr),
+            .PSEL(timer_psel),        .PWDATA(timer_pwdata),       .PRDATA(timer_prdata),
+            .PREADY(timer_pready),    .PSLVERR(timer_pslverr)
         );
-        apb_timer #(
-            .APB_ADDR_WIDTH ( 32 ),
-            .TIMER_CNT      ( 2  )
-        ) i_timer (
-            .HCLK    ( clk_i            ),
-            .HRESETn ( rst_ni           ),
-            .PSEL    ( timer_psel       ),
-            .PENABLE ( timer_penable    ),
-            .PWRITE  ( timer_pwrite     ),
-            .PADDR   ( timer_paddr      ),
-            .PWDATA  ( timer_pwdata     ),
-            .PRDATA  ( timer_prdata     ),
-            .PREADY  ( timer_pready     ),
-            .PSLVERR ( timer_pslverr    ),
-            .irq_o   ( irq_sources[6:3] )
+
+        apb_timer #(.APB_ADDR_WIDTH(32), .TIMER_CNT(2)) i_timer (
+            .HCLK(clk_i), .HRESETn(rst_ni),
+            .PSEL(timer_psel), .PENABLE(timer_penable), .PWRITE(timer_pwrite),
+            .PADDR(timer_paddr), .PWDATA(timer_pwdata), .PRDATA(timer_prdata),
+            .PREADY(timer_pready), .PSLVERR(timer_pslverr), .irq_o(irq_sources[6:3])
         );
     end
-    // ======================================================================
-    //  DMA / Accélérateurs & IOMMU
-    // ======================================================================
+
+    // =======================================================================
+    //  7. Accélérateurs DMA autonomes & IOMMU
+    // =======================================================================
     //
-    //  Interfaces XBAR-facing :
-    //    Maîtres (sorties de ce module) :
-    //      iommu_comp  — completion IF (IOMMU  => XBAR, requêtes DMA traduites)
-    //      iommu_ds    — memory IF     (IOMMU  => XBAR, accès implicites)
-    //    Esclaves (entrées de ce module) :
-    //      iommu_cfg   — programming IF (XBAR => IOMMU)
-    //      dma_cfg     — config Accel 1 (XBAR => Accel 1 MMIO)
-    //      dma_cfg2    — config Accel 2 (XBAR => Accel 2 MMIO)  [NEW]
+    //  Chaque accélérateur est instancié via accel_wrap, qui encapsule :
+    //    - un port AXI slave MMIO (configuration depuis le XBAR)
+    //    - la logique de calcul (compute_core, à remplir dans accel_wrap.sv)
+    //    - un dma_core_wrap interne (moteur DMA autonome)
+    //    - l'estampillage du stream_id sur chaque transaction DMA
     //
-    //  Bus internes :
-    //    accel1_dma_master  AXI_BUS_MMU  — DMA master de l'accélérateur 1
-    //    accel2_dma_master  AXI_BUS_MMU  — DMA master de l'accélérateur 2  [NEW]
-    //    accel1_std         AXI_BUS      — signaux AXI standard (sans champs IOMMU)
-    //    accel2_std         AXI_BUS      — idem pour accélérateur 2          [NEW]
-    //    dma_muxed          AXI_BUS      — sortie du 2:1 mux (ID = AxiIdWidth+1)
-    //    axi_iommu_tr_req   req_mmu_mux_t — requêtes vers TR IF de l'IOMMU
-    //    axi_iommu_tr_rsp   resp_mmu_mux_t — réponses de l'IOMMU
-    // ======================================================================
-    // Bus entre device(s) (Mst) et IOMMU TR IF (Slv) — type étendu (ID = AxiIdWidth+1)
-    // NOTE : req_mmu_mux_t / resp_mmu_mux_t doivent être définis dans ariane_axi_soc_pkg.sv
-    //        (voir l'encart en tête de fichier).  Quand InclDMA2=0, le MSB de l'ID est
-    //        toujours 0 (extension nulle) ; le comportement est identique à l'original.
-    ariane_axi_soc::req_mmu_mux_t  axi_iommu_tr_req;
-    ariane_axi_soc::resp_mmu_mux_t axi_iommu_tr_rsp;
-    // Bus entre XBAR (Mst) et IOMMU programming IF (Slv)
+    //  Largeurs d'ID (règle de cohérence) :
+    //    accel_wrap interne  : AXI_ID_WIDTH = ariane_soc::IdWidth-1 = 3b
+    //    axi_mux SLV port   : SLV_AXI_ID_WIDTH = 3b
+    //    axi_mux MST port   : MST_AXI_ID_WIDTH = ariane_soc::IdWidth = 4b
+    //    IOMMU ID_WIDTH     : ariane_soc::IdWidth = 4b  (inchangé)
+    // =======================================================================
+
+    // Bus entre device(s) et IOMMU TR IF (type original, ID=4b)
+    ariane_axi_soc::req_mmu_t  axi_iommu_tr_req;
+    ariane_axi_soc::resp_t     axi_iommu_tr_rsp;
+
+    // Bus XBAR → IOMMU programming IF
     ariane_axi_soc::req_slv_t  axi_iommu_cfg_req;
     ariane_axi_soc::resp_slv_t axi_iommu_cfg_rsp;
     `AXI_ASSIGN_TO_REQ(axi_iommu_cfg_req, iommu_cfg)
     `AXI_ASSIGN_FROM_RESP(iommu_cfg, axi_iommu_cfg_rsp)
-    // ------------------------------------------------------------------
-    //  Accélérateur(s) DMA
-    // ------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------
+    //  Accélérateur(s)
+    // -----------------------------------------------------------------------
     if (InclDMA) begin : gen_dma
-        // ---------------------------------------------------------------
-        //  Accélérateur 1 — DMA master (AXI_BUS_MMU)
-        // ---------------------------------------------------------------
+
+        // Bus DMA master de l'accel 1 (AXI_BUS_MMU, ID=3b, stream_id=1)
         AXI_BUS_MMU #(
-            .AXI_ADDR_WIDTH ( AxiAddrWidth ),
-            .AXI_DATA_WIDTH ( AxiDataWidth ),
-            .AXI_ID_WIDTH   ( AxiIdWidth   ),
-            .AXI_USER_WIDTH ( AxiUserWidth )
-        ) accel1_dma_master ();
-        dma_core_wrap #(
+            .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
+            .AXI_DATA_WIDTH ( AxiDataWidth             ),
+            .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1  ),
+            .AXI_USER_WIDTH ( AxiUserWidth             )
+        ) accel1_dma ();
+
+        // Accélérateur 1 — compute_core + dma_core_wrap interne
+        // → remplacer accel_wrap par ton module si le nom diffère
+        accel_wrap #(
             .AXI_ADDR_WIDTH   ( AxiAddrWidth              ),
             .AXI_DATA_WIDTH   ( AxiDataWidth              ),
-            .AXI_ID_WIDTH     ( AxiIdWidth                ),
+            .AXI_ID_WIDTH     ( ariane_soc::IdWidth - 1   ),
             .AXI_USER_WIDTH   ( AxiUserWidth              ),
             .AXI_SLV_ID_WIDTH ( ariane_soc::IdWidthSlave  ),
-            .AR_DEVICE_ID     ( 24'd1                     ),  // stream_id IOMMU = 1
-            .AW_DEVICE_ID     ( 24'd1                     )
-        ) i_dma_accel1 (
-            .clk_i      ( clk_i              ),
-            .rst_ni     ( rst_ni             ),
-            .testmode_i ( 1'b0               ),
-            .axi_slave  ( dma_cfg            ),  // MMIO config depuis XBAR
-            .axi_master ( accel1_dma_master  ),  // DMA master vers IOMMU
-            .btnu_i     ( btnu_i             ),
-            .btnd_i     ( btnd_i             ),
-            .btnl_i     ( btnl_i             ),
-            .btnr_i     ( btnr_i             ),
-            .btnc_i     ( btnc_i             )
+            .STREAM_ID        ( 24'd1                     )
+        ) i_accel1 (
+            .clk_i      ( clk_i      ),
+            .rst_ni     ( rst_ni     ),
+            .testmode_i ( 1'b0       ),
+            .axi_cfg    ( dma_cfg    ),  // MMIO config depuis XBAR
+            .axi_dma    ( accel1_dma )   // DMA master → axi_mux
         );
-        // ---------------------------------------------------------------
-        //  Accélérateur 2 (conditionnel) + arbitrage 2:1 par axi_mux
-        // ---------------------------------------------------------------
+
+        // -------------------------------------------------------------------
+        //  Accélérateur 2 + axi_mux 2:1
+        // -------------------------------------------------------------------
         if (InclDMA2) begin : gen_accel2
-            // DMA master de l'accélérateur 2
+
+            // Bus DMA master de l'accel 2 (AXI_BUS_MMU, ID=3b, stream_id=2)
             AXI_BUS_MMU #(
-                .AXI_ADDR_WIDTH ( AxiAddrWidth ),
-                .AXI_DATA_WIDTH ( AxiDataWidth ),
-                .AXI_ID_WIDTH   ( AxiIdWidth   ),
-                .AXI_USER_WIDTH ( AxiUserWidth )
-            ) accel2_dma_master ();
-            dma_core_wrap #(
+                .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
+                .AXI_DATA_WIDTH ( AxiDataWidth             ),
+                .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1  ),
+                .AXI_USER_WIDTH ( AxiUserWidth             )
+            ) accel2_dma ();
+
+            // Accélérateur 2
+            accel_wrap #(
                 .AXI_ADDR_WIDTH   ( AxiAddrWidth              ),
                 .AXI_DATA_WIDTH   ( AxiDataWidth              ),
-                .AXI_ID_WIDTH     ( AxiIdWidth                ),
+                .AXI_ID_WIDTH     ( ariane_soc::IdWidth - 1   ),
                 .AXI_USER_WIDTH   ( AxiUserWidth              ),
                 .AXI_SLV_ID_WIDTH ( ariane_soc::IdWidthSlave  ),
-                .AR_DEVICE_ID     ( 24'd2                     ),  // stream_id IOMMU = 2
-                .AW_DEVICE_ID     ( 24'd2                     )
-            ) i_dma_accel2 (
-                .clk_i      ( clk_i              ),
-                .rst_ni     ( rst_ni             ),
-                .testmode_i ( 1'b0               ),
-                .axi_slave  ( dma_cfg2           ),  // MMIO config depuis XBAR
-                .axi_master ( accel2_dma_master  ),
-                .btnu_i     ( btnu_i             ),
-                .btnd_i     ( btnd_i             ),
-                .btnl_i     ( btnl_i             ),
-                .btnr_i     ( btnr_i             ),
-                .btnc_i     ( btnc_i             )
+                .STREAM_ID        ( 24'd2                     )
+            ) i_accel2 (
+                .clk_i      ( clk_i      ),
+                .rst_ni     ( rst_ni     ),
+                .testmode_i ( 1'b0       ),
+                .axi_cfg    ( dma_cfg2   ),  // MMIO config depuis XBAR
+                .axi_dma    ( accel2_dma )
             );
-            // Bus AXI standard (sans champs IOMMU) — entrées du mux
-            // AXI_ASSIGN copie uniquement les signaux AXI standard ;
-            // les champs stream_id / ss_id_valid / substream_id sont récupérés
-            // séparément ci-dessous à partir du bit de sélection préfixé par le mux.
+
+            // Buses AXI standard (sans champs MMU) pour le mux
+            // L'axi_mux_intf n'accepte que des AXI_BUS, pas AXI_BUS_MMU.
+            // On projette les signaux AXI standards via AXI_ASSIGN.
             AXI_BUS #(
-                .AXI_ID_WIDTH   ( AxiIdWidth   ),
-                .AXI_ADDR_WIDTH ( AxiAddrWidth ),
-                .AXI_DATA_WIDTH ( AxiDataWidth ),
-                .AXI_USER_WIDTH ( AxiUserWidth )
+                .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
+                .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
+                .AXI_DATA_WIDTH ( AxiDataWidth            ),
+                .AXI_USER_WIDTH ( AxiUserWidth            )
             ) accel1_std (), accel2_std ();
-            `AXI_ASSIGN(accel1_std, accel1_dma_master)
-            `AXI_ASSIGN(accel2_std, accel2_dma_master)
-            // Bus de sortie du mux : l'ID est étendu d'1 bit par l'arbitre.
-            //   dma_muxed.{aw,ar}_id[AxiIdWidth]   = index du port source
-            //                                         (0 = accel1, 1 = accel2)
-            //   dma_muxed.{aw,ar}_id[AxiIdWidth-1:0] = ID original de l'accélérateur
+
+            `AXI_ASSIGN(accel1_std, accel1_dma)
+            `AXI_ASSIGN(accel2_std, accel2_dma)
+
+            // Bus de sortie du mux : ID = ariane_soc::IdWidth (4b)
             AXI_BUS #(
-                .AXI_ID_WIDTH   ( AxiIdWidth + 1 ),
-                .AXI_ADDR_WIDTH ( AxiAddrWidth   ),
-                .AXI_DATA_WIDTH ( AxiDataWidth   ),
-                .AXI_USER_WIDTH ( AxiUserWidth   )
+                .AXI_ID_WIDTH   ( ariane_soc::IdWidth ),
+                .AXI_ADDR_WIDTH ( AxiAddrWidth        ),
+                .AXI_DATA_WIDTH ( AxiDataWidth        ),
+                .AXI_USER_WIDTH ( AxiUserWidth        )
             ) dma_muxed ();
-            // Arbitre 2:1 round-robin — fusionne les deux masters DMA
+
+            // Arbitre 2:1 round-robin
+            // slv[0] = accel1 → ID[MSB]=0
+            // slv[1] = accel2 → ID[MSB]=1
             axi_mux_intf #(
-                .SLV_AXI_ID_WIDTH ( AxiIdWidth - 1   ),
-                .MST_AXI_ID_WIDTH ( AxiIdWidth + 1 ),
-                .AXI_ADDR_WIDTH   ( AxiAddrWidth   ),
-                .AXI_DATA_WIDTH   ( AxiDataWidth   ),
-                .AXI_USER_WIDTH   ( AxiUserWidth   ),
-                .NO_SLV_PORTS     ( 2              ),
-                .MAX_W_TRANS      ( 4              ),
-                .FALL_THROUGH     ( 1'b0           ),
-                .SPILL_AW         ( 1'b1           ),
-                .SPILL_AR         ( 1'b1           )
+                .SLV_AXI_ID_WIDTH ( ariane_soc::IdWidth - 1 ),
+                .MST_AXI_ID_WIDTH ( ariane_soc::IdWidth     ),
+                .AXI_ADDR_WIDTH   ( AxiAddrWidth            ),
+                .AXI_DATA_WIDTH   ( AxiDataWidth            ),
+                .AXI_USER_WIDTH   ( AxiUserWidth            ),
+                .NO_SLV_PORTS     ( 2                       ),
+                .MAX_W_TRANS      ( 4                       ),
+                .FALL_THROUGH     ( 1'b0                    ),
+                .SPILL_AW         ( 1'b1                    ),
+                .SPILL_AR         ( 1'b1                    )
             ) i_dma_mux (
-                .clk_i  ( clk_i  ),
-                .rst_ni ( rst_ni ),
-                .test_i ( 1'b0   ),
-                // Ordre : slv[0] = accel1, slv[1] = accel2
-                // → accel1 reçoit MSB=0, accel2 MSB=1
-                .slv    ( {accel2_std, accel1_std} ),
-                .mst    ( dma_muxed               )
+                .clk_i  ( clk_i                        ),
+                .rst_ni ( rst_ni                       ),
+                .test_i ( 1'b0                         ),
+                .slv    ( {accel2_std, accel1_std}     ),
+                .mst    ( dma_muxed                    )
             );
-            // -----------------------------------------------------------
-            //  Connexion du bus muxé vers l'interface TR de l'IOMMU
-            //  (assignation champ par champ car le type req_mmu_mux_t a
-            //   un ID plus large que req_mmu_t)
-            // -----------------------------------------------------------
-            // Canal AW
+
+            // Connexion du bus muxé vers le TR IF de l'IOMMU
+            // Les champs MMU sont sélectés selon le bit de poids fort de l'ID
+            // (0 = accel1, 1 = accel2)
+
+            // AW
             assign axi_iommu_tr_req.aw_valid        = dma_muxed.aw_valid;
             assign dma_muxed.aw_ready               = axi_iommu_tr_rsp.aw_ready;
             assign axi_iommu_tr_req.aw.id           = dma_muxed.aw_id;
@@ -1022,30 +625,28 @@ module ariane_peripherals #(
             assign axi_iommu_tr_req.aw.region       = dma_muxed.aw_region;
             assign axi_iommu_tr_req.aw.atop         = dma_muxed.aw_atop;
             assign axi_iommu_tr_req.aw.user         = dma_muxed.aw_user;
-            // Champs IOMMU : sélection par le bit de poids fort de l'ID
-            assign axi_iommu_tr_req.aw.stream_id    = dma_muxed.aw_id[AxiIdWidth] ?
-                                                       accel2_dma_master.aw_stream_id    :
-                                                       accel1_dma_master.aw_stream_id;
-            assign axi_iommu_tr_req.aw.ss_id_valid  = dma_muxed.aw_id[AxiIdWidth] ?
-                                                       accel2_dma_master.aw_ss_id_valid  :
-                                                       accel1_dma_master.aw_ss_id_valid;
-            assign axi_iommu_tr_req.aw.substream_id = dma_muxed.aw_id[AxiIdWidth] ?
-                                                       accel2_dma_master.aw_substream_id :
-                                                       accel1_dma_master.aw_substream_id;
-            // Canal W
+            assign axi_iommu_tr_req.aw.stream_id    = dma_muxed.aw_id[ariane_soc::IdWidth-1] ?
+                                                       accel2_dma.aw_stream_id :
+                                                       accel1_dma.aw_stream_id;
+            assign axi_iommu_tr_req.aw.ss_id_valid  = 1'b0;
+            assign axi_iommu_tr_req.aw.substream_id = 20'd0;
+
+            // W
             assign axi_iommu_tr_req.w_valid  = dma_muxed.w_valid;
             assign dma_muxed.w_ready         = axi_iommu_tr_rsp.w_ready;
             assign axi_iommu_tr_req.w.data   = dma_muxed.w_data;
             assign axi_iommu_tr_req.w.strb   = dma_muxed.w_strb;
             assign axi_iommu_tr_req.w.last   = dma_muxed.w_last;
             assign axi_iommu_tr_req.w.user   = dma_muxed.w_user;
-            // Canal B
+
+            // B
             assign dma_muxed.b_valid         = axi_iommu_tr_rsp.b_valid;
             assign axi_iommu_tr_req.b_ready  = dma_muxed.b_ready;
             assign dma_muxed.b_id            = axi_iommu_tr_rsp.b.id;
             assign dma_muxed.b_resp          = axi_iommu_tr_rsp.b.resp;
             assign dma_muxed.b_user          = axi_iommu_tr_rsp.b.user;
-            // Canal AR
+
+            // AR
             assign axi_iommu_tr_req.ar_valid        = dma_muxed.ar_valid;
             assign dma_muxed.ar_ready               = axi_iommu_tr_rsp.ar_ready;
             assign axi_iommu_tr_req.ar.id           = dma_muxed.ar_id;
@@ -1059,17 +660,13 @@ module ariane_peripherals #(
             assign axi_iommu_tr_req.ar.qos          = dma_muxed.ar_qos;
             assign axi_iommu_tr_req.ar.region       = dma_muxed.ar_region;
             assign axi_iommu_tr_req.ar.user         = dma_muxed.ar_user;
-            // Champs IOMMU AR
-            assign axi_iommu_tr_req.ar.stream_id    = dma_muxed.ar_id[AxiIdWidth] ?
-                                                       accel2_dma_master.ar_stream_id    :
-                                                       accel1_dma_master.ar_stream_id;
-            assign axi_iommu_tr_req.ar.ss_id_valid  = dma_muxed.ar_id[AxiIdWidth] ?
-                                                       accel2_dma_master.ar_ss_id_valid  :
-                                                       accel1_dma_master.ar_ss_id_valid;
-            assign axi_iommu_tr_req.ar.substream_id = dma_muxed.ar_id[AxiIdWidth] ?
-                                                       accel2_dma_master.ar_substream_id :
-                                                       accel1_dma_master.ar_substream_id;
-            // Canal R
+            assign axi_iommu_tr_req.ar.stream_id    = dma_muxed.ar_id[ariane_soc::IdWidth-1] ?
+                                                       accel2_dma.ar_stream_id :
+                                                       accel1_dma.ar_stream_id;
+            assign axi_iommu_tr_req.ar.ss_id_valid  = 1'b0;
+            assign axi_iommu_tr_req.ar.substream_id = 20'd0;
+
+            // R
             assign dma_muxed.r_valid         = axi_iommu_tr_rsp.r_valid;
             assign axi_iommu_tr_req.r_ready  = dma_muxed.r_ready;
             assign dma_muxed.r_id            = axi_iommu_tr_rsp.r.id;
@@ -1077,21 +674,25 @@ module ariane_peripherals #(
             assign dma_muxed.r_resp          = axi_iommu_tr_rsp.r.resp;
             assign dma_muxed.r_last          = axi_iommu_tr_rsp.r.last;
             assign dma_muxed.r_user          = axi_iommu_tr_rsp.r.user;
+
         end else begin : gen_accel2_disabled
-            // Un seul accélérateur : connexion directe, ID zero-étendu d'1 bit.
-            // Tous les champs AXI standard via macros AXI_ASSIGN_*
-            `AXI_ASSIGN_TO_REQ(axi_iommu_tr_req, accel1_dma_master)
-            `AXI_ASSIGN_FROM_RESP(accel1_dma_master, axi_iommu_tr_rsp)
-            // Extension du champ ID (MSB = 0, pas de mux)
-            assign axi_iommu_tr_req.aw.id = {1'b0, accel1_dma_master.aw_id};
-            assign axi_iommu_tr_req.ar.id = {1'b0, accel1_dma_master.ar_id};
-            // Champs IOMMU
-            assign axi_iommu_tr_req.aw.stream_id    = accel1_dma_master.aw_stream_id;
-            assign axi_iommu_tr_req.aw.ss_id_valid  = accel1_dma_master.aw_ss_id_valid;
-            assign axi_iommu_tr_req.aw.substream_id = accel1_dma_master.aw_substream_id;
-            assign axi_iommu_tr_req.ar.stream_id    = accel1_dma_master.ar_stream_id;
-            assign axi_iommu_tr_req.ar.ss_id_valid  = accel1_dma_master.ar_ss_id_valid;
-            assign axi_iommu_tr_req.ar.substream_id = accel1_dma_master.ar_substream_id;
+
+            // Un seul accélérateur — connexion directe (ID 3b → zero-étendu à 4b)
+            `AXI_ASSIGN_TO_REQ(axi_iommu_tr_req, accel1_dma)
+            `AXI_ASSIGN_FROM_RESP(accel1_dma, axi_iommu_tr_rsp)
+
+            // Extension du champ ID sans mux (MSB = 0)
+            assign axi_iommu_tr_req.aw.id = {{1'b0}, accel1_dma.aw_id};
+            assign axi_iommu_tr_req.ar.id = {{1'b0}, accel1_dma.ar_id};
+
+            // Champs IOMMU accel 1 uniquement
+            assign axi_iommu_tr_req.aw.stream_id    = accel1_dma.aw_stream_id;
+            assign axi_iommu_tr_req.aw.ss_id_valid  = accel1_dma.aw_ss_id_valid;
+            assign axi_iommu_tr_req.aw.substream_id = accel1_dma.aw_substream_id;
+            assign axi_iommu_tr_req.ar.stream_id    = accel1_dma.ar_stream_id;
+            assign axi_iommu_tr_req.ar.ss_id_valid  = accel1_dma.ar_ss_id_valid;
+            assign axi_iommu_tr_req.ar.substream_id = accel1_dma.ar_substream_id;
+
             // dma_cfg2 non utilisé → esclave d'erreur
             ariane_axi_soc::req_slv_t  axi_dma2_cfg_req;
             ariane_axi_soc::resp_slv_t axi_dma2_cfg_rsp;
@@ -1102,141 +703,134 @@ module ariane_peripherals #(
                 .req_t      ( ariane_axi_soc::req_slv_t  ),
                 .resp_t     ( ariane_axi_soc::resp_slv_t )
             ) i_accel2_err_slv (
-                .clk_i      ( clk_i             ),
-                .rst_ni     ( rst_ni            ),
-                .test_i     ( 1'b0              ),
-                .slv_req_i  ( axi_dma2_cfg_req  ),
-                .slv_resp_o ( axi_dma2_cfg_rsp  )
+                .clk_i(clk_i), .rst_ni(rst_ni), .test_i(1'b0),
+                .slv_req_i(axi_dma2_cfg_req), .slv_resp_o(axi_dma2_cfg_rsp)
             );
+
         end // gen_accel2 / gen_accel2_disabled
+
     end else begin : gen_dma_disabled
-        // Aucun accélérateur DMA — les deux ports de config répondent avec SLVERR.
+
+        // Aucun accélérateur — les deux ports MMIO répondent SLVERR
         ariane_axi_soc::req_slv_t  axi_dma_cfg_req;
         ariane_axi_soc::resp_slv_t axi_dma_cfg_rsp;
         `AXI_ASSIGN_TO_REQ(axi_dma_cfg_req, dma_cfg)
         `AXI_ASSIGN_FROM_RESP(dma_cfg, axi_dma_cfg_rsp)
         axi_err_slv #(
-            .AxiIdWidth ( ariane_soc::IdWidthSlave   ),
-            .req_t      ( ariane_axi_soc::req_slv_t  ),
-            .resp_t     ( ariane_axi_soc::resp_slv_t )
-        ) i_idma_err_slv (
-            .clk_i      ( clk_i          ),
-            .rst_ni     ( rst_ni         ),
-            .test_i     ( 1'b0           ),
-            .slv_req_i  ( axi_dma_cfg_req  ),
-            .slv_resp_o ( axi_dma_cfg_rsp  )
+            .AxiIdWidth(ariane_soc::IdWidthSlave),
+            .req_t(ariane_axi_soc::req_slv_t),
+            .resp_t(ariane_axi_soc::resp_slv_t)
+        ) i_dma1_err_slv (
+            .clk_i(clk_i), .rst_ni(rst_ni), .test_i(1'b0),
+            .slv_req_i(axi_dma_cfg_req), .slv_resp_o(axi_dma_cfg_rsp)
         );
+
         ariane_axi_soc::req_slv_t  axi_dma2_cfg_req;
         ariane_axi_soc::resp_slv_t axi_dma2_cfg_rsp;
         `AXI_ASSIGN_TO_REQ(axi_dma2_cfg_req, dma_cfg2)
         `AXI_ASSIGN_FROM_RESP(dma_cfg2, axi_dma2_cfg_rsp)
         axi_err_slv #(
-            .AxiIdWidth ( ariane_soc::IdWidthSlave   ),
-            .req_t      ( ariane_axi_soc::req_slv_t  ),
-            .resp_t     ( ariane_axi_soc::resp_slv_t )
+            .AxiIdWidth(ariane_soc::IdWidthSlave),
+            .req_t(ariane_axi_soc::req_slv_t),
+            .resp_t(ariane_axi_soc::resp_slv_t)
         ) i_dma2_err_slv (
-            .clk_i      ( clk_i             ),
-            .rst_ni     ( rst_ni            ),
-            .test_i     ( 1'b0              ),
-            .slv_req_i  ( axi_dma2_cfg_req  ),
-            .slv_resp_o ( axi_dma2_cfg_rsp  )
+            .clk_i(clk_i), .rst_ni(rst_ni), .test_i(1'b0),
+            .slv_req_i(axi_dma2_cfg_req), .slv_resp_o(axi_dma2_cfg_rsp)
         );
-        // TR IF → état connu (aucune transaction émise)
+
         assign axi_iommu_tr_req.ar_valid = 1'b0;
         assign axi_iommu_tr_req.aw_valid = 1'b0;
         assign axi_iommu_tr_req.w_valid  = 1'b0;
         assign axi_iommu_tr_req.b_ready  = 1'b0;
         assign axi_iommu_tr_req.r_ready  = 1'b0;
+
     end // gen_dma / gen_dma_disabled
-    // ------------------------------------------------------------------
-    //  RISC-V IOMMU
-    // ------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------
+    //  8. RISC-V IOMMU
+    // -----------------------------------------------------------------------
     if (InclIOMMU) begin : gen_iommu
-        // Bus entre IOMMU Memory IF (Mst) et XBAR (Slv)
+
         ariane_axi_soc::req_t  axi_iommu_ds_req;
         ariane_axi_soc::resp_t axi_iommu_ds_rsp;
         `AXI_ASSIGN_FROM_REQ(iommu_ds, axi_iommu_ds_req)
         `AXI_ASSIGN_TO_RESP(axi_iommu_ds_rsp, iommu_ds)
-        // Bus entre IOMMU Completion IF (Mst) et XBAR (Slv)
+
         ariane_axi_soc::req_t  axi_iommu_comp_req;
         ariane_axi_soc::resp_t axi_iommu_comp_rsp;
         `AXI_ASSIGN_FROM_REQ(iommu_comp, axi_iommu_comp_req)
         `AXI_ASSIGN_TO_RESP(axi_iommu_comp_rsp, iommu_comp)
-        // Types register IF
+
         `REG_BUS_TYPEDEF_ALL(iommu_reg,
             ariane_axi_soc::addr_t,
             ariane_axi_soc::data_t,
             ariane_axi_soc::strb_t)
+
         riscv_iommu #(
-            .IOTLB_ENTRIES      ( 8                              ),
-            .DDTC_ENTRIES       ( 4                              ),
-            .PDTC_ENTRIES       ( 4                              ),
-            .InclPC             ( 1'b0                           ),
-            .InclMSITrans       ( 1'b1                           ),
-            .InclBC             ( 1'b1                           ),
-            .IGS                ( rv_iommu::BOTH                 ),
-            .N_INT_VEC          ( ariane_soc::IOMMUNumWires      ),
-            .N_IOHPMCTR         ( 8                              ),
-            .ADDR_WIDTH         ( AxiAddrWidth                   ),
-            .DATA_WIDTH         ( AxiDataWidth                   ),
-            // ID_WIDTH = AxiIdWidth+1 pour absorber le bit de sélection du mux 2:1.
-            // Quand InclDMA2=0, ce bit est toujours 0 (extension innocente).
-            .ID_WIDTH           ( ariane_soc::IdWidth            ),
-            .ID_SLV_WIDTH       ( ariane_soc::IdWidthSlave       ),
-            .USER_WIDTH         ( AxiUserWidth                   ),
-            .aw_chan_t          ( ariane_axi_soc::aw_chan_t       ),
-            .w_chan_t           ( ariane_axi_soc::w_chan_t        ),
-            .b_chan_t           ( ariane_axi_soc::b_chan_t        ),
-            .ar_chan_t          ( ariane_axi_soc::ar_chan_t       ),
-            .r_chan_t           ( ariane_axi_soc::r_chan_t        ),
-            .axi_req_t          ( ariane_axi_soc::req_t          ),
-            .axi_rsp_t          ( ariane_axi_soc::resp_t         ),
-            .axi_req_slv_t      ( ariane_axi_soc::req_slv_t      ),
-            .axi_rsp_slv_t      ( ariane_axi_soc::resp_slv_t     ),
-            // Utilise les types étendus (ID = AxiIdWidth+1) côté device TR IF
-            .axi_req_mmu_t      ( ariane_axi_soc::req_mmu_mux_t  ),
-            .reg_req_t          ( iommu_reg_req_t                 ),
-            .reg_rsp_t          ( iommu_reg_rsp_t                 )
+            .IOTLB_ENTRIES   ( 8                              ),
+            .DDTC_ENTRIES    ( 4                              ),
+            .PDTC_ENTRIES    ( 4                              ),
+            .InclPC          ( 1'b0                           ),
+            .InclMSITrans    ( 1'b1                           ),
+            .InclBC          ( 1'b1                           ),
+            .IGS             ( rv_iommu::BOTH                 ),
+            .N_INT_VEC       ( ariane_soc::IOMMUNumWires      ),
+            .N_IOHPMCTR      ( 8                              ),
+            .ADDR_WIDTH      ( AxiAddrWidth                   ),
+            .DATA_WIDTH      ( AxiDataWidth                   ),
+            // ID_WIDTH = ariane_soc::IdWidth = 4b (sortie du mux 2:1)
+            .ID_WIDTH        ( ariane_soc::IdWidth            ),
+            .ID_SLV_WIDTH    ( ariane_soc::IdWidthSlave       ),
+            .USER_WIDTH      ( AxiUserWidth                   ),
+            .aw_chan_t       ( ariane_axi_soc::aw_chan_t      ),
+            .w_chan_t        ( ariane_axi_soc::w_chan_t       ),
+            .b_chan_t        ( ariane_axi_soc::b_chan_t       ),
+            .ar_chan_t       ( ariane_axi_soc::ar_chan_t      ),
+            .r_chan_t        ( ariane_axi_soc::r_chan_t       ),
+            .axi_req_t       ( ariane_axi_soc::req_t         ),
+            .axi_rsp_t       ( ariane_axi_soc::resp_t        ),
+            .axi_req_slv_t   ( ariane_axi_soc::req_slv_t     ),
+            .axi_rsp_slv_t   ( ariane_axi_soc::resp_slv_t    ),
+            // req_mmu_t : type original (ID=ariane_soc::IdWidth, champs MMU)
+            .axi_req_mmu_t   ( ariane_axi_soc::req_mmu_t     ),
+            .reg_req_t       ( iommu_reg_req_t                ),
+            .reg_rsp_t       ( iommu_reg_rsp_t                )
         ) i_riscv_iommu (
-            .clk_i              ( clk_i                          ),
-            .rst_ni             ( rst_ni                         ),
-            // Translation Request Interface (Slave)
-            .dev_tr_req_i       ( axi_iommu_tr_req               ),
-            .dev_tr_resp_o      ( axi_iommu_tr_rsp               ),
-            // Translation Completion Interface (Master)
-            .dev_comp_resp_i    ( axi_iommu_comp_rsp             ),
-            .dev_comp_req_o     ( axi_iommu_comp_req             ),
-            // Implicit Memory Accesses Interface (Master)
-            .ds_resp_i          ( axi_iommu_ds_rsp               ),
-            .ds_req_o           ( axi_iommu_ds_req               ),
-            // Programming Interface (Slave)
-            .prog_req_i         ( axi_iommu_cfg_req              ),
-            .prog_resp_o        ( axi_iommu_cfg_rsp              ),
-            .wsi_wires_o ( irq_sources[(ariane_soc::IOMMUNumWires-1)+8:8] )
+            .clk_i           ( clk_i              ),
+            .rst_ni          ( rst_ni             ),
+            .dev_tr_req_i    ( axi_iommu_tr_req   ),
+            .dev_tr_resp_o   ( axi_iommu_tr_rsp   ),
+            .dev_comp_resp_i ( axi_iommu_comp_rsp ),
+            .dev_comp_req_o  ( axi_iommu_comp_req ),
+            .ds_resp_i       ( axi_iommu_ds_rsp   ),
+            .ds_req_o        ( axi_iommu_ds_req   ),
+            .prog_req_i      ( axi_iommu_cfg_req  ),
+            .prog_resp_o     ( axi_iommu_cfg_rsp  ),
+            .wsi_wires_o     ( irq_sources[(ariane_soc::IOMMUNumWires-1)+8:8] )
         );
+
     end else begin : gen_iommu_disabled
-        // Pas d'IOMMU : bypass direct device → completion IF
+
         axi_err_slv #(
-            .AxiIdWidth ( ariane_soc::IdWidthSlave   ),
-            .req_t      ( ariane_axi_soc::req_slv_t  ),
-            .resp_t     ( ariane_axi_soc::resp_slv_t )
+            .AxiIdWidth(ariane_soc::IdWidthSlave),
+            .req_t(ariane_axi_soc::req_slv_t),
+            .resp_t(ariane_axi_soc::resp_slv_t)
         ) i_iommu_err_slv (
-            .clk_i      ( clk_i             ),
-            .rst_ni     ( rst_ni            ),
-            .test_i     ( 1'b0              ),
-            .slv_req_i  ( axi_iommu_cfg_req ),
-            .slv_resp_o ( axi_iommu_cfg_rsp )
+            .clk_i(clk_i), .rst_ni(rst_ni), .test_i(1'b0),
+            .slv_req_i(axi_iommu_cfg_req), .slv_resp_o(axi_iommu_cfg_rsp)
         );
-        // TR req → Comp req (bypass)
+
         `AXI_ASSIGN_FROM_REQ(iommu_comp, axi_iommu_tr_req)
-        // Comp resp → TR resp (bypass)
         `AXI_ASSIGN_TO_RESP(axi_iommu_tr_rsp, iommu_comp)
-        // Memory IF → état connu
+
         assign iommu_ds.aw_valid = 1'b0;
         assign iommu_ds.w_valid  = 1'b0;
         assign iommu_ds.b_ready  = 1'b0;
         assign iommu_ds.ar_valid = 1'b0;
         assign iommu_ds.r_ready  = 1'b0;
+
         assign irq_sources[(ariane_soc::IOMMUNumWires-1)+8:8] = '0;
+
     end // gen_iommu / gen_iommu_disabled
+
 endmodule

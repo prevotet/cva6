@@ -71,7 +71,7 @@ proc create_report { reportName command } {
 }
 OPTRACE "synth_1" START { ROLLUP_AUTO }
 set_param checkpoint.writeSynthRtdsInDcp 1
-set_param synth.incrementalSynthesisCache ./.Xil/Vivado-99277-jc-VirtualBox/incrSyn
+set_param synth.incrementalSynthesisCache ./.Xil/Vivado-146505-jc-VirtualBox/incrSyn
 set_msg_config -id {Synth 8-256} -limit 10000
 set_msg_config -id {Synth 8-4480} -limit 1000
 set_msg_config -id {Synth 8-638} -limit 10000
@@ -113,6 +113,7 @@ read_verilog -library xil_defaultlib -sv {
   /home/jc/tmp/riscv-iommu-demo/cva6/vendor/pulp-platform/fpga-support/rtl/AsyncThreePortRam.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/vendor/pulp-platform/fpga-support/rtl/SyncDpRam.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/vendor/pulp-platform/fpga-support/rtl/SyncSpRamBeNx64.sv
+  /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/accel_wrap.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/vendor/pulp-platform/common_cells/src/cf_math_pkg.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/vendor/pulp-platform/common_cells/src/addr_decode.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/core/include/cv64a6_imafdc_sv39_config_pkg.sv
