@@ -41,15 +41,16 @@ package ariane_soc;
     DRAM      =  0,
     IOMMU_CFG =  1, // IOMMU programming IF
     DMA_CFG   =  2, // DMA slave port for configuration of the engine
-    GPIO      =  3,
-    Ethernet  =  4,
-    SPI       =  5,
-    Timer     =  6,
-    UART      =  7,
-    PLIC      =  8,
-    CLINT     =  9,
-    ROM       =  10,
-    Debug     =  11
+    DMA_CFG2 = 3,
+    GPIO      =  4,
+    Ethernet  =  5,
+    SPI       =  6,
+    Timer     =  7,
+    UART      =  8,
+    PLIC      =  9,
+    CLINT     =  10,
+    ROM       =  11,
+    Debug     =  12
   } axi_slaves_t;
 
   localparam NB_PERIPHERALS = Debug + 1;
@@ -64,7 +65,8 @@ package ariane_soc;
   localparam logic[63:0] SPILength      = 64'h800000;
   localparam logic[63:0] EthernetLength = 64'h10000;
   localparam logic[63:0] GPIOLength     = 64'h1000;
-  localparam logic[63:0] DMALength      = 64'h1000;     
+  localparam logic[63:0] DMALength      = 64'h1000;  
+  localparam logic[63:0] DMA2Length      = 64'h1000;   
   localparam logic[63:0] IOMMULength    = 64'h1000;     // Regmap occupies 4kiB of memory address space
   localparam logic[63:0] DRAMLength     = 64'h40000000; // 1GByte of DDR (split between two chips on Genesys2)
   localparam logic[63:0] SRAMLength     = 64'h1800000;  // 24 MByte of SRAM
@@ -82,6 +84,7 @@ package ariane_soc;
     EthernetBase = 64'h3000_0000,
     GPIOBase     = 64'h4000_0000,
     DMABase      = 64'h5000_0000,
+    DMA2Base     = 64'h5000_1000,
     IOMMUBase    = 64'h5001_0000,
     DRAMBase     = 64'h8000_0000
   } soc_bus_start_t;

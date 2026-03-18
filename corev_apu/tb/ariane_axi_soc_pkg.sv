@@ -1,10 +1,10 @@
 /* Copyright 2018 ETH Zurich and University of Bologna.
  * Copyright and related rights are licensed under the Solderpad Hardware
- * License, Version 0.51 (the “License”); you may not use this file except in
+ * License, Version 0.51 (the "License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
  * or agreed to in writing, software, hardware and materials distributed under
- * this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
+ * this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  *
@@ -14,6 +14,12 @@
  *
  * Description: Contains Ariane's AXI ports on SoC, does not contain user ports
  */
+
+ `ifndef ARIANE_AXI_SOC
+ `define ARIANE_AXI_SOC
+
+ //`include "ariane_soc_pkg.sv"
+ //`include "axi_pkg.sv"
 
 package ariane_axi_soc;
 
@@ -36,6 +42,9 @@ package ariane_axi_soc;
     typedef logic [23:0] mmu_sid_t;
     typedef logic        mmu_ssidv_t;
     typedef logic [19:0] mmu_ssid_t;
+
+    // ID étendu d'1 bit pour le mux 2:1 (Accel1=0, Accel2=1)
+    typedef logic [ariane_soc::IdWidth:0] id_mux_t;
 
     // AW Channel
     typedef struct packed {
@@ -88,6 +97,25 @@ package ariane_axi_soc;
         mmu_ssid_t        substream_id;
     } aw_chan_mmu_t;
 
+    // AW Channel - AXI DVM extension + ID étendu (mux 2:1)
+    typedef struct packed {
+        id_mux_t          id;           // ariane_soc::IdWidth+1 bits
+        addr_t            addr;
+        axi_pkg::len_t    len;
+        axi_pkg::size_t   size;
+        axi_pkg::burst_t  burst;
+        logic             lock;
+        axi_pkg::cache_t  cache;
+        axi_pkg::prot_t   prot;
+        axi_pkg::qos_t    qos;
+        axi_pkg::region_t region;
+        axi_pkg::atop_t   atop;
+        user_t            user;
+        mmu_sid_t         stream_id;
+        mmu_ssidv_t       ss_id_valid;
+        mmu_ssid_t        substream_id;
+    } aw_chan_mmu_mux_t;
+
     // W Channel - AXI4 doesn't define a wid
     typedef struct packed {
         data_t data;
@@ -109,6 +137,13 @@ package ariane_axi_soc;
         axi_pkg::resp_t resp;
         user_t          user;
     } b_chan_slv_t;
+
+    // B Channel - ID étendu (mux 2:1)
+    typedef struct packed {
+        id_mux_t        id;
+        axi_pkg::resp_t resp;
+        user_t          user;
+    } b_chan_mux_t;
 
     // AR Channel
     typedef struct packed {
@@ -158,6 +193,24 @@ package ariane_axi_soc;
         mmu_ssid_t        substream_id;
     } ar_chan_mmu_t;
 
+    // AR Channel - AXI DVM extension + ID étendu (mux 2:1)
+    typedef struct packed {
+        id_mux_t          id;           // ariane_soc::IdWidth+1 bits
+        addr_t            addr;
+        axi_pkg::len_t    len;
+        axi_pkg::size_t   size;
+        axi_pkg::burst_t  burst;
+        logic             lock;
+        axi_pkg::cache_t  cache;
+        axi_pkg::prot_t   prot;
+        axi_pkg::qos_t    qos;
+        axi_pkg::region_t region;
+        user_t            user;
+        mmu_sid_t         stream_id;
+        mmu_ssidv_t       ss_id_valid;
+        mmu_ssid_t        substream_id;
+    } ar_chan_mmu_mux_t;
+
     // R Channel
     typedef struct packed {
         id_t            id;
@@ -175,6 +228,15 @@ package ariane_axi_soc;
         logic           last;
         user_t          user;
     } r_chan_slv_t;
+
+    // R Channel - ID étendu (mux 2:1)
+    typedef struct packed {
+        id_mux_t        id;
+        data_t          data;
+        axi_pkg::resp_t resp;
+        logic           last;
+        user_t          user;
+    } r_chan_mux_t;
 
     // Request/Response structs
     typedef struct packed {
@@ -219,7 +281,7 @@ package ariane_axi_soc;
         r_chan_slv_t  r;
     } resp_slv_t;
 
-    // AXI DVM extension for SMMU
+    // AXI DVM extension for SMMU — un seul device (ID original)
     typedef struct packed {
         aw_chan_mmu_t   aw;
         logic           aw_valid;
@@ -231,4 +293,28 @@ package ariane_axi_soc;
         logic           r_ready;
     } req_mmu_t;
 
+    // AXI DVM extension pour deux devices via mux 2:1 (ID étendu d'1 bit)
+    typedef struct packed {
+        aw_chan_mmu_mux_t   aw;
+        logic               aw_valid;
+        w_chan_t            w;
+        logic               w_valid;
+        logic               b_ready;
+        ar_chan_mmu_mux_t   ar;
+        logic               ar_valid;
+        logic               r_ready;
+    } req_mmu_mux_t;
+
+    typedef struct packed {
+        logic           aw_ready;
+        logic           ar_ready;
+        logic           w_ready;
+        logic           b_valid;
+        b_chan_mux_t    b;
+        logic           r_valid;
+        r_chan_mux_t    r;
+    } resp_mmu_mux_t;
+
 endpackage
+
+`endif
