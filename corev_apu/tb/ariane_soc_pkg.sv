@@ -42,15 +42,17 @@ package ariane_soc;
     IOMMU_CFG =  1, // IOMMU programming IF
     DMA_CFG   =  2, // DMA slave port for configuration of the engine
     DMA_CFG2 = 3,
-    GPIO      =  4,
-    Ethernet  =  5,
-    SPI       =  6,
-    Timer     =  7,
-    UART      =  8,
-    PLIC      =  9,
-    CLINT     =  10,
-    ROM       =  11,
-    Debug     =  12
+    WRAP_CFG1  =  4,   // config wrapper sécurité accel 1
+    WRAP_CFG2  =  5,  
+    GPIO      =  6,
+    Ethernet  =  7,
+    SPI       =  8,
+    Timer     =  9,
+    UART      =  10,
+    PLIC      =  11,
+    CLINT     =  12,
+    ROM       =  13,
+    Debug     =  14
   } axi_slaves_t;
 
   localparam NB_PERIPHERALS = Debug + 1;
@@ -85,6 +87,8 @@ package ariane_soc;
     GPIOBase     = 64'h4000_0000,
     DMABase      = 64'h5000_0000,
     DMA2Base     = 64'h5000_1000,
+    Wrap1Base  = 64'h5000_2000,
+    Wrap2Base  = 64'h5000_3000,
     IOMMUBase    = 64'h5001_0000,
     DRAMBase     = 64'h8000_0000
   } soc_bus_start_t;
