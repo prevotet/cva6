@@ -478,18 +478,6 @@ module ariane_peripherals #(
     //  7. Accélérateurs DMA + security wrappers + IOMMU
     // =======================================================================
 
-        assign resp.w_ready  = bus.w_ready;  
-        assign resp.ar_ready = bus.ar_ready; 
-        assign resp.b_valid  = bus.b_valid;  
-        assign resp.b.id     = bus.b_id;     
-        assign resp.b.resp   = bus.b_resp;   
-        assign resp.b.user   = bus.b_user;   
-        assign resp.r_valid  = bus.r_valid;  
-        assign resp.r.id     = bus.r_id;     
-        assign resp.r.data   = bus.r_data;   
-        assign resp.r.resp   = bus.r_resp;   
-        assign resp.r.last   = bus.r_last;   
-        assign resp.r.user   = bus.r_user;    
 
     // Bus entre device(s) et IOMMU TR IF
     ariane_axi_soc::req_mmu_t  axi_iommu_tr_req;
@@ -1026,44 +1014,46 @@ module ariane_peripherals #(
             ariane_axi_soc::strb_t)
 
         riscv_iommu #(
-            .IOTLB_ENTRIES   ( 8                              ),
-            .DDTC_ENTRIES    ( 4                              ),
-            .PDTC_ENTRIES    ( 4                              ),
-            .InclPC          ( 1'b0                           ),
-            .InclMSITrans    ( 1'b1                           ),
-            .InclBC          ( 1'b1                           ),
-            .IGS             ( rv_iommu::BOTH                 ),
-            .N_INT_VEC       ( ariane_soc::IOMMUNumWires      ),
-            .N_IOHPMCTR      ( 8                              ),
-            .ADDR_WIDTH      ( AxiAddrWidth                   ),
-            .DATA_WIDTH      ( AxiDataWidth                   ),
-            .ID_WIDTH        ( ariane_soc::IdWidth            ),
-            .ID_SLV_WIDTH    ( ariane_soc::IdWidthSlave       ),
-            .USER_WIDTH      ( AxiUserWidth                   ),
-            .aw_chan_t       ( ariane_axi_soc::aw_chan_t      ),
-            .w_chan_t        ( ariane_axi_soc::w_chan_t       ),
-            .b_chan_t        ( ariane_axi_soc::b_chan_t       ),
-            .ar_chan_t       ( ariane_axi_soc::ar_chan_t      ),
-            .r_chan_t        ( ariane_axi_soc::r_chan_t       ),
-            .axi_req_t       ( ariane_axi_soc::req_t         ),
-            .axi_rsp_t       ( ariane_axi_soc::resp_t        ),
-            .axi_req_slv_t   ( ariane_axi_soc::req_slv_t     ),
-            .axi_rsp_slv_t   ( ariane_axi_soc::resp_slv_t    ),
-            .axi_req_mmu_t   ( ariane_axi_soc::req_mmu_t     ),
-            .reg_req_t       ( iommu_reg_req_t                ),
-            .reg_rsp_t       ( iommu_reg_rsp_t                )
-        ) i_riscv_iommu (
-            .clk_i, .rst_ni,
-            .dev_tr_req_i    ( axi_iommu_tr_req   ),
-            .dev_tr_resp_o   ( axi_iommu_tr_rsp   ),
-            .dev_comp_resp_i ( axi_iommu_comp_rsp ),
-            .dev_comp_req_o  ( axi_iommu_comp_req ),
-            .ds_resp_i       ( axi_iommu_ds_rsp   ),
-            .ds_req_o        ( axi_iommu_ds_req   ),
-            .prog_req_i      ( axi_iommu_cfg_req  ),
-            .prog_resp_o     ( axi_iommu_cfg_rsp  ),
-            .wsi_wires_o     ( irq_sources[(ariane_soc::IOMMUNumWires-1)+8:8] )
-        );
+    .IOTLB_ENTRIES   ( 8                              ),
+    .DDTC_ENTRIES    ( 4                              ),
+    .PDTC_ENTRIES    ( 4                              ),
+    .MRIFC_ENTRIES   ( 4                              ),  // [NEW]
+    .InclPC          ( 1'b0                           ),
+    .InclBC          ( 1'b1                           ),
+    .InclDBG         ( 1'b0                           ),  // [NEW]
+    .MSITrans        ( rv_iommu::MSI_FLAT_MRIF        ),  // [CHANGED] était InclMSITrans=1
+    .IGS             ( rv_iommu::BOTH                 ),
+    .N_INT_VEC       ( ariane_soc::IOMMUNumWires      ),
+    .N_IOHPMCTR      ( 8                              ),
+    .ADDR_WIDTH      ( AxiAddrWidth                   ),
+    .DATA_WIDTH      ( AxiDataWidth                   ),
+    .ID_WIDTH        ( ariane_soc::IdWidth            ),
+    .ID_SLV_WIDTH    ( ariane_soc::IdWidthSlave       ),
+    .USER_WIDTH      ( AxiUserWidth                   ),
+    .aw_chan_t       ( ariane_axi_soc::aw_chan_t      ),
+    .w_chan_t        ( ariane_axi_soc::w_chan_t       ),
+    .b_chan_t        ( ariane_axi_soc::b_chan_t       ),
+    .ar_chan_t       ( ariane_axi_soc::ar_chan_t      ),
+    .r_chan_t        ( ariane_axi_soc::r_chan_t       ),
+    .axi_req_t       ( ariane_axi_soc::req_t         ),
+    .axi_rsp_t       ( ariane_axi_soc::resp_t        ),
+    .axi_req_slv_t   ( ariane_axi_soc::req_slv_t     ),
+    .axi_rsp_slv_t   ( ariane_axi_soc::resp_slv_t    ),
+    .axi_req_iommu_t ( ariane_axi_soc::req_mmu_t     ),  // [CHANGED] était axi_req_mmu_t
+    .reg_req_t       ( iommu_reg_req_t                ),
+    .reg_rsp_t       ( iommu_reg_rsp_t                )
+) i_riscv_iommu (
+    .clk_i, .rst_ni,
+    .dev_tr_req_i    ( axi_iommu_tr_req   ),
+    .dev_tr_resp_o   ( axi_iommu_tr_rsp   ),
+    .dev_comp_resp_i ( axi_iommu_comp_rsp ),
+    .dev_comp_req_o  ( axi_iommu_comp_req ),
+    .ds_resp_i       ( axi_iommu_ds_rsp   ),
+    .ds_req_o        ( axi_iommu_ds_req   ),
+    .prog_req_i      ( axi_iommu_cfg_req  ),
+    .prog_resp_o     ( axi_iommu_cfg_rsp  ),
+    .wsi_wires_o     ( irq_sources[(ariane_soc::IOMMUNumWires-1)+8:8] )
+);
 
     end else begin : gen_iommu_disabled
 
