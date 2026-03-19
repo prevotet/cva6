@@ -43,3 +43,5 @@
 [submodule "corev_apu/rv_iommu"]
 	path = corev_apu/rv_iommu
 	url = git@github.com:prevotet/riscv-iommu.git
+[submodule "rv_iommu"]
+	branch = jc_dev
