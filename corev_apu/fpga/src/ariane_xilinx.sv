@@ -279,7 +279,9 @@ assign addr_map = '{
   '{ idx: ariane_soc::Ethernet,   start_addr: ariane_soc::EthernetBase, end_addr: ariane_soc::EthernetBase  + ariane_soc::EthernetLength  },
   '{ idx: ariane_soc::GPIO,       start_addr: ariane_soc::GPIOBase,     end_addr: ariane_soc::GPIOBase      + ariane_soc::GPIOLength      },
   '{ idx: ariane_soc::DMA_CFG,    start_addr: ariane_soc::DMABase,      end_addr: ariane_soc::DMABase       + ariane_soc::DMALength       },
-  '{ idx: ariane_soc::DMA_CFG2,    start_addr: ariane_soc::DMA2Base,     end_addr: ariane_soc::DMA2Base + ariane_soc::DMA2Length          }, 
+  '{ idx: ariane_soc::DMA_CFG2,   start_addr: ariane_soc::DMA2Base,     end_addr: ariane_soc::DMA2Base + ariane_soc::DMA2Length          }, 
+  '{ idx: ariane_soc::WRAP_CFG1,  start_addr: ariane_soc::Wrap1Base,    end_addr: ariane_soc::Wrap1Base + 64'h1000 },
+  '{ idx: ariane_soc::WRAP_CFG2,   start_addr: ariane_soc::Wrap2Base,   end_addr: ariane_soc::Wrap2Base + 64'h1000 },
   '{ idx: ariane_soc::IOMMU_CFG,  start_addr: ariane_soc::IOMMUBase,    end_addr: ariane_soc::IOMMUBase     + ariane_soc::IOMMULength     },
   '{ idx: ariane_soc::DRAM,       start_addr: ariane_soc::DRAMBase,     end_addr: ariane_soc::DRAMBase      + ariane_soc::DRAMLength      }
 };
@@ -838,6 +840,8 @@ ariane_peripherals #(
     .timer        ( master[ariane_soc::Timer]    ),
     .dma_cfg      ( master[ariane_soc::DMA_CFG]  ),   
     .dma_cfg2     ( master[ariane_soc::DMA_CFG2] ),  
+    .wrapper_cfg1 ( master[ariane_soc::WRAP_CFG1] ),
+    .wrapper_cfg2 ( master[ariane_soc::WRAP_CFG2] ),
     .iommu_comp   ( slave[ariane_soc::IOMMU_COMP]),   
     .iommu_ds     ( slave[ariane_soc::IOMMU_MEM] ),   
     .iommu_cfg    ( master[ariane_soc::IOMMU_CFG]),
