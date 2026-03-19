@@ -1,0 +1,270 @@
+#-----------------------------------------------------------
+# Vivado v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
+# IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
+# Start of session at: Thu Mar 19 10:43:23 2026
+# Process ID: 26081
+# Current directory: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/impl_1
+# Command line: vivado -log ariane_xilinx.vdi -applog -product Vivado -messageDb vivado.pb -mode batch -source ariane_xilinx.tcl -notrace
+# Log file: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/impl_1/ariane_xilinx.vdi
+# Journal file: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/impl_1/vivado.jou
+# Running On: jc-VirtualBox, OS: Linux, CPU Frequency: 2903.996 MHz, CPU Physical cores: 8, Host memory: 54017 MB
+#-----------------------------------------------------------
+source ariane_xilinx.tcl -notrace
+Command: open_checkpoint /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/impl_1/ariane_xilinx.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.03 . Memory (MB): peak = 1642.500 ; gain = 0.000 ; free physical = 37751 ; free virtual = 45396
+INFO: [Device 21-403] Loading part xc7k325tffg900-2
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2405.711 ; gain = 0.000 ; free physical = 37032 ; free virtual = 44676
+INFO: [Netlist 29-17] Analyzing 10569 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2022.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+WARNING: [Constraints 18-550] Could not create 'IBUF_LOW_PWR' constraint because net 'i_xlnx_clk_gen/clk_in1' is not directly connected to top level port. Synthesis is ignored for IBUF_LOW_PWR but preserved for implementation.
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+Reading XDEF placement.
+Reading placer database...
+Reading XDEF routing.
+Read XDEF Files: Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.11 . Memory (MB): peak = 3488.000 ; gain = 0.000 ; free physical = 36095 ; free virtual = 43740
+Restored from archive | CPU: 0.110000 secs | Memory: 1.699982 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.12 . Memory (MB): peak = 3488.000 ; gain = 0.000 ; free physical = 36095 ; free virtual = 43740
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3488.000 ; gain = 0.000 ; free physical = 36097 ; free virtual = 43742
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 376 instances were transformed.
+  IOBUF => IOBUF (IBUF, OBUFT): 1 instance 
+  IOBUFDS_DIFF_OUT_DCIEN => IOBUFDS_DIFF_OUT_DCIEN (IBUFDS_IBUFDISABLE_INT(x2), INV, OBUFTDS_DCIEN(x2)): 4 instances
+  IOBUF_DCIEN => IOBUF_DCIEN (IBUF_IBUFDISABLE, OBUFT_DCIEN): 32 instances
+  LUT6_2 => LUT6_2 (LUT5, LUT6): 26 instances
+  OBUFDS => OBUFDS_DUAL_BUF (INV, OBUFDS(x2)): 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 292 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 20 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2022.2 (64-bit) build 3671981
+OpenCheckpoint Checksum | Checksum: 11745c71f
+----- Checksum: PlaceDB: e027ddcc ShapeSum: 371de953 RouteDB: 00000000 
+open_checkpoint: Time (s): cpu = 00:00:32 ; elapsed = 00:00:33 . Memory (MB): peak = 3488.000 ; gain = 1845.500 ; free physical = 36097 ; free virtual = 43742
+Command: opt_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7k325t'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7k325t'
+INFO: [Common 17-1540] The version limit for your license is '2025.06' and has expired for new software. A version limit expiration means that, although you may be able to continue to use the current version of tools or IP with this license, you will not be eligible for new releases.
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [DRC 23-27] Running DRC with 8 threads
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:03 ; elapsed = 00:00:01 . Memory (MB): peak = 3560.035 ; gain = 64.031 ; free physical = 36094 ; free virtual = 43739
+
+Starting Cache Timing Information Task
+Ending Cache Timing Information Task | Checksum: 1ba52a0fb
+
+Time (s): cpu = 00:00:00.46 ; elapsed = 00:00:00.26 . Memory (MB): peak = 3560.035 ; gain = 0.000 ; free physical = 36094 ; free virtual = 43739
+
+Starting Logic Optimization Task
+
+Phase 1 Retarget
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_add_shamt_q[1][3]_i_1 into driver instance i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_add_shamt_q[1][3]_i_2, which resulted in an inversion of 57 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_add_shamt_q[1][6]_i_1 into driver instance i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_add_shamt_q[1][6]_i_2, which resulted in an inversion of 20 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_eff_sub_q[1]_i_1 into driver instance i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[0].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_eff_sub_q[1]_i_2, which resulted in an inversion of 155 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fpnew_divsqrt_multi/i_divsqrt_lei/nrbd_nrsc_U0/control_U0/Special_case_dly_SBO_i_1 into driver instance i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fpnew_divsqrt_multi/i_divsqrt_lei/nrbd_nrsc_U0/control_U0/Ready_SO_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fpnew_divsqrt_multi/i_divsqrt_lei/preprocess_U0/Exp_a_norm_DP0_carry_i_3 into driver instance i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fpnew_divsqrt_multi/i_divsqrt_lei/preprocess_U0/Exp_a_norm_DP0_carry_i_10, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fpnew_divsqrt_multi/i_divsqrt_lei/preprocess_U0/Exp_b_norm_DP0_carry_i_3 into driver instance i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[1].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fpnew_divsqrt_multi/i_divsqrt_lei/preprocess_U0/Exp_b_norm_DP0_carry_i_10, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/i_cache_subsystem/i_adapter/mask_q[0]_i_1 into driver instance i_ariane/i_cva6/i_cache_subsystem/i_adapter/mask_q[15]_i_4, which resulted in an inversion of 24 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/i_cache_subsystem/i_cva6_icache/gen_sram[3].tag_sram/gen_cut[0].gen_mem.i_tc_sram_wrapper/i_ram/vaddr_q[63]_i_1__0 into driver instance i_ariane/i_cva6/i_cache_subsystem/i_cva6_icache/gen_sram[3].tag_sram/gen_cut[0].gen_mem.i_tc_sram_wrapper/i_ram/vaddr_q[63]_i_3__0, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/gen_rd_ports[0].i_wt_dcache_ctrl/address_idx_q[7]_i_1__0 into driver instance i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/gen_rd_ports[0].i_wt_dcache_ctrl/state_q[1]_i_2__0, which resulted in an inversion of 16 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/gen_rd_ports[1].i_wt_dcache_ctrl/address_off_q[3]_i_1 into driver instance i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/gen_rd_ports[1].i_wt_dcache_ctrl/address_off_q[3]_i_3, which resulted in an inversion of 15 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/i_wt_dcache_missunit/miss_req_masked_q[0]_i_1 into driver instance i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/i_wt_dcache_missunit/mshr_q[paddr][55]_i_7, which resulted in an inversion of 123 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/i_wt_dcache_missunit/mshr_q[miss_port_idx][0]_i_1 into driver instance i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/i_wt_dcache_missunit/mshr_q[paddr][55]_i_6, which resulted in an inversion of 128 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/i_wt_dcache_missunit/mshr_q[miss_port_idx][1]_i_1 into driver instance i_ariane/i_cva6/i_cache_subsystem/i_wt_dcache/i_wt_dcache_missunit/i__i_4__0, which resulted in an inversion of 191 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/id_stage_i/decoder_i/i_/issue_q[sbe][ex][tinst][5]_i_1 into driver instance i_ariane/i_cva6/id_stage_i/decoder_i/i_/issue_q[sbe][ex][tinst][24]_i_2, which resulted in an inversion of 7 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/id_stage_i/decoder_i/i_/issue_q[sbe][fu][3]_i_1 into driver instance i_ariane/i_cva6/id_stage_i/decoder_i/i_/issue_q[sbe][fu][3]_i_2, which resulted in an inversion of 34 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/issue_stage_i/i_issue_read_operands/comp_inv_q_i_1 into driver instance i_ariane/i_cva6/issue_stage_i/i_issue_read_operands/comp_inv_q_i_2, which resulted in an inversion of 69 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane/i_cva6/issue_stage_i/i_issue_read_operands/div_shift0_carry__0_i_3 into driver instance i_ariane/i_cva6/issue_stage_i/i_issue_read_operands/div_shift0_carry_i_27, which resulted in an inversion of 7 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_dma.gen_accel2.i_accel2/i_dma/i_axi_translate/i_axi_to_axi_lite/i_axi_burst_splitter/i_demux_supported_vs_unsupported/gen_demux.gen_ar_id_counter.i_ar_id_counter/gen_counters[56].i_in_flight_cnt/gen_asic_queue.mem_q[0][id][5]_i_1__0 into driver instance i_ariane_peripherals/gen_dma.gen_accel2.i_accel2/i_dma/i_axi_translate/i_axi_to_axi_lite/i_axi_burst_splitter/i_demux_supported_vs_unsupported/gen_demux.gen_ar_id_counter.i_ar_id_counter/gen_counters[56].i_in_flight_cnt/status_cnt_q[1]_i_3__37, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_dma.gen_accel2.i_dma_mux/i_axi_mux/gen_mux.i_aw_arbiter/gen_spill_reg.a_data_q[id][3]_i_1__35 into driver instance i_ariane_peripherals/gen_dma.gen_accel2.i_dma_mux/i_axi_mux/gen_mux.i_aw_arbiter/status_cnt_q[1]_i_3__35, which resulted in an inversion of 82 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_dma.i_accel1/i_dma/i_axi_translate/i_axi_to_axi_lite/i_axi_burst_splitter/i_demux_supported_vs_unsupported/gen_demux.gen_ar_id_counter.i_ar_id_counter/gen_counters[58].i_in_flight_cnt/gen_asic_queue.mem_q[0][id][5]_i_1 into driver instance i_ariane_peripherals/gen_dma.i_accel1/i_dma/i_axi_translate/i_axi_to_axi_lite/i_axi_burst_splitter/i_demux_supported_vs_unsupported/gen_demux.gen_ar_id_counter.i_ar_id_counter/gen_counters[58].i_in_flight_cnt/status_cnt_q[1]_i_2__24, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_dma.i_accel1/i_dma/i_idma_backend/gen_w_dp_fifo.i_w_dp_req/gen_spill.i_spill_register_flushable/gen_spill_reg.a_data_q[last]_i_1__15 into driver instance i_ariane_peripherals/gen_dma.i_accel1/i_dma/i_idma_backend/gen_w_dp_fifo.i_w_dp_req/gen_spill.i_spill_register_flushable/gen_spill_reg.a_data_q[last]_i_2__7, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_gpio.i_xlnx_axi_dwidth_converter_gpio/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_READ.read_addr_inst/cmd_queue/inst/m_axi_arvalid_INST_0 into driver instance i_ariane_peripherals/gen_gpio.i_xlnx_axi_dwidth_converter_gpio/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_READ.read_addr_inst/cmd_queue/inst/m_axi_arvalid_INST_0_i_1, which resulted in an inversion of 9 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_gpio.i_xlnx_axi_dwidth_converter_gpio/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.USE_SPLIT.write_resp_inst/first_mi_word_i_2 into driver instance i_ariane_peripherals/gen_gpio.i_xlnx_axi_dwidth_converter_gpio/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.USE_SPLIT.write_resp_inst/s_axi_bvalid_INST_0_i_1, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_gpio.i_xlnx_axi_dwidth_converter_gpio/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/m_axi_awvalid_INST_0 into driver instance i_ariane_peripherals/gen_gpio.i_xlnx_axi_dwidth_converter_gpio/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/m_axi_awvalid_INST_0_i_1, which resulted in an inversion of 6 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_iommu.i_riscv_iommu/i_rv_iommu_ds_if/i_stream_arbiter_ar/i_arb/gen_rr_arb.i_arbiter/gen_spill_reg.a_data_q[ar_chan][burst][0]_i_1 into driver instance i_ariane_peripherals/gen_iommu.i_riscv_iommu/i_rv_iommu_ds_if/i_stream_arbiter_ar/i_arb/gen_rr_arb.i_arbiter/gen_spill_reg.a_data_q[ar_chan][id][0]_i_4, which resulted in an inversion of 39 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_iommu.i_riscv_iommu/i_rv_iommu_prog_if/i_axi2apb_64_32_iommu/slave_aw_buffer_i/i_axi_single_slice/i_fifo/impl/i_fifo_v3/AWLEN_Q[4]_i_6__2 into driver instance i_ariane_peripherals/gen_iommu.i_riscv_iommu/i_rv_iommu_prog_if/i_axi2apb_64_32_iommu/slave_aw_buffer_i/i_axi_single_slice/i_fifo/impl/i_fifo_v3/AWLEN_Q[8]_i_4__2, which resulted in an inversion of 30 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_spi.i_xlnx_axi_dwidth_converter_spi/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_READ.read_addr_inst/cmd_queue/inst/m_axi_arvalid_INST_0 into driver instance i_ariane_peripherals/gen_spi.i_xlnx_axi_dwidth_converter_spi/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_READ.read_addr_inst/cmd_queue/inst/m_axi_arvalid_INST_0_i_1, which resulted in an inversion of 9 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_spi.i_xlnx_axi_dwidth_converter_spi/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.USE_SPLIT.write_resp_inst/first_mi_word_i_2 into driver instance i_ariane_peripherals/gen_spi.i_xlnx_axi_dwidth_converter_spi/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.USE_SPLIT.write_resp_inst/s_axi_bvalid_INST_0_i_1, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_spi.i_xlnx_axi_dwidth_converter_spi/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/m_axi_awvalid_INST_0 into driver instance i_ariane_peripherals/gen_spi.i_xlnx_axi_dwidth_converter_spi/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/m_axi_awvalid_INST_0_i_1, which resulted in an inversion of 6 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_spi.i_xlnx_axi_quad_spi/U0/NO_DUAL_QUAD_MODE.QSPI_NORMAL/QSPI_ENHANCED_MD_GEN.QSPI_CORE_INTERFACE_I/FIFO_EXISTS.RX_FIFO_II/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/FSM_onehot_gen_rst_ic.curr_wrst_state[4]_i_1 into driver instance i_ariane_peripherals/gen_spi.i_xlnx_axi_quad_spi/U0/NO_DUAL_QUAD_MODE.QSPI_NORMAL/QSPI_ENHANCED_MD_GEN.QSPI_CORE_INTERFACE_I/FIFO_EXISTS.RX_FIFO_II/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst//i_, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_spi.i_xlnx_axi_quad_spi/U0/NO_DUAL_QUAD_MODE.QSPI_NORMAL/QSPI_ENHANCED_MD_GEN.QSPI_CORE_INTERFACE_I/FIFO_EXISTS.TX_FIFO_II/xpm_fifo_instance.xpm_fifo_async_inst/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/FSM_onehot_gen_rst_ic.curr_wrst_state[4]_i_1 into driver instance i_ariane_peripherals/gen_spi.i_xlnx_axi_quad_spi/U0/NO_DUAL_QUAD_MODE.QSPI_NORMAL/QSPI_ENHANCED_MD_GEN.QSPI_CORE_INTERFACE_I/FIFO_EXISTS.TX_FIFO_II/xpm_fifo_instance.xpm_fifo_async_inst/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst//i_, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_spi.i_xlnx_axi_quad_spi/U0/NO_DUAL_QUAD_MODE.QSPI_NORMAL/QSPI_ENHANCED_MD_GEN.QSPI_CORE_INTERFACE_I/LOGIC_FOR_MD_0_GEN.SPI_MODULE_I/LOCAL_TX_EMPTY_FIFO_12_GEN.stop_clock_reg_i_1 into driver instance i_ariane_peripherals/gen_spi.i_xlnx_axi_quad_spi/U0/NO_DUAL_QUAD_MODE.QSPI_NORMAL/QSPI_ENHANCED_MD_GEN.QSPI_CORE_INTERFACE_I/LOGIC_FOR_MD_0_GEN.SPI_MODULE_I/SS_O[0]_i_2, which resulted in an inversion of 3 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/gen_uart.i_apb_uart/UART_RXFF/iIIR[2]_i_1 into driver instance i_ariane_peripherals/gen_uart.i_apb_uart/UART_RXFF/iIIR[2]_i_2, which resulted in an inversion of 2 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ariane_peripherals/i_axi2apb_64_32_plic/slave_w_buffer_i/i_axi_single_slice/i_fifo/impl/i_fifo_v3/AWLEN_Q[4]_i_6__1 into driver instance i_ariane_peripherals/i_axi2apb_64_32_plic/slave_w_buffer_i/i_axi_single_slice/i_fifo/impl/i_fifo_v3/AWLEN_Q[8]_i_4__1, which resulted in an inversion of 49 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[11]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[11]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[11]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[10]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[11]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[9]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[11]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[8]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[15]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[15]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[15]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[14]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[15]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[13]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[15]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[12]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[19]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[19]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[19]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[18]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[19]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[17]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[19]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[16]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[23]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[23]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[23]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[22]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[23]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[21]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[23]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[20]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[27]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[27]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[27]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[26]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[27]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[25]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[27]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[24]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[31]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[31]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[31]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[30]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[31]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[29]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[31]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[28]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[35]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[35]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[35]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[34]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[35]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[33]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[35]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[32]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[39]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[39]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[39]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[38]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[39]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[37]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[39]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[36]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[3]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[3]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[3]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[2]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[3]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[1]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[43]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[43]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[43]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[42]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[43]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[41]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[43]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[40]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[47]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[47]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[47]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[46]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[47]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[45]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[47]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[44]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[51]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[51]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[51]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[50]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[51]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[49]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[51]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[48]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[55]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[55]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[55]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[54]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[55]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[53]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[55]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[52]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[59]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[59]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[59]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[58]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[59]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[57]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[59]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[56]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[63]_i_33 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[63]_i_9, which resulted in an inversion of 8 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[63]_i_34 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[62]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[63]_i_35 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[61]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[63]_i_36 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[60]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[7]_i_13 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[7]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[7]_i_14 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[6]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[7]_i_15 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[5]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_axi_riscv_atomics/i_atomics/i_amos/result_q[7]_i_16 into driver instance i_axi_riscv_atomics/i_atomics/i_amos/result_q[4]_i_3, which resulted in an inversion of 5 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ddr/u_xlnx_mig_7_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/ddr_phy_prbs_rdlvl_gen.u_ddr_phy_prbs_rdlvl/complex_victim_inc_i_1 into driver instance i_ddr/u_xlnx_mig_7_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/ddr_phy_prbs_rdlvl_gen.u_ddr_phy_prbs_rdlvl/samples_cnt_r[11]_i_3, which resulted in an inversion of 17 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ddr/u_xlnx_mig_7_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/ddr_phy_tempmon_0/tempmon_state[0]_i_1 into driver instance i_ddr/u_xlnx_mig_7_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/ddr_phy_tempmon_0/tempmon_state[10]_i_6, which resulted in an inversion of 14 pins
+INFO: [Opt 31-1287] Pulled Inverter i_ddr/u_xlnx_mig_7_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/u_ddr_phy_init/init_state_r[3]_i_1 into driver instance i_ddr/u_xlnx_mig_7_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/u_ddr_phy_init/init_state_r[3]_i_2, which resulted in an inversion of 2 pins
+INFO: [Common 17-14] Message 'Opt 31-1287' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Opt 31-138] Pushed 3 inverter(s) to 3 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 1 Retarget | Checksum: 235de1541
+
+Time (s): cpu = 00:00:11 ; elapsed = 00:00:06 . Memory (MB): peak = 3766.984 ; gain = 24.012 ; free physical = 35985 ; free virtual = 43630
+INFO: [Opt 31-389] Phase Retarget created 303 cells and removed 519 cells
+INFO: [Opt 31-1021] In phase Retarget, 217 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 2 Constant propagation
+INFO: [Opt 31-138] Pushed 1 inverter(s) to 5 load pin(s).
+Phase 2 Constant propagation | Checksum: 1837387a3
+
+Time (s): cpu = 00:00:13 ; elapsed = 00:00:08 . Memory (MB): peak = 3766.984 ; gain = 24.012 ; free physical = 35987 ; free virtual = 43633
+INFO: [Opt 31-389] Phase Constant propagation created 736 cells and removed 1257 cells
+INFO: [Opt 31-1021] In phase Constant propagation, 172 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 3 Sweep
+Phase 3 Sweep | Checksum: 156e30a52
+
+Time (s): cpu = 00:00:15 ; elapsed = 00:00:10 . Memory (MB): peak = 3766.984 ; gain = 24.012 ; free physical = 35986 ; free virtual = 43632
+INFO: [Opt 31-389] Phase Sweep created 9 cells and removed 2517 cells
+INFO: [Opt 31-1021] In phase Sweep, 751 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 4 BUFG optimization
+Phase 4 BUFG optimization | Checksum: 163341cec
+
+Time (s): cpu = 00:00:17 ; elapsed = 00:00:12 . Memory (MB): peak = 3799.000 ; gain = 56.027 ; free physical = 35989 ; free virtual = 43634
+INFO: [Opt 31-662] Phase BUFG optimization created 0 cells of which 0 are BUFGs and removed 0 cells.
+
+Phase 5 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 5 Shift Register Optimization | Checksum: 163341cec
+
+Time (s): cpu = 00:00:17 ; elapsed = 00:00:12 . Memory (MB): peak = 3799.000 ; gain = 56.027 ; free physical = 35989 ; free virtual = 43634
+INFO: [Opt 31-389] Phase Shift Register Optimization created 0 cells and removed 0 cells
+
+Phase 6 Post Processing Netlist
+Phase 6 Post Processing Netlist | Checksum: 15b60e3bb
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:00:12 . Memory (MB): peak = 3799.000 ; gain = 56.027 ; free physical = 35999 ; free virtual = 43644
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 1 cells
+INFO: [Opt 31-1021] In phase Post Processing Netlist, 197 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |             303  |             519  |                                            217  |
+|  Constant propagation         |             736  |            1257  |                                            172  |
+|  Sweep                        |               9  |            2517  |                                            751  |
+|  BUFG optimization            |               0  |               0  |                                              0  |
+|  Shift Register Optimization  |               0  |               0  |                                              0  |
+|  Post Processing Netlist      |               0  |               1  |                                            197  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:00.3 ; elapsed = 00:00:00.3 . Memory (MB): peak = 3799.000 ; gain = 0.000 ; free physical = 36014 ; free virtual = 43660
+Ending Logic Optimization Task | Checksum: 23683c788
+
+Time (s): cpu = 00:00:21 ; elapsed = 00:00:15 . Memory (MB): peak = 3799.000 ; gain = 56.027 ; free physical = 36014 ; free virtual = 43660
+
+Starting Power Optimization Task
+INFO: [Pwropt 34-132] Skipping clock gating for clocks with a period < 2.00 ns.
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Running Vector-less Activity Propagation...
+
+Finished Running Vector-less Activity Propagation
+INFO: [Pwropt 34-9] Applying IDT optimizations ...
+INFO: [Pwropt 34-10] Applying ODC optimizations ...
+INFO: [Common 17-41] Interrupt caught. Command should exit soon.
+
+
+Starting PowerOpt Patch Enables Task
+Ending PowerOpt Patch Enables Task | Checksum: 23683c788
+
+Time (s): cpu = 00:00:00.31 ; elapsed = 00:00:00.39 . Memory (MB): peak = 4680.207 ; gain = 0.000 ; free physical = 40159 ; free virtual = 47755
+INFO: [Vivado_Tcl 4-76] power_opt_design has been cancelled by the user.
+ERROR: [Vivado_Tcl 4-130] Power Optimization encountered an error.
+Ending Power Optimization Task | Checksum: 23683c788
+
+Time (s): cpu = 00:05:27 ; elapsed = 00:05:00 . Memory (MB): peak = 4680.207 ; gain = 881.207 ; free physical = 40159 ; free virtual = 47755
+
+Starting Final Cleanup Task
+Ending Final Cleanup Task | Checksum: 23683c788
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00 . Memory (MB): peak = 4680.207 ; gain = 0.000 ; free physical = 40159 ; free virtual = 47755
+INFO: [Common 17-83] Releasing license: Implementation
+138 Infos, 1 Warnings, 0 Critical Warnings and 1 Errors encountered.
+opt_design failed
+opt_design: Time (s): cpu = 00:05:53 ; elapsed = 00:05:19 . Memory (MB): peak = 4680.207 ; gain = 1192.207 ; free physical = 40159 ; free virtual = 47755
+INFO: [Common 17-344] 'opt_design' was cancelled
+INFO: [Common 17-344] 'source' was cancelled
+INFO: [Common 17-206] Exiting Vivado at Thu Mar 19 10:49:19 2026...
