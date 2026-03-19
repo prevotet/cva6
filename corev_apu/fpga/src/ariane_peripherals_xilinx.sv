@@ -8,35 +8,34 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-// Xilinx Peripherals — dual autonomous DMA accelerator via IOMMU
+// Xilinx Peripherals — dual autonomous DMA accelerator + security wrappers via IOMMU
 //
 // ============================================================
 //  TOPOLOGIE DMA/IOMMU
 // ============================================================
 //
-//  XBAR ─dma_cfg──► accel_wrap #1  (stream_id=1) ─DMA─┐
-//                    (compute + dma_core_wrap)           │
-//                                                        ├─► axi_mux 2:1 ─► IOMMU TR IF
-//  XBAR ─dma_cfg2─► accel_wrap #2  (stream_id=2) ─DMA─┘
-//                    (compute + dma_core_wrap)
+//  XBAR ─dma_cfg────► accel_wrap #1 ─accel1_dma─► sec_wrapper #1 ─accel1_sec─┐
+//  XBAR ─wrapper_cfg1──────────────────────────────►(wrapper_cfg)              ├─►axi_mux─►IOMMU
+//  XBAR ─dma_cfg2───► accel_wrap #2 ─accel2_dma─► sec_wrapper #2 ─accel2_sec─┘
+//  XBAR ─wrapper_cfg2──────────────────────────────►(wrapper_cfg)
 //
-//  XBAR ─iommu_cfg─► IOMMU prog IF
-//  IOMMU comp IF ──► XBAR (requêtes traduites → DRAM)
-//  IOMMU ds IF ────► XBAR (page-table walk → DRAM)
+//  XBAR ─iommu_cfg──► IOMMU prog IF
+//  IOMMU comp IF ───► XBAR (requêtes traduites → DRAM)
+//  IOMMU ds IF ─────► XBAR (page-table walk → DRAM)
 //
 //  Bus internes :
-//    accel1_dma  AXI_BUS_MMU  SLV ID=3b  sortie accel_wrap #1
-//    accel2_dma  AXI_BUS_MMU  SLV ID=3b  sortie accel_wrap #2
-//    accel1_std  AXI_BUS      ID=3b      signaux AXI standard (sans champs MMU)
-//    accel2_std  AXI_BUS      ID=3b      idem
-//    dma_muxed   AXI_BUS      ID=4b      sortie axi_mux (IdWidth bits)
-//    axi_iommu_tr_req  req_mmu_t         vers IOMMU TR IF
-//    axi_iommu_tr_rsp  resp_t            retour IOMMU
+//    accel1_dma   AXI_BUS_MMU  ID=3b  sortie accel_wrap #1
+//    accel1_sec   AXI_BUS_MMU  ID=3b  sortie sec_wrapper #1 (après filtrage)
+//    accel1_std   AXI_BUS      ID=3b  projection std → entrée mux port 0
+//    accel2_dma   AXI_BUS_MMU  ID=3b  sortie accel_wrap #2
+//    accel2_sec   AXI_BUS_MMU  ID=3b  sortie sec_wrapper #2
+//    accel2_std   AXI_BUS      ID=3b  projection std → entrée mux port 1
+//    dma_muxed    AXI_BUS      ID=4b  sortie axi_mux → IOMMU TR IF
 //
 //  Largeurs d'ID :
 //    accel_wrap interne : AXI_ID_WIDTH = ariane_soc::IdWidth - 1 = 3b
 //    axi_mux sortie     : MST_AXI_ID_WIDTH = ariane_soc::IdWidth = 4b
-//    IOMMU ID_WIDTH     : ariane_soc::IdWidth = 4b  (inchangé vs original)
+//    IOMMU ID_WIDTH     : ariane_soc::IdWidth = 4b  (inchangé)
 // ============================================================
 
 `include "axi/assign.svh"
@@ -54,8 +53,8 @@ module ariane_peripherals #(
     parameter bit InclEthernet =  0,
     parameter bit InclGPIO     =  0,
     parameter bit InclTimer    =  1,
-    parameter bit InclDMA      =  0,   // Active les deux accélérateurs DMA
-    parameter bit InclDMA2     =  0,   // Active le second accélérateur
+    parameter bit InclDMA      =  0,
+    parameter bit InclDMA2     =  0,
     parameter bit InclIOMMU    =  0
 ) (
     input  logic       clk_i           ,
@@ -67,11 +66,13 @@ module ariane_peripherals #(
     AXI_BUS.Slave      gpio            ,
     AXI_BUS.Slave      ethernet        ,
     AXI_BUS.Slave      timer           ,
-    AXI_BUS.Slave      dma_cfg         , // Config MMIO Accel 1  (XBAR → accel_wrap #1)
-    AXI_BUS.Slave      dma_cfg2        , // Config MMIO Accel 2  (XBAR → accel_wrap #2)
-    AXI_BUS.Master     iommu_comp      , // IOMMU Completion IF  (IOMMU → XBAR)
-    AXI_BUS.Master     iommu_ds        , // IOMMU Memory IF      (IOMMU → XBAR)
-    AXI_BUS.Slave      iommu_cfg       , // IOMMU Programming IF (XBAR → IOMMU)
+    AXI_BUS.Slave      dma_cfg         , // Config MMIO Accel 1       (XBAR → accel_wrap #1)
+    AXI_BUS.Slave      dma_cfg2        , // Config MMIO Accel 2       (XBAR → accel_wrap #2)
+    AXI_BUS.Slave      wrapper_cfg1    , // Config sec_wrapper #1     (XBAR → sec_wrapper #1)
+    AXI_BUS.Slave      wrapper_cfg2    , // Config sec_wrapper #2     (XBAR → sec_wrapper #2)
+    AXI_BUS.Master     iommu_comp      , // IOMMU Completion IF       (IOMMU → XBAR)
+    AXI_BUS.Master     iommu_ds        , // IOMMU Memory IF           (IOMMU → XBAR)
+    AXI_BUS.Slave      iommu_cfg       , // IOMMU Programming IF      (XBAR → IOMMU)
     output logic [1:0] irq_o           ,
     input  logic       rx_i            ,
     output logic       tx_o            ,
@@ -216,7 +217,7 @@ module ariane_peripherals #(
     end
 
     // -----------------------------------------------------------------------
-    //  3. SPI (inchangé)
+    //  3. SPI
     // -----------------------------------------------------------------------
     assign spi.b_user = 1'b0;
     assign spi.r_user = 1'b0;
@@ -302,9 +303,7 @@ module ariane_peripherals #(
             .ip2intc_irpt(irq_sources[1])
         );
     end else begin
-        assign spi_clk_o = 1'b0;
-        assign spi_mosi  = 1'b0;
-        assign spi_ss    = 1'b0;
+        assign spi_clk_o = 1'b0; assign spi_mosi = 1'b0; assign spi_ss = 1'b0;
         assign spi.aw_ready = 1'b1; assign spi.ar_ready = 1'b1; assign spi.w_ready = 1'b1;
         assign spi.b_valid = spi.aw_valid; assign spi.b_id = spi.aw_id;
         assign spi.b_resp = axi_pkg::RESP_SLVERR; assign spi.b_user = '0;
@@ -313,7 +312,7 @@ module ariane_peripherals #(
     end
 
     // -----------------------------------------------------------------------
-    //  4. Ethernet (inchangé)
+    //  4. Ethernet
     // -----------------------------------------------------------------------
     if (InclEthernet) begin : gen_ethernet
         logic eth_en, eth_we, eth_int_n, eth_pme_n, eth_mdio_i, eth_mdio_o, eth_mdio_oe;
@@ -331,19 +330,19 @@ module ariane_peripherals #(
         );
 
         framing_top eth_rgmii (
-            .msoc_clk(clk_i),         .core_lsu_addr(eth_addr[14:0]),
+            .msoc_clk(clk_i),          .core_lsu_addr(eth_addr[14:0]),
             .core_lsu_wdata(eth_wrdata),.core_lsu_be(eth_be),
-            .ce_d(eth_en),            .we_d(eth_en & eth_we),
-            .framing_sel(eth_en),     .framing_rdata(eth_rdata),
-            .rst_int(!rst_ni),        .clk_int(phy_tx_clk_i),
-            .clk90_int(eth_clk_i),    .clk_200_int(clk_200MHz_i),
-            .phy_rx_clk(eth_rxck),    .phy_rxd(eth_rxd),
-            .phy_rx_ctl(eth_rxctl),   .phy_tx_clk(eth_txck),
-            .phy_txd(eth_txd),        .phy_tx_ctl(eth_txctl),
-            .phy_reset_n(eth_rst_n),  .phy_int_n(eth_int_n),
-            .phy_pme_n(eth_pme_n),    .phy_mdc(eth_mdc),
-            .phy_mdio_i(eth_mdio_i),  .phy_mdio_o(eth_mdio_o),
-            .phy_mdio_oe(eth_mdio_oe),.eth_irq(irq_sources[2])
+            .ce_d(eth_en),             .we_d(eth_en & eth_we),
+            .framing_sel(eth_en),      .framing_rdata(eth_rdata),
+            .rst_int(!rst_ni),         .clk_int(phy_tx_clk_i),
+            .clk90_int(eth_clk_i),     .clk_200_int(clk_200MHz_i),
+            .phy_rx_clk(eth_rxck),     .phy_rxd(eth_rxd),
+            .phy_rx_ctl(eth_rxctl),    .phy_tx_clk(eth_txck),
+            .phy_txd(eth_txd),         .phy_tx_ctl(eth_txctl),
+            .phy_reset_n(eth_rst_n),   .phy_int_n(eth_int_n),
+            .phy_pme_n(eth_pme_n),     .phy_mdc(eth_mdc),
+            .phy_mdio_i(eth_mdio_i),   .phy_mdio_o(eth_mdio_o),
+            .phy_mdio_oe(eth_mdio_oe), .eth_irq(irq_sources[2])
         );
 
         IOBUF #(.DRIVE(12), .IBUF_LOW_PWR("TRUE"), .IOSTANDARD("DEFAULT"), .SLEW("SLOW"))
@@ -353,8 +352,7 @@ module ariane_peripherals #(
         assign irq_sources[2]    = 1'b0;
         assign ethernet.aw_ready = 1'b1; assign ethernet.ar_ready = 1'b1;
         assign ethernet.w_ready  = 1'b1;
-        assign ethernet.b_valid  = ethernet.aw_valid;
-        assign ethernet.b_id     = ethernet.aw_id;
+        assign ethernet.b_valid  = ethernet.aw_valid; assign ethernet.b_id = ethernet.aw_id;
         assign ethernet.b_resp   = axi_pkg::RESP_SLVERR; assign ethernet.b_user = '0;
         assign ethernet.r_valid  = ethernet.ar_valid;
         assign ethernet.r_resp   = axi_pkg::RESP_SLVERR;
@@ -362,7 +360,7 @@ module ariane_peripherals #(
     end
 
     // -----------------------------------------------------------------------
-    //  5. GPIO (inchangé)
+    //  5. GPIO
     // -----------------------------------------------------------------------
     assign gpio.b_user = 1'b0;
     assign gpio.r_user = 1'b0;
@@ -402,20 +400,19 @@ module ariane_peripherals #(
             .m_axi_awaddr(s_axi_gpio_awaddr),  .m_axi_awlen(s_axi_gpio_awlen),
             .m_axi_awsize(s_axi_gpio_awsize),  .m_axi_awburst(s_axi_gpio_awburst),
             .m_axi_awlock(),                    .m_axi_awcache(s_axi_gpio_awcache),
-            .m_axi_awprot(),                    .m_axi_awregion(),
-            .m_axi_awqos(),                     .m_axi_awvalid(s_axi_gpio_awvalid),
-            .m_axi_awready(s_axi_gpio_awready), .m_axi_wdata(s_axi_gpio_wdata),
-            .m_axi_wstrb(s_axi_gpio_wstrb),     .m_axi_wlast(),
-            .m_axi_wvalid(s_axi_gpio_wvalid),   .m_axi_wready(s_axi_gpio_wready),
-            .m_axi_bresp(s_axi_gpio_bresp),     .m_axi_bvalid(s_axi_gpio_bvalid),
-            .m_axi_bready(s_axi_gpio_bready),   .m_axi_araddr(s_axi_gpio_araddr),
-            .m_axi_arlen(s_axi_gpio_arlen),     .m_axi_arsize(s_axi_gpio_arsize),
-            .m_axi_arburst(s_axi_gpio_arburst),  .m_axi_arlock(),
-            .m_axi_arcache(s_axi_gpio_arcache),  .m_axi_arprot(),
-            .m_axi_arregion(),                   .m_axi_arqos(),
-            .m_axi_arvalid(s_axi_gpio_arvalid),  .m_axi_arready(s_axi_gpio_arready),
-            .m_axi_rdata(s_axi_gpio_rdata),      .m_axi_rresp(s_axi_gpio_rresp),
-            .m_axi_rlast(s_axi_gpio_rlast),      .m_axi_rvalid(s_axi_gpio_rvalid),
+            .m_axi_awprot(),                    .m_axi_awregion(), .m_axi_awqos(),
+            .m_axi_awvalid(s_axi_gpio_awvalid),.m_axi_awready(s_axi_gpio_awready),
+            .m_axi_wdata(s_axi_gpio_wdata),    .m_axi_wstrb(s_axi_gpio_wstrb),
+            .m_axi_wlast(),                     .m_axi_wvalid(s_axi_gpio_wvalid),
+            .m_axi_wready(s_axi_gpio_wready),  .m_axi_bresp(s_axi_gpio_bresp),
+            .m_axi_bvalid(s_axi_gpio_bvalid),  .m_axi_bready(s_axi_gpio_bready),
+            .m_axi_araddr(s_axi_gpio_araddr),  .m_axi_arlen(s_axi_gpio_arlen),
+            .m_axi_arsize(s_axi_gpio_arsize),  .m_axi_arburst(s_axi_gpio_arburst),
+            .m_axi_arlock(),                    .m_axi_arcache(s_axi_gpio_arcache),
+            .m_axi_arprot(),                    .m_axi_arregion(), .m_axi_arqos(),
+            .m_axi_arvalid(s_axi_gpio_arvalid),.m_axi_arready(s_axi_gpio_arready),
+            .m_axi_rdata(s_axi_gpio_rdata),    .m_axi_rresp(s_axi_gpio_rresp),
+            .m_axi_rlast(s_axi_gpio_rlast),    .m_axi_rvalid(s_axi_gpio_rvalid),
             .m_axi_rready(s_axi_gpio_rready)
         );
 
@@ -437,7 +434,7 @@ module ariane_peripherals #(
     end
 
     // -----------------------------------------------------------------------
-    //  6. Timer (inchangé)
+    //  6. Timer
     // -----------------------------------------------------------------------
     if (InclTimer) begin : gen_timer
         logic [31:0] timer_paddr, timer_pwdata, timer_prdata;
@@ -478,23 +475,23 @@ module ariane_peripherals #(
     end
 
     // =======================================================================
-    //  7. Accélérateurs DMA autonomes & IOMMU
-    // =======================================================================
-    //
-    //  Chaque accélérateur est instancié via accel_wrap, qui encapsule :
-    //    - un port AXI slave MMIO (configuration depuis le XBAR)
-    //    - la logique de calcul (compute_core, à remplir dans accel_wrap.sv)
-    //    - un dma_core_wrap interne (moteur DMA autonome)
-    //    - l'estampillage du stream_id sur chaque transaction DMA
-    //
-    //  Largeurs d'ID (règle de cohérence) :
-    //    accel_wrap interne  : AXI_ID_WIDTH = ariane_soc::IdWidth-1 = 3b
-    //    axi_mux SLV port   : SLV_AXI_ID_WIDTH = 3b
-    //    axi_mux MST port   : MST_AXI_ID_WIDTH = ariane_soc::IdWidth = 4b
-    //    IOMMU ID_WIDTH     : ariane_soc::IdWidth = 4b  (inchangé)
+    //  7. Accélérateurs DMA + security wrappers + IOMMU
     // =======================================================================
 
-    // Bus entre device(s) et IOMMU TR IF (type original, ID=4b)
+        assign resp.w_ready  = bus.w_ready;  
+        assign resp.ar_ready = bus.ar_ready; 
+        assign resp.b_valid  = bus.b_valid;  
+        assign resp.b.id     = bus.b_id;     
+        assign resp.b.resp   = bus.b_resp;   
+        assign resp.b.user   = bus.b_user;   
+        assign resp.r_valid  = bus.r_valid;  
+        assign resp.r.id     = bus.r_id;     
+        assign resp.r.data   = bus.r_data;   
+        assign resp.r.resp   = bus.r_resp;   
+        assign resp.r.last   = bus.r_last;   
+        assign resp.r.user   = bus.r_user;    
+
+    // Bus entre device(s) et IOMMU TR IF
     ariane_axi_soc::req_mmu_t  axi_iommu_tr_req;
     ariane_axi_soc::resp_t     axi_iommu_tr_rsp;
 
@@ -504,34 +501,178 @@ module ariane_peripherals #(
     `AXI_ASSIGN_TO_REQ(axi_iommu_cfg_req, iommu_cfg)
     `AXI_ASSIGN_FROM_RESP(iommu_cfg, axi_iommu_cfg_rsp)
 
-    // -----------------------------------------------------------------------
-    //  Accélérateur(s)
-    // -----------------------------------------------------------------------
     if (InclDMA) begin : gen_dma
 
-        // Bus DMA master de l'accel 1 (AXI_BUS_MMU, ID=3b, stream_id=1)
+        // -------------------------------------------------------------------
+        //  Accélérateur 1
+        // -------------------------------------------------------------------
         AXI_BUS_MMU #(
-            .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
-            .AXI_DATA_WIDTH ( AxiDataWidth             ),
-            .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1  ),
-            .AXI_USER_WIDTH ( AxiUserWidth             )
-        ) accel1_dma ();
+            .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
+            .AXI_DATA_WIDTH ( AxiDataWidth            ),
+            .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
+            .AXI_USER_WIDTH ( AxiUserWidth            )
+        ) accel1_dma (), accel1_sec ();
 
-        // Accélérateur 1 — compute_core + dma_core_wrap interne
-        // → remplacer accel_wrap par ton module si le nom diffère
         accel_wrap #(
-            .AXI_ADDR_WIDTH   ( AxiAddrWidth              ),
-            .AXI_DATA_WIDTH   ( AxiDataWidth              ),
-            .AXI_ID_WIDTH     ( ariane_soc::IdWidth - 1   ),
-            .AXI_USER_WIDTH   ( AxiUserWidth              ),
-            .AXI_SLV_ID_WIDTH ( ariane_soc::IdWidthSlave  ),
-            .STREAM_ID        ( 24'd1                     )
+            .AXI_ADDR_WIDTH   ( AxiAddrWidth             ),
+            .AXI_DATA_WIDTH   ( AxiDataWidth             ),
+            .AXI_ID_WIDTH     ( ariane_soc::IdWidth - 1  ),
+            .AXI_USER_WIDTH   ( AxiUserWidth             ),
+            .AXI_SLV_ID_WIDTH ( ariane_soc::IdWidthSlave ),
+            .STREAM_ID        ( 24'd1                    )
         ) i_accel1 (
-            .clk_i      ( clk_i      ),
-            .rst_ni     ( rst_ni     ),
-            .testmode_i ( 1'b0       ),
-            .axi_cfg    ( dma_cfg    ),  // MMIO config depuis XBAR
-            .axi_dma    ( accel1_dma )   // DMA master → axi_mux
+            .clk_i, .rst_ni, .testmode_i(1'b0),
+            .axi_cfg ( dma_cfg    ),
+            .axi_dma ( accel1_dma )
+        );
+
+        // Conversion accel1_dma → structs pour le security wrapper
+        ariane_axi_soc::req_mmu_t  req_accel1_in;
+        ariane_axi_soc::resp_slv_t resp_accel1_in;
+        ariane_axi_soc::req_mmu_t  req_accel1_out;
+        ariane_axi_soc::resp_t     resp_accel1_out;
+        ariane_axi_soc::req_slv_t  req_cpu_wrap1;
+        ariane_axi_soc::resp_slv_t resp_cpu_wrap1;
+
+            assign req_accel1_in.aw_valid        = accel1_dma.aw_valid;
+            assign req_accel1_in.aw.id             = accel1_dma.aw_id;
+            assign req_accel1_in.aw.addr           = accel1_dma.aw_addr;
+            assign req_accel1_in.aw.len            = accel1_dma.aw_len;
+            assign req_accel1_in.aw.size           = accel1_dma.aw_size;
+            assign req_accel1_in.aw.burst          = accel1_dma.aw_burst;
+            assign req_accel1_in.aw.lock           = accel1_dma.aw_lock;
+            assign req_accel1_in.aw.cache          = accel1_dma.aw_cache;
+            assign req_accel1_in.aw.prot           = accel1_dma.aw_prot;
+            assign req_accel1_in.aw.qos            = accel1_dma.aw_qos;
+            assign req_accel1_in.aw.region         = accel1_dma.aw_region;
+            assign req_accel1_in.aw.atop           = accel1_dma.aw_atop;
+            assign req_accel1_in.aw.user           = accel1_dma.aw_user;
+            assign req_accel1_in.aw.stream_id      = accel1_dma.aw_stream_id;
+            assign req_accel1_in.aw.ss_id_valid    = accel1_dma.aw_ss_id_valid;
+            assign req_accel1_in.aw.substream_id   = accel1_dma.aw_substream_id;
+            assign req_accel1_in.ar_valid        = accel1_dma.ar_valid;
+            assign req_accel1_in.ar.id             = accel1_dma.ar_id;
+            assign req_accel1_in.ar.addr           = accel1_dma.ar_addr;
+            assign req_accel1_in.ar.len            = accel1_dma.ar_len;
+            assign req_accel1_in.ar.size           = accel1_dma.ar_size;
+            assign req_accel1_in.ar.burst          = accel1_dma.ar_burst;
+            assign req_accel1_in.ar.lock           = accel1_dma.ar_lock;
+            assign req_accel1_in.ar.cache          = accel1_dma.ar_cache;
+            assign req_accel1_in.ar.prot           = accel1_dma.ar_prot;
+            assign req_accel1_in.ar.qos            = accel1_dma.ar_qos;
+            assign req_accel1_in.ar.region         = accel1_dma.ar_region;
+            assign req_accel1_in.ar.user           = accel1_dma.ar_user;
+            assign req_accel1_in.ar.stream_id      = accel1_dma.ar_stream_id;
+            assign req_accel1_in.ar.ss_id_valid    = accel1_dma.ar_ss_id_valid;
+            assign req_accel1_in.ar.substream_id   = accel1_dma.ar_substream_id;
+            assign req_accel1_in.w_valid  = accel1_dma.w_valid;
+            assign req_accel1_in.w.data   = accel1_dma.w_data;
+            assign req_accel1_in.w.strb   = accel1_dma.w_strb;
+            assign req_accel1_in.w.last   = accel1_dma.w_last;
+            assign req_accel1_in.w.user   = accel1_dma.w_user;
+            assign req_accel1_in.b_ready  = accel1_dma.b_ready;
+            assign req_accel1_in.r_ready  = accel1_dma.r_ready;
+            assign accel1_dma.aw_ready = resp_accel1_in.aw_ready;
+            assign accel1_dma.w_ready  = resp_accel1_in.w_ready;
+            assign accel1_dma.b_valid  = resp_accel1_in.b_valid;
+            assign accel1_dma.b_id     = resp_accel1_in.b.id[ariane_soc::IdWidth - 2:0];
+            assign accel1_dma.b_resp   = resp_accel1_in.b.resp;
+            assign accel1_dma.b_user   = resp_accel1_in.b.user;
+            assign accel1_dma.ar_ready = resp_accel1_in.ar_ready;
+            assign accel1_dma.r_valid  = resp_accel1_in.r_valid;
+            assign accel1_dma.r_id     = resp_accel1_in.r.id[ariane_soc::IdWidth - 2:0];
+            assign accel1_dma.r_data   = resp_accel1_in.r.data;
+            assign accel1_dma.r_resp   = resp_accel1_in.r.resp;
+            assign accel1_dma.r_last   = resp_accel1_in.r.last;
+            assign accel1_dma.r_user   = resp_accel1_in.r.user;
+            assign accel1_sec.aw_valid          = req_accel1_out.aw_valid;
+            assign accel1_sec.aw_id             = req_accel1_out.aw.id;
+            assign accel1_sec.aw_addr           = req_accel1_out.aw.addr;
+            assign accel1_sec.aw_len            = req_accel1_out.aw.len;
+            assign accel1_sec.aw_size           = req_accel1_out.aw.size;
+            assign accel1_sec.aw_burst          = req_accel1_out.aw.burst;
+            assign accel1_sec.aw_lock           = req_accel1_out.aw.lock;
+            assign accel1_sec.aw_cache          = req_accel1_out.aw.cache;
+            assign accel1_sec.aw_prot           = req_accel1_out.aw.prot;
+            assign accel1_sec.aw_qos            = req_accel1_out.aw.qos;
+            assign accel1_sec.aw_region         = req_accel1_out.aw.region;
+            assign accel1_sec.aw_atop           = req_accel1_out.aw.atop;
+            assign accel1_sec.aw_user           = req_accel1_out.aw.user;
+            assign accel1_sec.aw_stream_id      = req_accel1_out.aw.stream_id;
+            assign accel1_sec.aw_ss_id_valid    = req_accel1_out.aw.ss_id_valid;
+            assign accel1_sec.aw_substream_id   = req_accel1_out.aw.substream_id;
+            assign accel1_sec.ar_valid          = req_accel1_out.ar_valid;
+            assign accel1_sec.ar_id             = req_accel1_out.ar.id;
+            assign accel1_sec.ar_addr           = req_accel1_out.ar.addr;
+            assign accel1_sec.ar_len            = req_accel1_out.ar.len;
+            assign accel1_sec.ar_size           = req_accel1_out.ar.size;
+            assign accel1_sec.ar_burst          = req_accel1_out.ar.burst;
+            assign accel1_sec.ar_lock           = req_accel1_out.ar.lock;
+            assign accel1_sec.ar_cache          = req_accel1_out.ar.cache;
+            assign accel1_sec.ar_prot           = req_accel1_out.ar.prot;
+            assign accel1_sec.ar_qos            = req_accel1_out.ar.qos;
+            assign accel1_sec.ar_region         = req_accel1_out.ar.region;
+            assign accel1_sec.ar_user           = req_accel1_out.ar.user;
+            assign accel1_sec.ar_stream_id      = req_accel1_out.ar.stream_id;
+            assign accel1_sec.ar_ss_id_valid    = req_accel1_out.ar.ss_id_valid;
+            assign accel1_sec.ar_substream_id   = req_accel1_out.ar.substream_id;
+            assign accel1_sec.w_valid  = req_accel1_out.w_valid;
+            assign accel1_sec.w_data   = req_accel1_out.w.data;
+            assign accel1_sec.w_strb   = req_accel1_out.w.strb;
+            assign accel1_sec.w_last   = req_accel1_out.w.last;
+            assign accel1_sec.w_user   = req_accel1_out.w.user;
+            assign accel1_sec.b_ready  = req_accel1_out.b_ready;
+            assign accel1_sec.r_ready  = req_accel1_out.r_ready;
+            assign resp_accel1_out.aw_ready = accel1_sec.aw_ready;
+            assign resp_accel1_out.w_ready  = accel1_sec.w_ready;
+            assign resp_accel1_out.ar_ready = accel1_sec.ar_ready;
+            assign resp_accel1_out.b_valid  = accel1_sec.b_valid;
+            assign resp_accel1_out.b.id     = accel1_sec.b_id;
+            assign resp_accel1_out.b.resp   = accel1_sec.b_resp;
+            assign resp_accel1_out.b.user   = accel1_sec.b_user;
+            assign resp_accel1_out.r_valid  = accel1_sec.r_valid;
+            assign resp_accel1_out.r.id     = accel1_sec.r_id;
+            assign resp_accel1_out.r.data   = accel1_sec.r_data;
+            assign resp_accel1_out.r.resp   = accel1_sec.r_resp;
+            assign resp_accel1_out.r.last   = accel1_sec.r_last;
+            assign resp_accel1_out.r.user   = accel1_sec.r_user;
+
+        `AXI_ASSIGN_TO_REQ(req_cpu_wrap1, wrapper_cfg1)
+        `AXI_ASSIGN_FROM_RESP(wrapper_cfg1, resp_cpu_wrap1)
+
+        wrapper #(
+            .IdWidth            ( ariane_soc::IdWidth - 1        ),
+            .IdWidthSlv         ( ariane_soc::IdWidthSlave       ),
+            .AddrWidth          ( AxiAddrWidth                   ),
+            .UserWidth          ( AxiUserWidth                   ),
+            .DevIDWidth         ( 24                             ),
+            .ProcIDWidth        ( 20                             ),
+            .DataWidth          ( AxiDataWidth                   ),
+            .StrbWidth          ( AxiDataWidth / 8               ),
+            .aw_chan_extended_t ( ariane_axi_soc::aw_chan_mmu_t  ),
+            .aw_chan_slv_t      ( ariane_axi_soc::aw_chan_slv_t  ),
+            .aw_chan_t          ( ariane_axi_soc::aw_chan_t       ),
+            .w_chan_t           ( ariane_axi_soc::w_chan_t        ),
+            .b_chan_t           ( ariane_axi_soc::b_chan_t        ),
+            .b_chan_slv_t       ( ariane_axi_soc::b_chan_slv_t   ),
+            .ar_chan_extended_t ( ariane_axi_soc::ar_chan_mmu_t  ),
+            .ar_chan_slv_t      ( ariane_axi_soc::ar_chan_slv_t  ),
+            .ar_chan_t          ( ariane_axi_soc::ar_chan_t       ),
+            .r_chan_t           ( ariane_axi_soc::r_chan_t        ),
+            .r_chan_slv_t       ( ariane_axi_soc::r_chan_slv_t   ),
+            .req_t              ( ariane_axi_soc::req_t          ),
+            .req_slv_t          ( ariane_axi_soc::req_slv_t      ),
+            .resp_t             ( ariane_axi_soc::resp_t         ),
+            .resp_slv_t         ( ariane_axi_soc::resp_slv_t     ),
+            .req_iommu_t        ( ariane_axi_soc::req_mmu_t      )
+        ) i_sec_wrap1 (
+            .clk_i, .rst_ni,
+            .req_IP_wrapper_i    ( req_accel1_in    ),
+            .resp_IP_wrapper_o   ( resp_accel1_in   ),
+            .resp_wrapper_iommu_i( resp_accel1_out  ),
+            .req_wrapper_iommu_o ( req_accel1_out   ),
+            .req_CPU_Wrapper__i  ( req_cpu_wrap1    ),
+            .resp_CPU_Wrapper_o  ( resp_cpu_wrap1   )
         );
 
         // -------------------------------------------------------------------
@@ -539,33 +680,175 @@ module ariane_peripherals #(
         // -------------------------------------------------------------------
         if (InclDMA2) begin : gen_accel2
 
-            // Bus DMA master de l'accel 2 (AXI_BUS_MMU, ID=3b, stream_id=2)
             AXI_BUS_MMU #(
-                .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
-                .AXI_DATA_WIDTH ( AxiDataWidth             ),
-                .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1  ),
-                .AXI_USER_WIDTH ( AxiUserWidth             )
-            ) accel2_dma ();
+                .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
+                .AXI_DATA_WIDTH ( AxiDataWidth            ),
+                .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
+                .AXI_USER_WIDTH ( AxiUserWidth            )
+            ) accel2_dma (), accel2_sec ();
 
-            // Accélérateur 2
             accel_wrap #(
-                .AXI_ADDR_WIDTH   ( AxiAddrWidth              ),
-                .AXI_DATA_WIDTH   ( AxiDataWidth              ),
-                .AXI_ID_WIDTH     ( ariane_soc::IdWidth - 1   ),
-                .AXI_USER_WIDTH   ( AxiUserWidth              ),
-                .AXI_SLV_ID_WIDTH ( ariane_soc::IdWidthSlave  ),
-                .STREAM_ID        ( 24'd2                     )
+                .AXI_ADDR_WIDTH   ( AxiAddrWidth             ),
+                .AXI_DATA_WIDTH   ( AxiDataWidth             ),
+                .AXI_ID_WIDTH     ( ariane_soc::IdWidth - 1  ),
+                .AXI_USER_WIDTH   ( AxiUserWidth             ),
+                .AXI_SLV_ID_WIDTH ( ariane_soc::IdWidthSlave ),
+                .STREAM_ID        ( 24'd2                    )
             ) i_accel2 (
-                .clk_i      ( clk_i      ),
-                .rst_ni     ( rst_ni     ),
-                .testmode_i ( 1'b0       ),
-                .axi_cfg    ( dma_cfg2   ),  // MMIO config depuis XBAR
-                .axi_dma    ( accel2_dma )
+                .clk_i, .rst_ni, .testmode_i(1'b0),
+                .axi_cfg ( dma_cfg2   ),
+                .axi_dma ( accel2_dma )
             );
 
-            // Buses AXI standard (sans champs MMU) pour le mux
-            // L'axi_mux_intf n'accepte que des AXI_BUS, pas AXI_BUS_MMU.
-            // On projette les signaux AXI standards via AXI_ASSIGN.
+            ariane_axi_soc::req_mmu_t  req_accel2_in;
+            ariane_axi_soc::resp_slv_t resp_accel2_in;
+            ariane_axi_soc::req_mmu_t  req_accel2_out;
+            ariane_axi_soc::resp_t     resp_accel2_out;
+            ariane_axi_soc::req_slv_t  req_cpu_wrap2;
+            ariane_axi_soc::resp_slv_t resp_cpu_wrap2;
+
+                assign req_accel2_in.aw_valid        = accel2_dma.aw_valid;
+                assign req_accel2_in.aw.id             = accel2_dma.aw_id;
+                assign req_accel2_in.aw.addr           = accel2_dma.aw_addr;
+                assign req_accel2_in.aw.len            = accel2_dma.aw_len;
+                assign req_accel2_in.aw.size           = accel2_dma.aw_size;
+                assign req_accel2_in.aw.burst          = accel2_dma.aw_burst;
+                assign req_accel2_in.aw.lock           = accel2_dma.aw_lock;
+                assign req_accel2_in.aw.cache          = accel2_dma.aw_cache;
+                assign req_accel2_in.aw.prot           = accel2_dma.aw_prot;
+                assign req_accel2_in.aw.qos            = accel2_dma.aw_qos;
+                assign req_accel2_in.aw.region         = accel2_dma.aw_region;
+                assign req_accel2_in.aw.atop           = accel2_dma.aw_atop;
+                assign req_accel2_in.aw.user           = accel2_dma.aw_user;
+                assign req_accel2_in.aw.stream_id      = accel2_dma.aw_stream_id;
+                assign req_accel2_in.aw.ss_id_valid    = accel2_dma.aw_ss_id_valid;
+                assign req_accel2_in.aw.substream_id   = accel2_dma.aw_substream_id;
+                assign req_accel2_in.ar_valid        = accel2_dma.ar_valid;
+                assign req_accel2_in.ar.id             = accel2_dma.ar_id;
+                assign req_accel2_in.ar.addr           = accel2_dma.ar_addr;
+                assign req_accel2_in.ar.len            = accel2_dma.ar_len;
+                assign req_accel2_in.ar.size           = accel2_dma.ar_size;
+                assign req_accel2_in.ar.burst          = accel2_dma.ar_burst;
+                assign req_accel2_in.ar.lock           = accel2_dma.ar_lock;
+                assign req_accel2_in.ar.cache          = accel2_dma.ar_cache;
+                assign req_accel2_in.ar.prot           = accel2_dma.ar_prot;
+                assign req_accel2_in.ar.qos            = accel2_dma.ar_qos;
+                assign req_accel2_in.ar.region         = accel2_dma.ar_region;
+                assign req_accel2_in.ar.user           = accel2_dma.ar_user;
+                assign req_accel2_in.ar.stream_id      = accel2_dma.ar_stream_id;
+                assign req_accel2_in.ar.ss_id_valid    = accel2_dma.ar_ss_id_valid;
+                assign req_accel2_in.ar.substream_id   = accel2_dma.ar_substream_id;
+                assign req_accel2_in.w_valid  = accel2_dma.w_valid;
+                assign req_accel2_in.w.data   = accel2_dma.w_data;
+                assign req_accel2_in.w.strb   = accel2_dma.w_strb;
+                assign req_accel2_in.w.last   = accel2_dma.w_last;
+                assign req_accel2_in.w.user   = accel2_dma.w_user;
+                assign req_accel2_in.b_ready  = accel2_dma.b_ready;
+                assign req_accel2_in.r_ready  = accel2_dma.r_ready;
+                assign accel2_dma.aw_ready = resp_accel2_in.aw_ready;
+                assign accel2_dma.w_ready  = resp_accel2_in.w_ready;
+                assign accel2_dma.b_valid  = resp_accel2_in.b_valid;
+                assign accel2_dma.b_id     = resp_accel2_in.b.id[ariane_soc::IdWidth - 2:0];
+                assign accel2_dma.b_resp   = resp_accel2_in.b.resp;
+                assign accel2_dma.b_user   = resp_accel2_in.b.user;
+                assign accel2_dma.ar_ready = resp_accel2_in.ar_ready;
+                assign accel2_dma.r_valid  = resp_accel2_in.r_valid;
+                assign accel2_dma.r_id     = resp_accel2_in.r.id[ariane_soc::IdWidth - 2:0];
+                assign accel2_dma.r_data   = resp_accel2_in.r.data;
+                assign accel2_dma.r_resp   = resp_accel2_in.r.resp;
+                assign accel2_dma.r_last   = resp_accel2_in.r.last;
+                assign accel2_dma.r_user   = resp_accel2_in.r.user;
+                assign accel2_sec.aw_valid          = req_accel2_out.aw_valid;
+                assign accel2_sec.aw_id             = req_accel2_out.aw.id;
+                assign accel2_sec.aw_addr           = req_accel2_out.aw.addr;
+                assign accel2_sec.aw_len            = req_accel2_out.aw.len;
+                assign accel2_sec.aw_size           = req_accel2_out.aw.size;
+                assign accel2_sec.aw_burst          = req_accel2_out.aw.burst;
+                assign accel2_sec.aw_lock           = req_accel2_out.aw.lock;
+                assign accel2_sec.aw_cache          = req_accel2_out.aw.cache;
+                assign accel2_sec.aw_prot           = req_accel2_out.aw.prot;
+                assign accel2_sec.aw_qos            = req_accel2_out.aw.qos;
+                assign accel2_sec.aw_region         = req_accel2_out.aw.region;
+                assign accel2_sec.aw_atop           = req_accel2_out.aw.atop;
+                assign accel2_sec.aw_user           = req_accel2_out.aw.user;
+                assign accel2_sec.aw_stream_id      = req_accel2_out.aw.stream_id;
+                assign accel2_sec.aw_ss_id_valid    = req_accel2_out.aw.ss_id_valid;
+                assign accel2_sec.aw_substream_id   = req_accel2_out.aw.substream_id;
+                assign accel2_sec.ar_valid          = req_accel2_out.ar_valid;
+                assign accel2_sec.ar_id             = req_accel2_out.ar.id;
+                assign accel2_sec.ar_addr           = req_accel2_out.ar.addr;
+                assign accel2_sec.ar_len            = req_accel2_out.ar.len;
+                assign accel2_sec.ar_size           = req_accel2_out.ar.size;
+                assign accel2_sec.ar_burst          = req_accel2_out.ar.burst;
+                assign accel2_sec.ar_lock           = req_accel2_out.ar.lock;
+                assign accel2_sec.ar_cache          = req_accel2_out.ar.cache;
+                assign accel2_sec.ar_prot           = req_accel2_out.ar.prot;
+                assign accel2_sec.ar_qos            = req_accel2_out.ar.qos;
+                assign accel2_sec.ar_region         = req_accel2_out.ar.region;
+                assign accel2_sec.ar_user           = req_accel2_out.ar.user;
+                assign accel2_sec.ar_stream_id      = req_accel2_out.ar.stream_id;
+                assign accel2_sec.ar_ss_id_valid    = req_accel2_out.ar.ss_id_valid;
+                assign accel2_sec.ar_substream_id   = req_accel2_out.ar.substream_id;
+                assign accel2_sec.w_valid  = req_accel2_out.w_valid;
+                assign accel2_sec.w_data   = req_accel2_out.w.data;
+                assign accel2_sec.w_strb   = req_accel2_out.w.strb;
+                assign accel2_sec.w_last   = req_accel2_out.w.last;
+                assign accel2_sec.w_user   = req_accel2_out.w.user;
+                assign accel2_sec.b_ready  = req_accel2_out.b_ready;
+                assign accel2_sec.r_ready  = req_accel2_out.r_ready;
+                assign resp_accel2_out.aw_ready = accel2_sec.aw_ready;
+                assign resp_accel2_out.w_ready  = accel2_sec.w_ready;
+                assign resp_accel2_out.ar_ready = accel2_sec.ar_ready;
+                assign resp_accel2_out.b_valid  = accel2_sec.b_valid;
+                assign resp_accel2_out.b.id     = accel2_sec.b_id;
+                assign resp_accel2_out.b.resp   = accel2_sec.b_resp;
+                assign resp_accel2_out.b.user   = accel2_sec.b_user;
+                assign resp_accel2_out.r_valid  = accel2_sec.r_valid;
+                assign resp_accel2_out.r.id     = accel2_sec.r_id;
+                assign resp_accel2_out.r.data   = accel2_sec.r_data;
+                assign resp_accel2_out.r.resp   = accel2_sec.r_resp;
+                assign resp_accel2_out.r.last   = accel2_sec.r_last;
+                assign resp_accel2_out.r.user   = accel2_sec.r_user;
+
+            `AXI_ASSIGN_TO_REQ(req_cpu_wrap2, wrapper_cfg2)
+            `AXI_ASSIGN_FROM_RESP(wrapper_cfg2, resp_cpu_wrap2)
+
+            wrapper #(
+                .IdWidth            ( ariane_soc::IdWidth - 1        ),
+                .IdWidthSlv         ( ariane_soc::IdWidthSlave       ),
+                .AddrWidth          ( AxiAddrWidth                   ),
+                .UserWidth          ( AxiUserWidth                   ),
+                .DevIDWidth         ( 24                             ),
+                .ProcIDWidth        ( 20                             ),
+                .DataWidth          ( AxiDataWidth                   ),
+                .StrbWidth          ( AxiDataWidth / 8               ),
+                .aw_chan_extended_t ( ariane_axi_soc::aw_chan_mmu_t  ),
+                .aw_chan_slv_t      ( ariane_axi_soc::aw_chan_slv_t  ),
+                .aw_chan_t          ( ariane_axi_soc::aw_chan_t       ),
+                .w_chan_t           ( ariane_axi_soc::w_chan_t        ),
+                .b_chan_t           ( ariane_axi_soc::b_chan_t        ),
+                .b_chan_slv_t       ( ariane_axi_soc::b_chan_slv_t   ),
+                .ar_chan_extended_t ( ariane_axi_soc::ar_chan_mmu_t  ),
+                .ar_chan_slv_t      ( ariane_axi_soc::ar_chan_slv_t  ),
+                .ar_chan_t          ( ariane_axi_soc::ar_chan_t       ),
+                .r_chan_t           ( ariane_axi_soc::r_chan_t        ),
+                .r_chan_slv_t       ( ariane_axi_soc::r_chan_slv_t   ),
+                .req_t              ( ariane_axi_soc::req_t          ),
+                .req_slv_t          ( ariane_axi_soc::req_slv_t      ),
+                .resp_t             ( ariane_axi_soc::resp_t         ),
+                .resp_slv_t         ( ariane_axi_soc::resp_slv_t     ),
+                .req_iommu_t        ( ariane_axi_soc::req_mmu_t      )
+            ) i_sec_wrap2 (
+                .clk_i, .rst_ni,
+                .req_IP_wrapper_i    ( req_accel2_in    ),
+                .resp_IP_wrapper_o   ( resp_accel2_in   ),
+                .resp_wrapper_iommu_i( resp_accel2_out  ),
+                .req_wrapper_iommu_o ( req_accel2_out   ),
+                .req_CPU_Wrapper__i  ( req_cpu_wrap2    ),
+                .resp_CPU_Wrapper_o  ( resp_cpu_wrap2   )
+            );
+
+            // axi_mux 2:1 — entrées : accel1_sec, accel2_sec (sorties des wrappers)
             AXI_BUS #(
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
                 .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
@@ -573,10 +856,9 @@ module ariane_peripherals #(
                 .AXI_USER_WIDTH ( AxiUserWidth            )
             ) accel1_std (), accel2_std ();
 
-            `AXI_ASSIGN(accel1_std, accel1_dma)
-            `AXI_ASSIGN(accel2_std, accel2_dma)
+            `AXI_ASSIGN(accel1_std, accel1_sec)
+            `AXI_ASSIGN(accel2_std, accel2_sec)
 
-            // Bus de sortie du mux : ID = ariane_soc::IdWidth (4b)
             AXI_BUS #(
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidth ),
                 .AXI_ADDR_WIDTH ( AxiAddrWidth        ),
@@ -584,9 +866,6 @@ module ariane_peripherals #(
                 .AXI_USER_WIDTH ( AxiUserWidth        )
             ) dma_muxed ();
 
-            // Arbitre 2:1 round-robin
-            // slv[0] = accel1 → ID[MSB]=0
-            // slv[1] = accel2 → ID[MSB]=1
             axi_mux_intf #(
                 .SLV_AXI_ID_WIDTH ( ariane_soc::IdWidth - 1 ),
                 .MST_AXI_ID_WIDTH ( ariane_soc::IdWidth     ),
@@ -599,18 +878,13 @@ module ariane_peripherals #(
                 .SPILL_AW         ( 1'b1                    ),
                 .SPILL_AR         ( 1'b1                    )
             ) i_dma_mux (
-                .clk_i  ( clk_i                        ),
-                .rst_ni ( rst_ni                       ),
-                .test_i ( 1'b0                         ),
-                .slv    ( {accel2_std, accel1_std}     ),
-                .mst    ( dma_muxed                    )
+                .clk_i, .rst_ni, .test_i(1'b0),
+                .slv ( {accel2_std, accel1_std} ),
+                .mst ( dma_muxed               )
             );
 
-            // Connexion du bus muxé vers le TR IF de l'IOMMU
-            // Les champs MMU sont sélectés selon le bit de poids fort de l'ID
-            // (0 = accel1, 1 = accel2)
-
-            // AW
+            // dma_muxed → IOMMU TR IF
+            // stream_id sélectionné selon le bit MSB de l'ID (0=accel1, 1=accel2)
             assign axi_iommu_tr_req.aw_valid        = dma_muxed.aw_valid;
             assign dma_muxed.aw_ready               = axi_iommu_tr_rsp.aw_ready;
             assign axi_iommu_tr_req.aw.id           = dma_muxed.aw_id;
@@ -625,13 +899,12 @@ module ariane_peripherals #(
             assign axi_iommu_tr_req.aw.region       = dma_muxed.aw_region;
             assign axi_iommu_tr_req.aw.atop         = dma_muxed.aw_atop;
             assign axi_iommu_tr_req.aw.user         = dma_muxed.aw_user;
-            assign axi_iommu_tr_req.aw.stream_id    = dma_muxed.aw_id[ariane_soc::IdWidth-1] ?
-                                                       accel2_dma.aw_stream_id :
-                                                       accel1_dma.aw_stream_id;
+            assign axi_iommu_tr_req.aw.stream_id    =
+                dma_muxed.aw_id[ariane_soc::IdWidth-1] ?
+                    accel2_sec.aw_stream_id : accel1_sec.aw_stream_id;
             assign axi_iommu_tr_req.aw.ss_id_valid  = 1'b0;
             assign axi_iommu_tr_req.aw.substream_id = 20'd0;
 
-            // W
             assign axi_iommu_tr_req.w_valid  = dma_muxed.w_valid;
             assign dma_muxed.w_ready         = axi_iommu_tr_rsp.w_ready;
             assign axi_iommu_tr_req.w.data   = dma_muxed.w_data;
@@ -639,14 +912,12 @@ module ariane_peripherals #(
             assign axi_iommu_tr_req.w.last   = dma_muxed.w_last;
             assign axi_iommu_tr_req.w.user   = dma_muxed.w_user;
 
-            // B
             assign dma_muxed.b_valid         = axi_iommu_tr_rsp.b_valid;
             assign axi_iommu_tr_req.b_ready  = dma_muxed.b_ready;
             assign dma_muxed.b_id            = axi_iommu_tr_rsp.b.id;
             assign dma_muxed.b_resp          = axi_iommu_tr_rsp.b.resp;
             assign dma_muxed.b_user          = axi_iommu_tr_rsp.b.user;
 
-            // AR
             assign axi_iommu_tr_req.ar_valid        = dma_muxed.ar_valid;
             assign dma_muxed.ar_ready               = axi_iommu_tr_rsp.ar_ready;
             assign axi_iommu_tr_req.ar.id           = dma_muxed.ar_id;
@@ -660,13 +931,12 @@ module ariane_peripherals #(
             assign axi_iommu_tr_req.ar.qos          = dma_muxed.ar_qos;
             assign axi_iommu_tr_req.ar.region       = dma_muxed.ar_region;
             assign axi_iommu_tr_req.ar.user         = dma_muxed.ar_user;
-            assign axi_iommu_tr_req.ar.stream_id    = dma_muxed.ar_id[ariane_soc::IdWidth-1] ?
-                                                       accel2_dma.ar_stream_id :
-                                                       accel1_dma.ar_stream_id;
+            assign axi_iommu_tr_req.ar.stream_id    =
+                dma_muxed.ar_id[ariane_soc::IdWidth-1] ?
+                    accel2_sec.ar_stream_id : accel1_sec.ar_stream_id;
             assign axi_iommu_tr_req.ar.ss_id_valid  = 1'b0;
             assign axi_iommu_tr_req.ar.substream_id = 20'd0;
 
-            // R
             assign dma_muxed.r_valid         = axi_iommu_tr_rsp.r_valid;
             assign axi_iommu_tr_req.r_ready  = dma_muxed.r_ready;
             assign dma_muxed.r_id            = axi_iommu_tr_rsp.r.id;
@@ -677,66 +947,55 @@ module ariane_peripherals #(
 
         end else begin : gen_accel2_disabled
 
-            // Un seul accélérateur — connexion directe (ID 3b → zero-étendu à 4b)
-            `AXI_ASSIGN_TO_REQ(axi_iommu_tr_req, accel1_dma)
-            `AXI_ASSIGN_FROM_RESP(accel1_dma, axi_iommu_tr_rsp)
+            // Un seul accélérateur — accel1_sec → IOMMU directement
+            `AXI_ASSIGN_TO_REQ(axi_iommu_tr_req, accel1_sec)
+            `AXI_ASSIGN_FROM_RESP(accel1_sec, axi_iommu_tr_rsp)
+            assign axi_iommu_tr_req.aw.id           = {1'b0, accel1_sec.aw_id};
+            assign axi_iommu_tr_req.ar.id           = {1'b0, accel1_sec.ar_id};
+            assign axi_iommu_tr_req.aw.stream_id    = accel1_sec.aw_stream_id;
+            assign axi_iommu_tr_req.aw.ss_id_valid  = accel1_sec.aw_ss_id_valid;
+            assign axi_iommu_tr_req.aw.substream_id = accel1_sec.aw_substream_id;
+            assign axi_iommu_tr_req.ar.stream_id    = accel1_sec.ar_stream_id;
+            assign axi_iommu_tr_req.ar.ss_id_valid  = accel1_sec.ar_ss_id_valid;
+            assign axi_iommu_tr_req.ar.substream_id = accel1_sec.ar_substream_id;
 
-            // Extension du champ ID sans mux (MSB = 0)
-            assign axi_iommu_tr_req.aw.id = {{1'b0}, accel1_dma.aw_id};
-            assign axi_iommu_tr_req.ar.id = {{1'b0}, accel1_dma.ar_id};
-
-            // Champs IOMMU accel 1 uniquement
-            assign axi_iommu_tr_req.aw.stream_id    = accel1_dma.aw_stream_id;
-            assign axi_iommu_tr_req.aw.ss_id_valid  = accel1_dma.aw_ss_id_valid;
-            assign axi_iommu_tr_req.aw.substream_id = accel1_dma.aw_substream_id;
-            assign axi_iommu_tr_req.ar.stream_id    = accel1_dma.ar_stream_id;
-            assign axi_iommu_tr_req.ar.ss_id_valid  = accel1_dma.ar_ss_id_valid;
-            assign axi_iommu_tr_req.ar.substream_id = accel1_dma.ar_substream_id;
-
-            // dma_cfg2 non utilisé → esclave d'erreur
-            ariane_axi_soc::req_slv_t  axi_dma2_cfg_req;
-            ariane_axi_soc::resp_slv_t axi_dma2_cfg_rsp;
-            `AXI_ASSIGN_TO_REQ(axi_dma2_cfg_req, dma_cfg2)
-            `AXI_ASSIGN_FROM_RESP(dma_cfg2, axi_dma2_cfg_rsp)
-            axi_err_slv #(
-                .AxiIdWidth ( ariane_soc::IdWidthSlave   ),
-                .req_t      ( ariane_axi_soc::req_slv_t  ),
-                .resp_t     ( ariane_axi_soc::resp_slv_t )
-            ) i_accel2_err_slv (
-                .clk_i(clk_i), .rst_ni(rst_ni), .test_i(1'b0),
-                .slv_req_i(axi_dma2_cfg_req), .slv_resp_o(axi_dma2_cfg_rsp)
-            );
+            // dma_cfg2 et wrapper_cfg2 non utilisés → esclaves d'erreur
+            for (genvar i = 0; i < 2; i++) begin : gen_disabled_err
+                ariane_axi_soc::req_slv_t  q; ariane_axi_soc::resp_slv_t r;
+                if (i == 0) begin
+                    `AXI_ASSIGN_TO_REQ(q, dma_cfg2)
+                    `AXI_ASSIGN_FROM_RESP(dma_cfg2, r)
+                end else begin
+                    `AXI_ASSIGN_TO_REQ(q, wrapper_cfg2)
+                    `AXI_ASSIGN_FROM_RESP(wrapper_cfg2, r)
+                end
+                axi_err_slv #(
+                    .AxiIdWidth(ariane_soc::IdWidthSlave),
+                    .req_t(ariane_axi_soc::req_slv_t),
+                    .resp_t(ariane_axi_soc::resp_slv_t)
+                ) i_err (.clk_i, .rst_ni, .test_i(1'b0),
+                         .slv_req_i(q), .slv_resp_o(r));
+            end
 
         end // gen_accel2 / gen_accel2_disabled
 
     end else begin : gen_dma_disabled
 
-        // Aucun accélérateur — les deux ports MMIO répondent SLVERR
-        ariane_axi_soc::req_slv_t  axi_dma_cfg_req;
-        ariane_axi_soc::resp_slv_t axi_dma_cfg_rsp;
-        `AXI_ASSIGN_TO_REQ(axi_dma_cfg_req, dma_cfg)
-        `AXI_ASSIGN_FROM_RESP(dma_cfg, axi_dma_cfg_rsp)
-        axi_err_slv #(
-            .AxiIdWidth(ariane_soc::IdWidthSlave),
-            .req_t(ariane_axi_soc::req_slv_t),
-            .resp_t(ariane_axi_soc::resp_slv_t)
-        ) i_dma1_err_slv (
-            .clk_i(clk_i), .rst_ni(rst_ni), .test_i(1'b0),
-            .slv_req_i(axi_dma_cfg_req), .slv_resp_o(axi_dma_cfg_rsp)
-        );
+        // Tous les ports → esclaves d'erreur
+        ariane_axi_soc::req_slv_t  q[4]; ariane_axi_soc::resp_slv_t r[4];
+        `AXI_ASSIGN_TO_REQ(q[0], dma_cfg)      `AXI_ASSIGN_FROM_RESP(dma_cfg,      r[0])
+        `AXI_ASSIGN_TO_REQ(q[1], dma_cfg2)     `AXI_ASSIGN_FROM_RESP(dma_cfg2,     r[1])
+        `AXI_ASSIGN_TO_REQ(q[2], wrapper_cfg1) `AXI_ASSIGN_FROM_RESP(wrapper_cfg1, r[2])
+        `AXI_ASSIGN_TO_REQ(q[3], wrapper_cfg2) `AXI_ASSIGN_FROM_RESP(wrapper_cfg2, r[3])
 
-        ariane_axi_soc::req_slv_t  axi_dma2_cfg_req;
-        ariane_axi_soc::resp_slv_t axi_dma2_cfg_rsp;
-        `AXI_ASSIGN_TO_REQ(axi_dma2_cfg_req, dma_cfg2)
-        `AXI_ASSIGN_FROM_RESP(dma_cfg2, axi_dma2_cfg_rsp)
-        axi_err_slv #(
-            .AxiIdWidth(ariane_soc::IdWidthSlave),
-            .req_t(ariane_axi_soc::req_slv_t),
-            .resp_t(ariane_axi_soc::resp_slv_t)
-        ) i_dma2_err_slv (
-            .clk_i(clk_i), .rst_ni(rst_ni), .test_i(1'b0),
-            .slv_req_i(axi_dma2_cfg_req), .slv_resp_o(axi_dma2_cfg_rsp)
-        );
+        for (genvar i = 0; i < 4; i++) begin : gen_err
+            axi_err_slv #(
+                .AxiIdWidth(ariane_soc::IdWidthSlave),
+                .req_t(ariane_axi_soc::req_slv_t),
+                .resp_t(ariane_axi_soc::resp_slv_t)
+            ) i_err (.clk_i, .rst_ni, .test_i(1'b0),
+                     .slv_req_i(q[i]), .slv_resp_o(r[i]));
+        end
 
         assign axi_iommu_tr_req.ar_valid = 1'b0;
         assign axi_iommu_tr_req.aw_valid = 1'b0;
@@ -778,7 +1037,6 @@ module ariane_peripherals #(
             .N_IOHPMCTR      ( 8                              ),
             .ADDR_WIDTH      ( AxiAddrWidth                   ),
             .DATA_WIDTH      ( AxiDataWidth                   ),
-            // ID_WIDTH = ariane_soc::IdWidth = 4b (sortie du mux 2:1)
             .ID_WIDTH        ( ariane_soc::IdWidth            ),
             .ID_SLV_WIDTH    ( ariane_soc::IdWidthSlave       ),
             .USER_WIDTH      ( AxiUserWidth                   ),
@@ -791,13 +1049,11 @@ module ariane_peripherals #(
             .axi_rsp_t       ( ariane_axi_soc::resp_t        ),
             .axi_req_slv_t   ( ariane_axi_soc::req_slv_t     ),
             .axi_rsp_slv_t   ( ariane_axi_soc::resp_slv_t    ),
-            // req_mmu_t : type original (ID=ariane_soc::IdWidth, champs MMU)
             .axi_req_mmu_t   ( ariane_axi_soc::req_mmu_t     ),
             .reg_req_t       ( iommu_reg_req_t                ),
             .reg_rsp_t       ( iommu_reg_rsp_t                )
         ) i_riscv_iommu (
-            .clk_i           ( clk_i              ),
-            .rst_ni          ( rst_ni             ),
+            .clk_i, .rst_ni,
             .dev_tr_req_i    ( axi_iommu_tr_req   ),
             .dev_tr_resp_o   ( axi_iommu_tr_rsp   ),
             .dev_comp_resp_i ( axi_iommu_comp_rsp ),
@@ -816,17 +1072,15 @@ module ariane_peripherals #(
             .req_t(ariane_axi_soc::req_slv_t),
             .resp_t(ariane_axi_soc::resp_slv_t)
         ) i_iommu_err_slv (
-            .clk_i(clk_i), .rst_ni(rst_ni), .test_i(1'b0),
+            .clk_i, .rst_ni, .test_i(1'b0),
             .slv_req_i(axi_iommu_cfg_req), .slv_resp_o(axi_iommu_cfg_rsp)
         );
 
         `AXI_ASSIGN_FROM_REQ(iommu_comp, axi_iommu_tr_req)
         `AXI_ASSIGN_TO_RESP(axi_iommu_tr_rsp, iommu_comp)
 
-        assign iommu_ds.aw_valid = 1'b0;
-        assign iommu_ds.w_valid  = 1'b0;
-        assign iommu_ds.b_ready  = 1'b0;
-        assign iommu_ds.ar_valid = 1'b0;
+        assign iommu_ds.aw_valid = 1'b0; assign iommu_ds.w_valid  = 1'b0;
+        assign iommu_ds.b_ready  = 1'b0; assign iommu_ds.ar_valid = 1'b0;
         assign iommu_ds.r_ready  = 1'b0;
 
         assign irq_sources[(ariane_soc::IOMMUNumWires-1)+8:8] = '0;
