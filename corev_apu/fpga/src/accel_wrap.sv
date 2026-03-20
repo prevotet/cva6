@@ -48,6 +48,12 @@ module accel_wrap #(
     input  logic clk_i,
     input  logic rst_ni,
     input  logic testmode_i,
+    input  logic btnu_i,
+    input  logic btnd_i,
+    input  logic btnl_i,
+    input  logic btnr_i,
+    input  logic btnc_i,
+    
 
     // Interface de configuration MMIO (esclave AXI, depuis le XBAR)
     AXI_BUS.Slave  axi_cfg,
@@ -97,7 +103,12 @@ module accel_wrap #(
         // Configuration MMIO depuis le XBAR (dma_cfg ou dma_cfg2)
         .axi_slave  ( axi_cfg    ),
         // Master DMA interne (avant estampillage stream_id)
-        .axi_master ( idma_master )
+        .axi_master ( idma_master ),
+        .btnu_i     ( btnu_i      ),
+        .btnd_i     ( btnd_i      ),
+        .btnl_i     ( btnl_i      ),
+        .btnr_i     ( btnr_i      ),
+        .btnc_i     ( btnc_i      )
         // NOTE : si dma_core_wrap expose une interface de
         // déclenchement logicielle (start/done/addr), connecter ici.
         // Dans l'implémentation actuelle, le CVA6 programme directement

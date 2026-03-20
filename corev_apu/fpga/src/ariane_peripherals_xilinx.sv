@@ -511,7 +511,12 @@ module ariane_peripherals #(
         ) i_accel1 (
             .clk_i, .rst_ni, .testmode_i(1'b0),
             .axi_cfg ( dma_cfg    ),
-            .axi_dma ( accel1_dma )
+            .axi_dma ( accel1_dma ),
+            .btnu_i  ( btnu_i     ),
+            .btnd_i  ( btnd_i     ),
+            .btnl_i  ( btnl_i     ),
+            .btnr_i  ( btnr_i     ),
+            .btnc_i  ( btnc_i     )
         );
 
         // Conversion accel1_dma → structs pour le security wrapper
@@ -685,7 +690,12 @@ module ariane_peripherals #(
             ) i_accel2 (
                 .clk_i, .rst_ni, .testmode_i(1'b0),
                 .axi_cfg ( dma_cfg2   ),
-                .axi_dma ( accel2_dma )
+                .axi_dma ( accel2_dma ),
+                .btnu_i  ( 1'b0       ),
+                .btnd_i  ( 1'b0       ),
+                .btnl_i  ( 1'b0       ),
+                .btnr_i  ( 1'b0       ),
+                .btnc_i  ( 1'b0       )
             );
 
             ariane_axi_soc::req_mmu_t  req_accel2_in;
