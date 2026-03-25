@@ -70,11 +70,6 @@ proc create_report { reportName command } {
   }
 }
 OPTRACE "synth_1" START { ROLLUP_AUTO }
-set_param checkpoint.writeSynthRtdsInDcp 1
-set_param synth.incrementalSynthesisCache ./.Xil/Vivado-136726-jc-VirtualBox/incrSyn
-set_msg_config -id {Synth 8-256} -limit 10000
-set_msg_config -id {Synth 8-4480} -limit 1000
-set_msg_config -id {Synth 8-638} -limit 10000
 set_msg_config  -id {[Synth 8-5858]}  -new_severity {INFO} 
 OPTRACE "Creating in-memory project" START { }
 create_project -in_memory -part xc7k325tffg900-2
@@ -432,6 +427,9 @@ set_property used_in_implementation false [get_files /home/jc/tmp/riscv-iommu-de
 
 read_xdc /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/constraints/ariane.xdc
 set_property used_in_implementation false [get_files /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/constraints/ariane.xdc]
+
+read_xdc /home/jc/tmp/riscv-iommu-demo/dpr/constraints/pblock_accels.xdc
+set_property used_in_implementation false [get_files /home/jc/tmp/riscv-iommu-demo/dpr/constraints/pblock_accels.xdc]
 
 read_xdc dont_touch.xdc
 set_property used_in_implementation false [get_files dont_touch.xdc]
