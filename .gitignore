@@ -46,3 +46,6 @@ xrun_results/
 __pycache__
 .bender/
 .runs/
+*.dcp
+corev_apu/fpga/**/*.dcp
+*.dcp
