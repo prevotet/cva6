@@ -430,16 +430,13 @@ set_property used_in_implementation false [get_files /home/jc/tmp/riscv-iommu-de
 read_xdc /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/constraints/ariane.xdc
 set_property used_in_implementation false [get_files /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/constraints/ariane.xdc]
 
-read_xdc /home/jc/tmp/riscv-iommu-demo/dpr/constraints/pblock_accels.xdc
-set_property used_in_implementation false [get_files /home/jc/tmp/riscv-iommu-demo/dpr/constraints/pblock_accels.xdc]
-
 read_xdc dont_touch.xdc
 set_property used_in_implementation false [get_files dont_touch.xdc]
 set_param ips.enableIPCacheLiteLoad 1
 close [open __synthesis_is_running__ w]
 
 OPTRACE "synth_design" START { }
-synth_design -top ariane_xilinx -part xc7k325tffg900-2 -retiming
+synth_design -top ariane_xilinx -part xc7k325tffg900-2 -flatten_hierarchy none -retiming
 OPTRACE "synth_design" END { }
 if { [get_msg_config -count -severity {CRITICAL WARNING}] > 0 } {
  send_msg_id runtcl-6 info "Synthesis results are not added to the cache due to CRITICAL_WARNING"

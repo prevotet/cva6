@@ -5,8 +5,6 @@
 
 # XDC: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/constraints/ariane.xdc
 
-# XDC: /home/jc/tmp/riscv-iommu-demo/dpr/constraints/pblock_accels.xdc
-
 # IP: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_dwidth_converter_dm_master/xlnx_axi_dwidth_converter_dm_master.srcs/sources_1/ip/xlnx_axi_dwidth_converter_dm_master/xlnx_axi_dwidth_converter_dm_master.xci
 set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==xlnx_axi_dwidth_converter_dm_master || ORIG_REF_NAME==xlnx_axi_dwidth_converter_dm_master} -quiet] -quiet
 

@@ -45,5 +45,4 @@ xrun_results/
 /core/include/gen64_config_pkg.sv
 __pycache__
 .bender/
-*.dcp
 .runs/

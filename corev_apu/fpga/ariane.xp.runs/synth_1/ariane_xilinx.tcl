@@ -296,6 +296,8 @@ read_verilog -library xil_defaultlib -sv {
   /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/ariane-ethernet/rgmii_soc.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/rv_iommu/packages/rv_iommu/rv_iommu_reg_pkg.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/rv_iommu/rtl/riscv_iommu.sv
+  /home/jc/tmp/riscv-iommu-demo/dpr/src/rp_boundary_regs.sv
+  /home/jc/tmp/riscv-iommu-demo/dpr/src/rp_boundary_regs_mmu.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/vendor/pulp-platform/common_cells/src/rr_arb_tree.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/vendor/pulp-platform/common_cells/src/rstgen.sv
   /home/jc/tmp/riscv-iommu-demo/cva6/vendor/pulp-platform/common_cells/src/rstgen_bypass.sv
@@ -434,7 +436,7 @@ set_param ips.enableIPCacheLiteLoad 1
 close [open __synthesis_is_running__ w]
 
 OPTRACE "synth_design" START { }
-synth_design -top ariane_xilinx -part xc7k325tffg900-2 -flatten_hierarchy none
+synth_design -top ariane_xilinx -part xc7k325tffg900-2 -flatten_hierarchy none -retiming
 OPTRACE "synth_design" END { }
 if { [get_msg_config -count -severity {CRITICAL WARNING}] > 0 } {
  send_msg_id runtcl-6 info "Synthesis results are not added to the cache due to CRITICAL_WARNING"
