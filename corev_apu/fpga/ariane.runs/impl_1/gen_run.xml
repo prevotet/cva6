@@ -1,14 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<GenRun Id="synth_1" LaunchPart="xc7k325tffg900-2" LaunchTime="1774479385">
-  <File Type="VDS-TIMINGSUMMARY" Name="ariane_xilinx_timing_summary_synth.rpt"/>
-  <File Type="RDS-DCP" Name="ariane_xilinx.dcp"/>
-  <File Type="RDS-UTIL-PB" Name="ariane_xilinx_utilization_synth.pb"/>
-  <File Type="RDS-UTIL" Name="ariane_xilinx_utilization_synth.rpt"/>
-  <File Type="RDS-PROPCONSTRS" Name="ariane_xilinx_drc_synth.rpt"/>
-  <File Type="RDS-RDS" Name="ariane_xilinx.vds"/>
-  <File Type="REPORTS-TCL" Name="ariane_xilinx_reports.tcl"/>
-  <File Type="VDS-TIMING-PB" Name="ariane_xilinx_timing_summary_synth.pb"/>
+<GenRun Id="impl_1" LaunchPart="xc7k325tffg900-2" LaunchTime="1774477656">
+  <File Type="POSTROUTE-PHYSOPT-RQS-RPT" Name="postroute_physopt_report_qor_suggestions_0.rpt"/>
+  <File Type="ROUTE-RQS-RPT" Name="route_report_qor_suggestions_0.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-RQS" Name="ariane_xilinx_postroute_physopted.rqs"/>
+  <File Type="ROUTE-RQS" Name="ariane_xilinx_routed.rqs"/>
+  <File Type="WBT-USG" Name="usage_statistics_webtalk.html"/>
+  <File Type="BG-DRC" Name="ariane_xilinx.drc"/>
+  <File Type="BG-BGN" Name="ariane_xilinx.bgn"/>
+  <File Type="BITSTR-SYSDEF" Name="ariane_xilinx.sysdef"/>
+  <File Type="BITSTR-LTX" Name="debug_nets.ltx"/>
+  <File Type="BITSTR-LTX" Name="ariane_xilinx.ltx"/>
+  <File Type="RBD_FILE" Name="ariane_xilinx.rbd"/>
+  <File Type="NPI_FILE" Name="ariane_xilinx.npi"/>
+  <File Type="RNPI_FILE" Name="ariane_xilinx.rnpi"/>
+  <File Type="CFI_FILE" Name="ariane_xilinx.cfi"/>
+  <File Type="RCFI_FILE" Name="ariane_xilinx.rcfi"/>
+  <File Type="RDI-RDI" Name="ariane_xilinx.vdi"/>
+  <File Type="PDI-FILE" Name="ariane_xilinx.pdi"/>
+  <File Type="BITSTR-MMI" Name="ariane_xilinx.mmi"/>
+  <File Type="BITSTR-BMM" Name="ariane_xilinx_bd.bmm"/>
+  <File Type="BITSTR-NKY" Name="ariane_xilinx.nky"/>
+  <File Type="BITSTR-RBT" Name="ariane_xilinx.rbt"/>
+  <File Type="BITSTR-MSK" Name="ariane_xilinx.msk"/>
+  <File Type="BG-BIN" Name="ariane_xilinx.bin"/>
+  <File Type="BG-BIT" Name="ariane_xilinx.bit"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-RPX" Name="ariane_xilinx_bus_skew_postroute_physopted.rpx"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-PB" Name="ariane_xilinx_bus_skew_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW" Name="ariane_xilinx_bus_skew_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-RPX" Name="ariane_xilinx_timing_summary_postroute_physopted.rpx"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-PB" Name="ariane_xilinx_timing_summary_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING" Name="ariane_xilinx_timing_summary_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-BLACKBOX-DCP" Name="ariane_xilinx_postroute_physopt_bb.dcp"/>
+  <File Type="POSTROUTE-PHYSOPT-DCP" Name="ariane_xilinx_postroute_physopt.dcp"/>
+  <File Type="ROUTE-BUS-SKEW-RPX" Name="ariane_xilinx_bus_skew_routed.rpx"/>
   <File Type="PA-TCL" Name="ariane_xilinx.tcl"/>
+  <File Type="INIT-TIMING" Name="ariane_xilinx_timing_summary_init.rpt"/>
+  <File Type="OPT-DCP" Name="ariane_xilinx_opt.dcp"/>
+  <File Type="OPT-DRC" Name="ariane_xilinx_drc_opted.rpt"/>
+  <File Type="PLACE-TIMING" Name="ariane_xilinx_timing_summary_placed.rpt"/>
+  <File Type="OPT-METHODOLOGY-DRC" Name="ariane_xilinx_methodology_drc_opted.rpt"/>
+  <File Type="PLACE-UTIL-PB" Name="ariane_xilinx_utilization_placed.pb"/>
+  <File Type="OPT-HWDEF" Name="ariane_xilinx.hwdef"/>
+  <File Type="POSTPLACE-PWROPT-TIMING" Name="ariane_xilinx_timing_summary_postplace_pwropted.rpt"/>
+  <File Type="REPORTS-TCL" Name="ariane_xilinx_reports.tcl"/>
+  <File Type="OPT-TIMING" Name="ariane_xilinx_timing_summary_opted.rpt"/>
+  <File Type="PWROPT-DCP" Name="ariane_xilinx_pwropt.dcp"/>
+  <File Type="PWROPT-DRC" Name="ariane_xilinx_drc_pwropted.rpt"/>
+  <File Type="PWROPT-TIMING" Name="ariane_xilinx_timing_summary_pwropted.rpt"/>
+  <File Type="PLACE-DCP" Name="ariane_xilinx_placed.dcp"/>
+  <File Type="PLACE-IO" Name="ariane_xilinx_io_placed.rpt"/>
+  <File Type="PHYSOPT-TIMING" Name="ariane_xilinx_timing_summary_physopted.rpt"/>
+  <File Type="PLACE-CLK" Name="ariane_xilinx_clock_utilization_placed.rpt"/>
+  <File Type="PLACE-UTIL" Name="ariane_xilinx_utilization_placed.rpt"/>
+  <File Type="PLACE-CTRL" Name="ariane_xilinx_control_sets_placed.rpt"/>
+  <File Type="ROUTE-METHODOLOGY-DRC" Name="ariane_xilinx_methodology_drc_routed.rpt"/>
+  <File Type="PLACE-SIMILARITY" Name="ariane_xilinx_incremental_reuse_placed.rpt"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-PB" Name="ariane_xilinx_methodology_drc_routed.pb"/>
+  <File Type="PLACE-PRE-SIMILARITY" Name="ariane_xilinx_incremental_reuse_pre_placed.rpt"/>
+  <File Type="ROUTE-DRC-RPX" Name="ariane_xilinx_drc_routed.rpx"/>
+  <File Type="POSTPLACE-PWROPT-DCP" Name="ariane_xilinx_postplace_pwropt.dcp"/>
+  <File Type="PHYSOPT-DCP" Name="ariane_xilinx_physopt.dcp"/>
+  <File Type="PHYSOPT-DRC" Name="ariane_xilinx_drc_physopted.rpt"/>
+  <File Type="ROUTE-ERROR-DCP" Name="ariane_xilinx_routed_error.dcp"/>
+  <File Type="ROUTE-DCP" Name="ariane_xilinx_routed.dcp"/>
+  <File Type="ROUTE-BLACKBOX-DCP" Name="ariane_xilinx_routed_bb.dcp"/>
+  <File Type="ROUTE-DRC" Name="ariane_xilinx_drc_routed.rpt"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-RPX" Name="ariane_xilinx_methodology_drc_routed.rpx"/>
+  <File Type="ROUTE-DRC-PB" Name="ariane_xilinx_drc_routed.pb"/>
+  <File Type="ROUTE-PWR" Name="ariane_xilinx_power_routed.rpt"/>
+  <File Type="ROUTE-PWR-SUM" Name="ariane_xilinx_power_summary_routed.pb"/>
+  <File Type="ROUTE-PWR-RPX" Name="ariane_xilinx_power_routed.rpx"/>
+  <File Type="ROUTE-STATUS" Name="ariane_xilinx_route_status.rpt"/>
+  <File Type="ROUTE-STATUS-PB" Name="ariane_xilinx_route_status.pb"/>
+  <File Type="ROUTE-TIMINGSUMMARY" Name="ariane_xilinx_timing_summary_routed.rpt"/>
+  <File Type="ROUTE-TIMING-PB" Name="ariane_xilinx_timing_summary_routed.pb"/>
+  <File Type="ROUTE-TIMING-RPX" Name="ariane_xilinx_timing_summary_routed.rpx"/>
+  <File Type="ROUTE-SIMILARITY" Name="ariane_xilinx_incremental_reuse_routed.rpt"/>
+  <File Type="ROUTE-CLK" Name="ariane_xilinx_clock_utilization_routed.rpt"/>
+  <File Type="ROUTE-BUS-SKEW" Name="ariane_xilinx_bus_skew_routed.rpt"/>
+  <File Type="ROUTE-BUS-SKEW-PB" Name="ariane_xilinx_bus_skew_routed.pb"/>
   <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
     <Filter Type="Srcs"/>
     <File Path="$PPRDIR/../../vendor/pulp-platform/common_cells/include/common_cells/registers.svh">
@@ -1427,20 +1497,6 @@
         <Attr Name="UsedIn" Val="simulation"/>
       </FileInfo>
     </File>
-    <File Path="$PPRDIR/../../../dpr/src/rp_boundary_regs.sv">
-      <FileInfo>
-        <Attr Name="UsedIn" Val="synthesis"/>
-        <Attr Name="UsedIn" Val="implementation"/>
-        <Attr Name="UsedIn" Val="simulation"/>
-      </FileInfo>
-    </File>
-    <File Path="$PPRDIR/../../../dpr/src/rp_boundary_regs_mmu.sv">
-      <FileInfo>
-        <Attr Name="UsedIn" Val="synthesis"/>
-        <Attr Name="UsedIn" Val="implementation"/>
-        <Attr Name="UsedIn" Val="simulation"/>
-      </FileInfo>
-    </File>
     <File Path="$PPRDIR/../../vendor/pulp-platform/common_cells/src/rr_arb_tree.sv">
       <FileInfo>
         <Attr Name="UsedIn" Val="synthesis"/>
@@ -2161,6 +2217,14 @@
         <Attr Name="UsedIn" Val="simulation"/>
       </FileInfo>
     </File>
+    <File Path="$PPRDIR/../../../dpr/src/rp_boundary_regs.sv">
+      <FileInfo>
+        <Attr Name="AutoDisabled" Val="1"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
     <Config>
       <Option Name="DesignMode" Val="RTL"/>
       <Option Name="TopModule" Val="ariane_xilinx"/>
@@ -2197,9 +2261,15 @@
     </Config>
   </FileSet>
   <Strategy Version="1" Minor="2">
-    <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2022"/>
-    <Step Id="synth_design">
-      <Option Id="ReTiming">1</Option>
-    </Step>
+    <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2022"/>
+    <Step Id="init_design"/>
+    <Step Id="opt_design"/>
+    <Step Id="power_opt_design"/>
+    <Step Id="place_design"/>
+    <Step Id="post_place_power_opt_design"/>
+    <Step Id="phys_opt_design"/>
+    <Step Id="route_design"/>
+    <Step Id="post_route_phys_opt_design"/>
+    <Step Id="write_bitstream"/>
   </Strategy>
 </GenRun>

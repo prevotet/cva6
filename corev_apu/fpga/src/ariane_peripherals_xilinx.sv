@@ -474,33 +474,88 @@ module ariane_peripherals #(
         );
     end
 
+    
     // =======================================================================
-    //  7. Accélérateurs DMA + security wrappers + IOMMU
+    //  7. Accélérateurs DMA + security wrappers + IOMMU (DPR-ready)
     // =======================================================================
-
-
-    // Bus entre device(s) et IOMMU TR IF
+    //
+    //  DPR insertion points:
+    //    CFG:  dma_cfg ──► rp_boundary_regs ──►│ accel_wrap │
+    //    DMA:  │ accel_wrap │──► rp_boundary_regs_mmu ──► wrapper (sec)
+    //                       │── RP ──│
+    //
+ 
     ariane_axi_soc::req_mmu_t  axi_iommu_tr_req;
     ariane_axi_soc::resp_t     axi_iommu_tr_rsp;
-
-    // Bus XBAR → IOMMU programming IF
+ 
     ariane_axi_soc::req_slv_t  axi_iommu_cfg_req;
     ariane_axi_soc::resp_slv_t axi_iommu_cfg_rsp;
     `AXI_ASSIGN_TO_REQ(axi_iommu_cfg_req, iommu_cfg)
     `AXI_ASSIGN_FROM_RESP(iommu_cfg, axi_iommu_cfg_rsp)
-
+ 
     if (InclDMA) begin : gen_dma
-
-        // -------------------------------------------------------------------
-        //  Accélérateur 1
-        // -------------------------------------------------------------------
+ 
+        // ===================================================================
+        //  Accélérateur 1 — with DPR boundary registers
+        // ===================================================================
+ 
+        // --- Internal buses (all STATIC) ---
+ 
+        // CFG path: dma_cfg → boundary_regs → accel_wrap.axi_cfg
+        AXI_BUS #(
+            .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
+            .AXI_DATA_WIDTH ( AxiDataWidth             ),
+            .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
+            .AXI_USER_WIDTH ( AxiUserWidth             )
+        ) accel1_cfg_to_rp ();
+ 
+        // DMA path: accel_wrap.axi_dma → boundary_regs_mmu → wrapper
+        AXI_BUS_MMU #(
+            .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
+            .AXI_DATA_WIDTH ( AxiDataWidth            ),
+            .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
+            .AXI_USER_WIDTH ( AxiUserWidth            )
+        ) accel1_dma_from_rp ();
+ 
         AXI_BUS_MMU #(
             .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
             .AXI_DATA_WIDTH ( AxiDataWidth            ),
             .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
             .AXI_USER_WIDTH ( AxiUserWidth            )
         ) accel1_dma (), accel1_sec ();
-
+ 
+        // ----- DPR boundary: CFG (STATIC) -----
+        // XBAR(dma_cfg) → rp_boundary_regs → accel_wrap.axi_cfg
+        rp_boundary_regs #(
+            .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
+            .AXI_DATA_WIDTH ( AxiDataWidth             ),
+            .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
+            .AXI_USER_WIDTH ( AxiUserWidth             ),
+            .PASS_THROUGH   ( 0                        )
+        ) i_boundary_cfg_accel1 (
+            .clk_i  ( clk_i            ),
+            .rst_ni ( rst_ni           ),
+            .s      ( dma_cfg          ),
+            .m      ( accel1_cfg_to_rp )
+        );
+ 
+        // ----- DPR boundary: DMA (STATIC) -----
+        // accel_wrap.axi_dma → rp_boundary_regs_mmu → accel1_dma (→ wrapper)
+        rp_boundary_regs_mmu #(
+            .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
+            .AXI_DATA_WIDTH ( AxiDataWidth            ),
+            .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
+            .AXI_USER_WIDTH ( AxiUserWidth            ),
+            .PASS_THROUGH   ( 0                       )
+        ) i_boundary_dma_accel1 (
+            .clk_i  ( clk_i              ),
+            .rst_ni ( rst_ni             ),
+            .s      ( accel1_dma_from_rp ),
+            .m      ( accel1_dma         )
+        );
+ 
+        // ----- accel_wrap #1 (RECONFIGURABLE — RP1) -----
+        // Instance path: gen_dma.i_accel1
         accel_wrap #(
             .AXI_ADDR_WIDTH   ( AxiAddrWidth             ),
             .AXI_DATA_WIDTH   ( AxiDataWidth             ),
@@ -510,129 +565,136 @@ module ariane_peripherals #(
             .STREAM_ID        ( 24'd1                    )
         ) i_accel1 (
             .clk_i, .rst_ni, .testmode_i(1'b0),
-            .axi_cfg ( dma_cfg    ),
-            .axi_dma ( accel1_dma ),
+            .axi_cfg ( accel1_cfg_to_rp  ),
+            .axi_dma ( accel1_dma_from_rp ),
             .btnu_i  ( btnu_i     ),
             .btnd_i  ( btnd_i     ),
             .btnl_i  ( btnl_i     ),
             .btnr_i  ( btnr_i     ),
             .btnc_i  ( btnc_i     )
         );
-
-        // Conversion accel1_dma → structs pour le security wrapper
+ 
+        // ----- Struct conversion: accel1_dma (AXI_BUS_MMU) → wrapper structs -----
         ariane_axi_soc::req_mmu_t  req_accel1_in;
         ariane_axi_soc::resp_slv_t resp_accel1_in;
         ariane_axi_soc::req_mmu_t  req_accel1_out;
         ariane_axi_soc::resp_t     resp_accel1_out;
         ariane_axi_soc::req_slv_t  req_cpu_wrap1;
         ariane_axi_soc::resp_slv_t resp_cpu_wrap1;
-
-            assign req_accel1_in.aw_valid        = accel1_dma.aw_valid;
-            assign req_accel1_in.aw.id             = accel1_dma.aw_id;
-            assign req_accel1_in.aw.addr           = accel1_dma.aw_addr;
-            assign req_accel1_in.aw.len            = accel1_dma.aw_len;
-            assign req_accel1_in.aw.size           = accel1_dma.aw_size;
-            assign req_accel1_in.aw.burst          = accel1_dma.aw_burst;
-            assign req_accel1_in.aw.lock           = accel1_dma.aw_lock;
-            assign req_accel1_in.aw.cache          = accel1_dma.aw_cache;
-            assign req_accel1_in.aw.prot           = accel1_dma.aw_prot;
-            assign req_accel1_in.aw.qos            = accel1_dma.aw_qos;
-            assign req_accel1_in.aw.region         = accel1_dma.aw_region;
-            assign req_accel1_in.aw.atop           = accel1_dma.aw_atop;
-            assign req_accel1_in.aw.user           = accel1_dma.aw_user;
-            assign req_accel1_in.aw.stream_id      = accel1_dma.aw_stream_id;
-            assign req_accel1_in.aw.ss_id_valid    = accel1_dma.aw_ss_id_valid;
-            assign req_accel1_in.aw.substream_id   = accel1_dma.aw_substream_id;
-            assign req_accel1_in.ar_valid        = accel1_dma.ar_valid;
-            assign req_accel1_in.ar.id             = accel1_dma.ar_id;
-            assign req_accel1_in.ar.addr           = accel1_dma.ar_addr;
-            assign req_accel1_in.ar.len            = accel1_dma.ar_len;
-            assign req_accel1_in.ar.size           = accel1_dma.ar_size;
-            assign req_accel1_in.ar.burst          = accel1_dma.ar_burst;
-            assign req_accel1_in.ar.lock           = accel1_dma.ar_lock;
-            assign req_accel1_in.ar.cache          = accel1_dma.ar_cache;
-            assign req_accel1_in.ar.prot           = accel1_dma.ar_prot;
-            assign req_accel1_in.ar.qos            = accel1_dma.ar_qos;
-            assign req_accel1_in.ar.region         = accel1_dma.ar_region;
-            assign req_accel1_in.ar.user           = accel1_dma.ar_user;
-            assign req_accel1_in.ar.stream_id      = accel1_dma.ar_stream_id;
-            assign req_accel1_in.ar.ss_id_valid    = accel1_dma.ar_ss_id_valid;
-            assign req_accel1_in.ar.substream_id   = accel1_dma.ar_substream_id;
-            assign req_accel1_in.w_valid  = accel1_dma.w_valid;
-            assign req_accel1_in.w.data   = accel1_dma.w_data;
-            assign req_accel1_in.w.strb   = accel1_dma.w_strb;
-            assign req_accel1_in.w.last   = accel1_dma.w_last;
-            assign req_accel1_in.w.user   = accel1_dma.w_user;
-            assign req_accel1_in.b_ready  = accel1_dma.b_ready;
-            assign req_accel1_in.r_ready  = accel1_dma.r_ready;
-            assign accel1_dma.aw_ready = resp_accel1_in.aw_ready;
-            assign accel1_dma.w_ready  = resp_accel1_in.w_ready;
-            assign accel1_dma.b_valid  = resp_accel1_in.b_valid;
-            assign accel1_dma.b_id     = resp_accel1_in.b.id[ariane_soc::IdWidth - 2:0];
-            assign accel1_dma.b_resp   = resp_accel1_in.b.resp;
-            assign accel1_dma.b_user   = resp_accel1_in.b.user;
-            assign accel1_dma.ar_ready = resp_accel1_in.ar_ready;
-            assign accel1_dma.r_valid  = resp_accel1_in.r_valid;
-            assign accel1_dma.r_id     = resp_accel1_in.r.id[ariane_soc::IdWidth - 2:0];
-            assign accel1_dma.r_data   = resp_accel1_in.r.data;
-            assign accel1_dma.r_resp   = resp_accel1_in.r.resp;
-            assign accel1_dma.r_last   = resp_accel1_in.r.last;
-            assign accel1_dma.r_user   = resp_accel1_in.r.user;
-            assign accel1_sec.aw_valid          = req_accel1_out.aw_valid;
-            assign accel1_sec.aw_id             = req_accel1_out.aw.id;
-            assign accel1_sec.aw_addr           = req_accel1_out.aw.addr;
-            assign accel1_sec.aw_len            = req_accel1_out.aw.len;
-            assign accel1_sec.aw_size           = req_accel1_out.aw.size;
-            assign accel1_sec.aw_burst          = req_accel1_out.aw.burst;
-            assign accel1_sec.aw_lock           = req_accel1_out.aw.lock;
-            assign accel1_sec.aw_cache          = req_accel1_out.aw.cache;
-            assign accel1_sec.aw_prot           = req_accel1_out.aw.prot;
-            assign accel1_sec.aw_qos            = req_accel1_out.aw.qos;
-            assign accel1_sec.aw_region         = req_accel1_out.aw.region;
-            assign accel1_sec.aw_atop           = req_accel1_out.aw.atop;
-            assign accel1_sec.aw_user           = req_accel1_out.aw.user;
-            assign accel1_sec.aw_stream_id      = req_accel1_out.aw.stream_id;
-            assign accel1_sec.aw_ss_id_valid    = req_accel1_out.aw.ss_id_valid;
-            assign accel1_sec.aw_substream_id   = req_accel1_out.aw.substream_id;
-            assign accel1_sec.ar_valid          = req_accel1_out.ar_valid;
-            assign accel1_sec.ar_id             = req_accel1_out.ar.id;
-            assign accel1_sec.ar_addr           = req_accel1_out.ar.addr;
-            assign accel1_sec.ar_len            = req_accel1_out.ar.len;
-            assign accel1_sec.ar_size           = req_accel1_out.ar.size;
-            assign accel1_sec.ar_burst          = req_accel1_out.ar.burst;
-            assign accel1_sec.ar_lock           = req_accel1_out.ar.lock;
-            assign accel1_sec.ar_cache          = req_accel1_out.ar.cache;
-            assign accel1_sec.ar_prot           = req_accel1_out.ar.prot;
-            assign accel1_sec.ar_qos            = req_accel1_out.ar.qos;
-            assign accel1_sec.ar_region         = req_accel1_out.ar.region;
-            assign accel1_sec.ar_user           = req_accel1_out.ar.user;
-            assign accel1_sec.ar_stream_id      = req_accel1_out.ar.stream_id;
-            assign accel1_sec.ar_ss_id_valid    = req_accel1_out.ar.ss_id_valid;
-            assign accel1_sec.ar_substream_id   = req_accel1_out.ar.substream_id;
-            assign accel1_sec.w_valid  = req_accel1_out.w_valid;
-            assign accel1_sec.w_data   = req_accel1_out.w.data;
-            assign accel1_sec.w_strb   = req_accel1_out.w.strb;
-            assign accel1_sec.w_last   = req_accel1_out.w.last;
-            assign accel1_sec.w_user   = req_accel1_out.w.user;
-            assign accel1_sec.b_ready  = req_accel1_out.b_ready;
-            assign accel1_sec.r_ready  = req_accel1_out.r_ready;
-            assign resp_accel1_out.aw_ready = accel1_sec.aw_ready;
-            assign resp_accel1_out.w_ready  = accel1_sec.w_ready;
-            assign resp_accel1_out.ar_ready = accel1_sec.ar_ready;
-            assign resp_accel1_out.b_valid  = accel1_sec.b_valid;
-            assign resp_accel1_out.b.id     = accel1_sec.b_id;
-            assign resp_accel1_out.b.resp   = accel1_sec.b_resp;
-            assign resp_accel1_out.b.user   = accel1_sec.b_user;
-            assign resp_accel1_out.r_valid  = accel1_sec.r_valid;
-            assign resp_accel1_out.r.id     = accel1_sec.r_id;
-            assign resp_accel1_out.r.data   = accel1_sec.r_data;
-            assign resp_accel1_out.r.resp   = accel1_sec.r_resp;
-            assign resp_accel1_out.r.last   = accel1_sec.r_last;
-            assign resp_accel1_out.r.user   = accel1_sec.r_user;
-
+ 
+        // accel1_dma → req_accel1_in (input to wrapper)
+        assign req_accel1_in.aw_valid        = accel1_dma.aw_valid;
+        assign req_accel1_in.aw.id           = accel1_dma.aw_id;
+        assign req_accel1_in.aw.addr         = accel1_dma.aw_addr;
+        assign req_accel1_in.aw.len          = accel1_dma.aw_len;
+        assign req_accel1_in.aw.size         = accel1_dma.aw_size;
+        assign req_accel1_in.aw.burst        = accel1_dma.aw_burst;
+        assign req_accel1_in.aw.lock         = accel1_dma.aw_lock;
+        assign req_accel1_in.aw.cache        = accel1_dma.aw_cache;
+        assign req_accel1_in.aw.prot         = accel1_dma.aw_prot;
+        assign req_accel1_in.aw.qos          = accel1_dma.aw_qos;
+        assign req_accel1_in.aw.region       = accel1_dma.aw_region;
+        assign req_accel1_in.aw.atop         = accel1_dma.aw_atop;
+        assign req_accel1_in.aw.user         = accel1_dma.aw_user;
+        assign req_accel1_in.aw.stream_id    = accel1_dma.aw_stream_id;
+        assign req_accel1_in.aw.ss_id_valid  = accel1_dma.aw_ss_id_valid;
+        assign req_accel1_in.aw.substream_id = accel1_dma.aw_substream_id;
+        assign req_accel1_in.ar_valid        = accel1_dma.ar_valid;
+        assign req_accel1_in.ar.id           = accel1_dma.ar_id;
+        assign req_accel1_in.ar.addr         = accel1_dma.ar_addr;
+        assign req_accel1_in.ar.len          = accel1_dma.ar_len;
+        assign req_accel1_in.ar.size         = accel1_dma.ar_size;
+        assign req_accel1_in.ar.burst        = accel1_dma.ar_burst;
+        assign req_accel1_in.ar.lock         = accel1_dma.ar_lock;
+        assign req_accel1_in.ar.cache        = accel1_dma.ar_cache;
+        assign req_accel1_in.ar.prot         = accel1_dma.ar_prot;
+        assign req_accel1_in.ar.qos          = accel1_dma.ar_qos;
+        assign req_accel1_in.ar.region       = accel1_dma.ar_region;
+        assign req_accel1_in.ar.user         = accel1_dma.ar_user;
+        assign req_accel1_in.ar.stream_id    = accel1_dma.ar_stream_id;
+        assign req_accel1_in.ar.ss_id_valid  = accel1_dma.ar_ss_id_valid;
+        assign req_accel1_in.ar.substream_id = accel1_dma.ar_substream_id;
+        assign req_accel1_in.w_valid  = accel1_dma.w_valid;
+        assign req_accel1_in.w.data   = accel1_dma.w_data;
+        assign req_accel1_in.w.strb   = accel1_dma.w_strb;
+        assign req_accel1_in.w.last   = accel1_dma.w_last;
+        assign req_accel1_in.w.user   = accel1_dma.w_user;
+        assign req_accel1_in.b_ready  = accel1_dma.b_ready;
+        assign req_accel1_in.r_ready  = accel1_dma.r_ready;
+ 
+        // resp_accel1_in → accel1_dma (response back from wrapper)
+        assign accel1_dma.aw_ready = resp_accel1_in.aw_ready;
+        assign accel1_dma.w_ready  = resp_accel1_in.w_ready;
+        assign accel1_dma.b_valid  = resp_accel1_in.b_valid;
+        assign accel1_dma.b_id     = resp_accel1_in.b.id[ariane_soc::IdWidth - 2:0];
+        assign accel1_dma.b_resp   = resp_accel1_in.b.resp;
+        assign accel1_dma.b_user   = resp_accel1_in.b.user;
+        assign accel1_dma.ar_ready = resp_accel1_in.ar_ready;
+        assign accel1_dma.r_valid  = resp_accel1_in.r_valid;
+        assign accel1_dma.r_id     = resp_accel1_in.r.id[ariane_soc::IdWidth - 2:0];
+        assign accel1_dma.r_data   = resp_accel1_in.r.data;
+        assign accel1_dma.r_resp   = resp_accel1_in.r.resp;
+        assign accel1_dma.r_last   = resp_accel1_in.r.last;
+        assign accel1_dma.r_user   = resp_accel1_in.r.user;
+ 
+        // req_accel1_out → accel1_sec (output from wrapper to mux)
+        assign accel1_sec.aw_valid          = req_accel1_out.aw_valid;
+        assign accel1_sec.aw_id             = req_accel1_out.aw.id;
+        assign accel1_sec.aw_addr           = req_accel1_out.aw.addr;
+        assign accel1_sec.aw_len            = req_accel1_out.aw.len;
+        assign accel1_sec.aw_size           = req_accel1_out.aw.size;
+        assign accel1_sec.aw_burst          = req_accel1_out.aw.burst;
+        assign accel1_sec.aw_lock           = req_accel1_out.aw.lock;
+        assign accel1_sec.aw_cache          = req_accel1_out.aw.cache;
+        assign accel1_sec.aw_prot           = req_accel1_out.aw.prot;
+        assign accel1_sec.aw_qos            = req_accel1_out.aw.qos;
+        assign accel1_sec.aw_region         = req_accel1_out.aw.region;
+        assign accel1_sec.aw_atop           = req_accel1_out.aw.atop;
+        assign accel1_sec.aw_user           = req_accel1_out.aw.user;
+        assign accel1_sec.aw_stream_id      = req_accel1_out.aw.stream_id;
+        assign accel1_sec.aw_ss_id_valid    = req_accel1_out.aw.ss_id_valid;
+        assign accel1_sec.aw_substream_id   = req_accel1_out.aw.substream_id;
+        assign accel1_sec.ar_valid          = req_accel1_out.ar_valid;
+        assign accel1_sec.ar_id             = req_accel1_out.ar.id;
+        assign accel1_sec.ar_addr           = req_accel1_out.ar.addr;
+        assign accel1_sec.ar_len            = req_accel1_out.ar.len;
+        assign accel1_sec.ar_size           = req_accel1_out.ar.size;
+        assign accel1_sec.ar_burst          = req_accel1_out.ar.burst;
+        assign accel1_sec.ar_lock           = req_accel1_out.ar.lock;
+        assign accel1_sec.ar_cache          = req_accel1_out.ar.cache;
+        assign accel1_sec.ar_prot           = req_accel1_out.ar.prot;
+        assign accel1_sec.ar_qos            = req_accel1_out.ar.qos;
+        assign accel1_sec.ar_region         = req_accel1_out.ar.region;
+        assign accel1_sec.ar_user           = req_accel1_out.ar.user;
+        assign accel1_sec.ar_stream_id      = req_accel1_out.ar.stream_id;
+        assign accel1_sec.ar_ss_id_valid    = req_accel1_out.ar.ss_id_valid;
+        assign accel1_sec.ar_substream_id   = req_accel1_out.ar.substream_id;
+        assign accel1_sec.w_valid  = req_accel1_out.w_valid;
+        assign accel1_sec.w_data   = req_accel1_out.w.data;
+        assign accel1_sec.w_strb   = req_accel1_out.w.strb;
+        assign accel1_sec.w_last   = req_accel1_out.w.last;
+        assign accel1_sec.w_user   = req_accel1_out.w.user;
+        assign accel1_sec.b_ready  = req_accel1_out.b_ready;
+        assign accel1_sec.r_ready  = req_accel1_out.r_ready;
+ 
+        assign resp_accel1_out.aw_ready = accel1_sec.aw_ready;
+        assign resp_accel1_out.w_ready  = accel1_sec.w_ready;
+        assign resp_accel1_out.ar_ready = accel1_sec.ar_ready;
+        assign resp_accel1_out.b_valid  = accel1_sec.b_valid;
+        assign resp_accel1_out.b.id     = accel1_sec.b_id;
+        assign resp_accel1_out.b.resp   = accel1_sec.b_resp;
+        assign resp_accel1_out.b.user   = accel1_sec.b_user;
+        assign resp_accel1_out.r_valid  = accel1_sec.r_valid;
+        assign resp_accel1_out.r.id     = accel1_sec.r_id;
+        assign resp_accel1_out.r.data   = accel1_sec.r_data;
+        assign resp_accel1_out.r.resp   = accel1_sec.r_resp;
+        assign resp_accel1_out.r.last   = accel1_sec.r_last;
+        assign resp_accel1_out.r.user   = accel1_sec.r_user;
+ 
         `AXI_ASSIGN_TO_REQ(req_cpu_wrap1, wrapper_cfg1)
         `AXI_ASSIGN_FROM_RESP(wrapper_cfg1, resp_cpu_wrap1)
-
+ 
+        // ----- Security wrapper #1 (STATIC) -----
         wrapper #(
             .IdWidth            ( ariane_soc::IdWidth - 1        ),
             .IdWidthSlv         ( ariane_soc::IdWidthSlave       ),
@@ -667,19 +729,64 @@ module ariane_peripherals #(
             .req_CPU_Wrapper__i  ( req_cpu_wrap1    ),
             .resp_CPU_Wrapper_o  ( resp_cpu_wrap1   )
         );
-
-        // -------------------------------------------------------------------
+ 
+        // ===================================================================
         //  Accélérateur 2 + axi_mux 2:1
-        // -------------------------------------------------------------------
+        // ===================================================================
         if (InclDMA2) begin : gen_accel2
-
+ 
+            // --- Internal buses ---
+            AXI_BUS #(
+                .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
+                .AXI_DATA_WIDTH ( AxiDataWidth             ),
+                .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
+                .AXI_USER_WIDTH ( AxiUserWidth             )
+            ) accel2_cfg_to_rp ();
+ 
+            AXI_BUS_MMU #(
+                .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
+                .AXI_DATA_WIDTH ( AxiDataWidth            ),
+                .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
+                .AXI_USER_WIDTH ( AxiUserWidth            )
+            ) accel2_dma_from_rp ();
+ 
             AXI_BUS_MMU #(
                 .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
                 .AXI_DATA_WIDTH ( AxiDataWidth            ),
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
                 .AXI_USER_WIDTH ( AxiUserWidth            )
             ) accel2_dma (), accel2_sec ();
-
+ 
+            // ----- DPR boundary: CFG (STATIC) -----
+            rp_boundary_regs #(
+                .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
+                .AXI_DATA_WIDTH ( AxiDataWidth             ),
+                .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
+                .AXI_USER_WIDTH ( AxiUserWidth             ),
+                .PASS_THROUGH   ( 0                        )
+            ) i_boundary_cfg_accel2 (
+                .clk_i  ( clk_i            ),
+                .rst_ni ( rst_ni           ),
+                .s      ( dma_cfg2         ),
+                .m      ( accel2_cfg_to_rp )
+            );
+ 
+            // ----- DPR boundary: DMA (STATIC) -----
+            rp_boundary_regs_mmu #(
+                .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
+                .AXI_DATA_WIDTH ( AxiDataWidth            ),
+                .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
+                .AXI_USER_WIDTH ( AxiUserWidth            ),
+                .PASS_THROUGH   ( 0                       )
+            ) i_boundary_dma_accel2 (
+                .clk_i  ( clk_i              ),
+                .rst_ni ( rst_ni             ),
+                .s      ( accel2_dma_from_rp ),
+                .m      ( accel2_dma         )
+            );
+ 
+            // ----- accel_wrap #2 (RECONFIGURABLE — RP2) -----
+            // Instance path: gen_dma.gen_accel2.i_accel2
             accel_wrap #(
                 .AXI_ADDR_WIDTH   ( AxiAddrWidth             ),
                 .AXI_DATA_WIDTH   ( AxiDataWidth             ),
@@ -689,128 +796,133 @@ module ariane_peripherals #(
                 .STREAM_ID        ( 24'd2                    )
             ) i_accel2 (
                 .clk_i, .rst_ni, .testmode_i(1'b0),
-                .axi_cfg ( dma_cfg2   ),
-                .axi_dma ( accel2_dma ),
+                .axi_cfg ( accel2_cfg_to_rp  ),
+                .axi_dma ( accel2_dma_from_rp ),
                 .btnu_i  ( 1'b0       ),
                 .btnd_i  ( 1'b0       ),
                 .btnl_i  ( 1'b0       ),
                 .btnr_i  ( 1'b0       ),
                 .btnc_i  ( 1'b0       )
             );
-
+ 
+            // ----- Struct conversion: accel2_dma → wrapper structs -----
             ariane_axi_soc::req_mmu_t  req_accel2_in;
             ariane_axi_soc::resp_slv_t resp_accel2_in;
             ariane_axi_soc::req_mmu_t  req_accel2_out;
             ariane_axi_soc::resp_t     resp_accel2_out;
             ariane_axi_soc::req_slv_t  req_cpu_wrap2;
             ariane_axi_soc::resp_slv_t resp_cpu_wrap2;
-
-                assign req_accel2_in.aw_valid        = accel2_dma.aw_valid;
-                assign req_accel2_in.aw.id             = accel2_dma.aw_id;
-                assign req_accel2_in.aw.addr           = accel2_dma.aw_addr;
-                assign req_accel2_in.aw.len            = accel2_dma.aw_len;
-                assign req_accel2_in.aw.size           = accel2_dma.aw_size;
-                assign req_accel2_in.aw.burst          = accel2_dma.aw_burst;
-                assign req_accel2_in.aw.lock           = accel2_dma.aw_lock;
-                assign req_accel2_in.aw.cache          = accel2_dma.aw_cache;
-                assign req_accel2_in.aw.prot           = accel2_dma.aw_prot;
-                assign req_accel2_in.aw.qos            = accel2_dma.aw_qos;
-                assign req_accel2_in.aw.region         = accel2_dma.aw_region;
-                assign req_accel2_in.aw.atop           = accel2_dma.aw_atop;
-                assign req_accel2_in.aw.user           = accel2_dma.aw_user;
-                assign req_accel2_in.aw.stream_id      = accel2_dma.aw_stream_id;
-                assign req_accel2_in.aw.ss_id_valid    = accel2_dma.aw_ss_id_valid;
-                assign req_accel2_in.aw.substream_id   = accel2_dma.aw_substream_id;
-                assign req_accel2_in.ar_valid        = accel2_dma.ar_valid;
-                assign req_accel2_in.ar.id             = accel2_dma.ar_id;
-                assign req_accel2_in.ar.addr           = accel2_dma.ar_addr;
-                assign req_accel2_in.ar.len            = accel2_dma.ar_len;
-                assign req_accel2_in.ar.size           = accel2_dma.ar_size;
-                assign req_accel2_in.ar.burst          = accel2_dma.ar_burst;
-                assign req_accel2_in.ar.lock           = accel2_dma.ar_lock;
-                assign req_accel2_in.ar.cache          = accel2_dma.ar_cache;
-                assign req_accel2_in.ar.prot           = accel2_dma.ar_prot;
-                assign req_accel2_in.ar.qos            = accel2_dma.ar_qos;
-                assign req_accel2_in.ar.region         = accel2_dma.ar_region;
-                assign req_accel2_in.ar.user           = accel2_dma.ar_user;
-                assign req_accel2_in.ar.stream_id      = accel2_dma.ar_stream_id;
-                assign req_accel2_in.ar.ss_id_valid    = accel2_dma.ar_ss_id_valid;
-                assign req_accel2_in.ar.substream_id   = accel2_dma.ar_substream_id;
-                assign req_accel2_in.w_valid  = accel2_dma.w_valid;
-                assign req_accel2_in.w.data   = accel2_dma.w_data;
-                assign req_accel2_in.w.strb   = accel2_dma.w_strb;
-                assign req_accel2_in.w.last   = accel2_dma.w_last;
-                assign req_accel2_in.w.user   = accel2_dma.w_user;
-                assign req_accel2_in.b_ready  = accel2_dma.b_ready;
-                assign req_accel2_in.r_ready  = accel2_dma.r_ready;
-                assign accel2_dma.aw_ready = resp_accel2_in.aw_ready;
-                assign accel2_dma.w_ready  = resp_accel2_in.w_ready;
-                assign accel2_dma.b_valid  = resp_accel2_in.b_valid;
-                assign accel2_dma.b_id     = resp_accel2_in.b.id[ariane_soc::IdWidth - 2:0];
-                assign accel2_dma.b_resp   = resp_accel2_in.b.resp;
-                assign accel2_dma.b_user   = resp_accel2_in.b.user;
-                assign accel2_dma.ar_ready = resp_accel2_in.ar_ready;
-                assign accel2_dma.r_valid  = resp_accel2_in.r_valid;
-                assign accel2_dma.r_id     = resp_accel2_in.r.id[ariane_soc::IdWidth - 2:0];
-                assign accel2_dma.r_data   = resp_accel2_in.r.data;
-                assign accel2_dma.r_resp   = resp_accel2_in.r.resp;
-                assign accel2_dma.r_last   = resp_accel2_in.r.last;
-                assign accel2_dma.r_user   = resp_accel2_in.r.user;
-                assign accel2_sec.aw_valid          = req_accel2_out.aw_valid;
-                assign accel2_sec.aw_id             = req_accel2_out.aw.id;
-                assign accel2_sec.aw_addr           = req_accel2_out.aw.addr;
-                assign accel2_sec.aw_len            = req_accel2_out.aw.len;
-                assign accel2_sec.aw_size           = req_accel2_out.aw.size;
-                assign accel2_sec.aw_burst          = req_accel2_out.aw.burst;
-                assign accel2_sec.aw_lock           = req_accel2_out.aw.lock;
-                assign accel2_sec.aw_cache          = req_accel2_out.aw.cache;
-                assign accel2_sec.aw_prot           = req_accel2_out.aw.prot;
-                assign accel2_sec.aw_qos            = req_accel2_out.aw.qos;
-                assign accel2_sec.aw_region         = req_accel2_out.aw.region;
-                assign accel2_sec.aw_atop           = req_accel2_out.aw.atop;
-                assign accel2_sec.aw_user           = req_accel2_out.aw.user;
-                assign accel2_sec.aw_stream_id      = req_accel2_out.aw.stream_id;
-                assign accel2_sec.aw_ss_id_valid    = req_accel2_out.aw.ss_id_valid;
-                assign accel2_sec.aw_substream_id   = req_accel2_out.aw.substream_id;
-                assign accel2_sec.ar_valid          = req_accel2_out.ar_valid;
-                assign accel2_sec.ar_id             = req_accel2_out.ar.id;
-                assign accel2_sec.ar_addr           = req_accel2_out.ar.addr;
-                assign accel2_sec.ar_len            = req_accel2_out.ar.len;
-                assign accel2_sec.ar_size           = req_accel2_out.ar.size;
-                assign accel2_sec.ar_burst          = req_accel2_out.ar.burst;
-                assign accel2_sec.ar_lock           = req_accel2_out.ar.lock;
-                assign accel2_sec.ar_cache          = req_accel2_out.ar.cache;
-                assign accel2_sec.ar_prot           = req_accel2_out.ar.prot;
-                assign accel2_sec.ar_qos            = req_accel2_out.ar.qos;
-                assign accel2_sec.ar_region         = req_accel2_out.ar.region;
-                assign accel2_sec.ar_user           = req_accel2_out.ar.user;
-                assign accel2_sec.ar_stream_id      = req_accel2_out.ar.stream_id;
-                assign accel2_sec.ar_ss_id_valid    = req_accel2_out.ar.ss_id_valid;
-                assign accel2_sec.ar_substream_id   = req_accel2_out.ar.substream_id;
-                assign accel2_sec.w_valid  = req_accel2_out.w_valid;
-                assign accel2_sec.w_data   = req_accel2_out.w.data;
-                assign accel2_sec.w_strb   = req_accel2_out.w.strb;
-                assign accel2_sec.w_last   = req_accel2_out.w.last;
-                assign accel2_sec.w_user   = req_accel2_out.w.user;
-                assign accel2_sec.b_ready  = req_accel2_out.b_ready;
-                assign accel2_sec.r_ready  = req_accel2_out.r_ready;
-                assign resp_accel2_out.aw_ready = accel2_sec.aw_ready;
-                assign resp_accel2_out.w_ready  = accel2_sec.w_ready;
-                assign resp_accel2_out.ar_ready = accel2_sec.ar_ready;
-                assign resp_accel2_out.b_valid  = accel2_sec.b_valid;
-                assign resp_accel2_out.b.id     = accel2_sec.b_id;
-                assign resp_accel2_out.b.resp   = accel2_sec.b_resp;
-                assign resp_accel2_out.b.user   = accel2_sec.b_user;
-                assign resp_accel2_out.r_valid  = accel2_sec.r_valid;
-                assign resp_accel2_out.r.id     = accel2_sec.r_id;
-                assign resp_accel2_out.r.data   = accel2_sec.r_data;
-                assign resp_accel2_out.r.resp   = accel2_sec.r_resp;
-                assign resp_accel2_out.r.last   = accel2_sec.r_last;
-                assign resp_accel2_out.r.user   = accel2_sec.r_user;
-
+ 
+            assign req_accel2_in.aw_valid        = accel2_dma.aw_valid;
+            assign req_accel2_in.aw.id           = accel2_dma.aw_id;
+            assign req_accel2_in.aw.addr         = accel2_dma.aw_addr;
+            assign req_accel2_in.aw.len          = accel2_dma.aw_len;
+            assign req_accel2_in.aw.size         = accel2_dma.aw_size;
+            assign req_accel2_in.aw.burst        = accel2_dma.aw_burst;
+            assign req_accel2_in.aw.lock         = accel2_dma.aw_lock;
+            assign req_accel2_in.aw.cache        = accel2_dma.aw_cache;
+            assign req_accel2_in.aw.prot         = accel2_dma.aw_prot;
+            assign req_accel2_in.aw.qos          = accel2_dma.aw_qos;
+            assign req_accel2_in.aw.region       = accel2_dma.aw_region;
+            assign req_accel2_in.aw.atop         = accel2_dma.aw_atop;
+            assign req_accel2_in.aw.user         = accel2_dma.aw_user;
+            assign req_accel2_in.aw.stream_id    = accel2_dma.aw_stream_id;
+            assign req_accel2_in.aw.ss_id_valid  = accel2_dma.aw_ss_id_valid;
+            assign req_accel2_in.aw.substream_id = accel2_dma.aw_substream_id;
+            assign req_accel2_in.ar_valid        = accel2_dma.ar_valid;
+            assign req_accel2_in.ar.id           = accel2_dma.ar_id;
+            assign req_accel2_in.ar.addr         = accel2_dma.ar_addr;
+            assign req_accel2_in.ar.len          = accel2_dma.ar_len;
+            assign req_accel2_in.ar.size         = accel2_dma.ar_size;
+            assign req_accel2_in.ar.burst        = accel2_dma.ar_burst;
+            assign req_accel2_in.ar.lock         = accel2_dma.ar_lock;
+            assign req_accel2_in.ar.cache        = accel2_dma.ar_cache;
+            assign req_accel2_in.ar.prot         = accel2_dma.ar_prot;
+            assign req_accel2_in.ar.qos          = accel2_dma.ar_qos;
+            assign req_accel2_in.ar.region       = accel2_dma.ar_region;
+            assign req_accel2_in.ar.user         = accel2_dma.ar_user;
+            assign req_accel2_in.ar.stream_id    = accel2_dma.ar_stream_id;
+            assign req_accel2_in.ar.ss_id_valid  = accel2_dma.ar_ss_id_valid;
+            assign req_accel2_in.ar.substream_id = accel2_dma.ar_substream_id;
+            assign req_accel2_in.w_valid  = accel2_dma.w_valid;
+            assign req_accel2_in.w.data   = accel2_dma.w_data;
+            assign req_accel2_in.w.strb   = accel2_dma.w_strb;
+            assign req_accel2_in.w.last   = accel2_dma.w_last;
+            assign req_accel2_in.w.user   = accel2_dma.w_user;
+            assign req_accel2_in.b_ready  = accel2_dma.b_ready;
+            assign req_accel2_in.r_ready  = accel2_dma.r_ready;
+ 
+            assign accel2_dma.aw_ready = resp_accel2_in.aw_ready;
+            assign accel2_dma.w_ready  = resp_accel2_in.w_ready;
+            assign accel2_dma.b_valid  = resp_accel2_in.b_valid;
+            assign accel2_dma.b_id     = resp_accel2_in.b.id[ariane_soc::IdWidth - 2:0];
+            assign accel2_dma.b_resp   = resp_accel2_in.b.resp;
+            assign accel2_dma.b_user   = resp_accel2_in.b.user;
+            assign accel2_dma.ar_ready = resp_accel2_in.ar_ready;
+            assign accel2_dma.r_valid  = resp_accel2_in.r_valid;
+            assign accel2_dma.r_id     = resp_accel2_in.r.id[ariane_soc::IdWidth - 2:0];
+            assign accel2_dma.r_data   = resp_accel2_in.r.data;
+            assign accel2_dma.r_resp   = resp_accel2_in.r.resp;
+            assign accel2_dma.r_last   = resp_accel2_in.r.last;
+            assign accel2_dma.r_user   = resp_accel2_in.r.user;
+ 
+            assign accel2_sec.aw_valid          = req_accel2_out.aw_valid;
+            assign accel2_sec.aw_id             = req_accel2_out.aw.id;
+            assign accel2_sec.aw_addr           = req_accel2_out.aw.addr;
+            assign accel2_sec.aw_len            = req_accel2_out.aw.len;
+            assign accel2_sec.aw_size           = req_accel2_out.aw.size;
+            assign accel2_sec.aw_burst          = req_accel2_out.aw.burst;
+            assign accel2_sec.aw_lock           = req_accel2_out.aw.lock;
+            assign accel2_sec.aw_cache          = req_accel2_out.aw.cache;
+            assign accel2_sec.aw_prot           = req_accel2_out.aw.prot;
+            assign accel2_sec.aw_qos            = req_accel2_out.aw.qos;
+            assign accel2_sec.aw_region         = req_accel2_out.aw.region;
+            assign accel2_sec.aw_atop           = req_accel2_out.aw.atop;
+            assign accel2_sec.aw_user           = req_accel2_out.aw.user;
+            assign accel2_sec.aw_stream_id      = req_accel2_out.aw.stream_id;
+            assign accel2_sec.aw_ss_id_valid    = req_accel2_out.aw.ss_id_valid;
+            assign accel2_sec.aw_substream_id   = req_accel2_out.aw.substream_id;
+            assign accel2_sec.ar_valid          = req_accel2_out.ar_valid;
+            assign accel2_sec.ar_id             = req_accel2_out.ar.id;
+            assign accel2_sec.ar_addr           = req_accel2_out.ar.addr;
+            assign accel2_sec.ar_len            = req_accel2_out.ar.len;
+            assign accel2_sec.ar_size           = req_accel2_out.ar.size;
+            assign accel2_sec.ar_burst          = req_accel2_out.ar.burst;
+            assign accel2_sec.ar_lock           = req_accel2_out.ar.lock;
+            assign accel2_sec.ar_cache          = req_accel2_out.ar.cache;
+            assign accel2_sec.ar_prot           = req_accel2_out.ar.prot;
+            assign accel2_sec.ar_qos            = req_accel2_out.ar.qos;
+            assign accel2_sec.ar_region         = req_accel2_out.ar.region;
+            assign accel2_sec.ar_user           = req_accel2_out.ar.user;
+            assign accel2_sec.ar_stream_id      = req_accel2_out.ar.stream_id;
+            assign accel2_sec.ar_ss_id_valid    = req_accel2_out.ar.ss_id_valid;
+            assign accel2_sec.ar_substream_id   = req_accel2_out.ar.substream_id;
+            assign accel2_sec.w_valid  = req_accel2_out.w_valid;
+            assign accel2_sec.w_data   = req_accel2_out.w.data;
+            assign accel2_sec.w_strb   = req_accel2_out.w.strb;
+            assign accel2_sec.w_last   = req_accel2_out.w.last;
+            assign accel2_sec.w_user   = req_accel2_out.w.user;
+            assign accel2_sec.b_ready  = req_accel2_out.b_ready;
+            assign accel2_sec.r_ready  = req_accel2_out.r_ready;
+ 
+            assign resp_accel2_out.aw_ready = accel2_sec.aw_ready;
+            assign resp_accel2_out.w_ready  = accel2_sec.w_ready;
+            assign resp_accel2_out.ar_ready = accel2_sec.ar_ready;
+            assign resp_accel2_out.b_valid  = accel2_sec.b_valid;
+            assign resp_accel2_out.b.id     = accel2_sec.b_id;
+            assign resp_accel2_out.b.resp   = accel2_sec.b_resp;
+            assign resp_accel2_out.b.user   = accel2_sec.b_user;
+            assign resp_accel2_out.r_valid  = accel2_sec.r_valid;
+            assign resp_accel2_out.r.id     = accel2_sec.r_id;
+            assign resp_accel2_out.r.data   = accel2_sec.r_data;
+            assign resp_accel2_out.r.resp   = accel2_sec.r_resp;
+            assign resp_accel2_out.r.last   = accel2_sec.r_last;
+            assign resp_accel2_out.r.user   = accel2_sec.r_user;
+ 
             `AXI_ASSIGN_TO_REQ(req_cpu_wrap2, wrapper_cfg2)
             `AXI_ASSIGN_FROM_RESP(wrapper_cfg2, resp_cpu_wrap2)
-
+ 
+            // ----- Security wrapper #2 (STATIC) -----
             wrapper #(
                 .IdWidth            ( ariane_soc::IdWidth - 1        ),
                 .IdWidthSlv         ( ariane_soc::IdWidthSlave       ),
@@ -845,25 +957,25 @@ module ariane_peripherals #(
                 .req_CPU_Wrapper__i  ( req_cpu_wrap2    ),
                 .resp_CPU_Wrapper_o  ( resp_cpu_wrap2   )
             );
-
-            // axi_mux 2:1 — entrées : accel1_sec, accel2_sec (sorties des wrappers)
+ 
+            // ----- axi_mux 2:1 -----
             AXI_BUS #(
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
                 .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
                 .AXI_DATA_WIDTH ( AxiDataWidth            ),
                 .AXI_USER_WIDTH ( AxiUserWidth            )
             ) accel1_std (), accel2_std ();
-
+ 
             `AXI_ASSIGN(accel1_std, accel1_sec)
             `AXI_ASSIGN(accel2_std, accel2_sec)
-
+ 
             AXI_BUS #(
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidth ),
                 .AXI_ADDR_WIDTH ( AxiAddrWidth        ),
                 .AXI_DATA_WIDTH ( AxiDataWidth        ),
                 .AXI_USER_WIDTH ( AxiUserWidth        )
             ) dma_muxed ();
-
+ 
             axi_mux_intf #(
                 .SLV_AXI_ID_WIDTH ( ariane_soc::IdWidth - 1 ),
                 .MST_AXI_ID_WIDTH ( ariane_soc::IdWidth     ),
@@ -880,9 +992,8 @@ module ariane_peripherals #(
                 .slv ( {accel2_std, accel1_std} ),
                 .mst ( dma_muxed               )
             );
-
+ 
             // dma_muxed → IOMMU TR IF
-            // stream_id sélectionné selon le bit MSB de l'ID (0=accel1, 1=accel2)
             assign axi_iommu_tr_req.aw_valid        = dma_muxed.aw_valid;
             assign dma_muxed.aw_ready               = axi_iommu_tr_rsp.aw_ready;
             assign axi_iommu_tr_req.aw.id           = dma_muxed.aw_id;
@@ -902,20 +1013,20 @@ module ariane_peripherals #(
                     accel2_sec.aw_stream_id : accel1_sec.aw_stream_id;
             assign axi_iommu_tr_req.aw.ss_id_valid  = 1'b0;
             assign axi_iommu_tr_req.aw.substream_id = 20'd0;
-
+ 
             assign axi_iommu_tr_req.w_valid  = dma_muxed.w_valid;
             assign dma_muxed.w_ready         = axi_iommu_tr_rsp.w_ready;
             assign axi_iommu_tr_req.w.data   = dma_muxed.w_data;
             assign axi_iommu_tr_req.w.strb   = dma_muxed.w_strb;
             assign axi_iommu_tr_req.w.last   = dma_muxed.w_last;
             assign axi_iommu_tr_req.w.user   = dma_muxed.w_user;
-
+ 
             assign dma_muxed.b_valid         = axi_iommu_tr_rsp.b_valid;
             assign axi_iommu_tr_req.b_ready  = dma_muxed.b_ready;
             assign dma_muxed.b_id            = axi_iommu_tr_rsp.b.id;
             assign dma_muxed.b_resp          = axi_iommu_tr_rsp.b.resp;
             assign dma_muxed.b_user          = axi_iommu_tr_rsp.b.user;
-
+ 
             assign axi_iommu_tr_req.ar_valid        = dma_muxed.ar_valid;
             assign dma_muxed.ar_ready               = axi_iommu_tr_rsp.ar_ready;
             assign axi_iommu_tr_req.ar.id           = dma_muxed.ar_id;
@@ -934,7 +1045,7 @@ module ariane_peripherals #(
                     accel2_sec.ar_stream_id : accel1_sec.ar_stream_id;
             assign axi_iommu_tr_req.ar.ss_id_valid  = 1'b0;
             assign axi_iommu_tr_req.ar.substream_id = 20'd0;
-
+ 
             assign dma_muxed.r_valid         = axi_iommu_tr_rsp.r_valid;
             assign axi_iommu_tr_req.r_ready  = dma_muxed.r_ready;
             assign dma_muxed.r_id            = axi_iommu_tr_rsp.r.id;
@@ -942,10 +1053,10 @@ module ariane_peripherals #(
             assign dma_muxed.r_resp          = axi_iommu_tr_rsp.r.resp;
             assign dma_muxed.r_last          = axi_iommu_tr_rsp.r.last;
             assign dma_muxed.r_user          = axi_iommu_tr_rsp.r.user;
-
+ 
         end else begin : gen_accel2_disabled
-
-            // Un seul accélérateur — accel1_sec → IOMMU directement
+ 
+            // Single accelerator — accel1_sec → IOMMU directly
             `AXI_ASSIGN_TO_REQ(axi_iommu_tr_req, accel1_sec)
             `AXI_ASSIGN_FROM_RESP(accel1_sec, axi_iommu_tr_rsp)
             assign axi_iommu_tr_req.aw.id           = {1'b0, accel1_sec.aw_id};
@@ -956,8 +1067,8 @@ module ariane_peripherals #(
             assign axi_iommu_tr_req.ar.stream_id    = accel1_sec.ar_stream_id;
             assign axi_iommu_tr_req.ar.ss_id_valid  = accel1_sec.ar_ss_id_valid;
             assign axi_iommu_tr_req.ar.substream_id = accel1_sec.ar_substream_id;
-
-            // dma_cfg2 et wrapper_cfg2 non utilisés → esclaves d'erreur
+ 
+            // dma_cfg2 and wrapper_cfg2 unused → error slaves
             for (genvar i = 0; i < 2; i++) begin : gen_disabled_err
                 ariane_axi_soc::req_slv_t  q; ariane_axi_soc::resp_slv_t r;
                 if (i == 0) begin
@@ -974,18 +1085,18 @@ module ariane_peripherals #(
                 ) i_err (.clk_i, .rst_ni, .test_i(1'b0),
                          .slv_req_i(q), .slv_resp_o(r));
             end
-
+ 
         end // gen_accel2 / gen_accel2_disabled
-
+ 
     end else begin : gen_dma_disabled
-
-        // Tous les ports → esclaves d'erreur
+ 
+        // All ports → error slaves
         ariane_axi_soc::req_slv_t  q[4]; ariane_axi_soc::resp_slv_t r[4];
         `AXI_ASSIGN_TO_REQ(q[0], dma_cfg)      `AXI_ASSIGN_FROM_RESP(dma_cfg,      r[0])
         `AXI_ASSIGN_TO_REQ(q[1], dma_cfg2)     `AXI_ASSIGN_FROM_RESP(dma_cfg2,     r[1])
         `AXI_ASSIGN_TO_REQ(q[2], wrapper_cfg1) `AXI_ASSIGN_FROM_RESP(wrapper_cfg1, r[2])
         `AXI_ASSIGN_TO_REQ(q[3], wrapper_cfg2) `AXI_ASSIGN_FROM_RESP(wrapper_cfg2, r[3])
-
+ 
         for (genvar i = 0; i < 4; i++) begin : gen_err
             axi_err_slv #(
                 .AxiIdWidth(ariane_soc::IdWidthSlave),
@@ -994,13 +1105,13 @@ module ariane_peripherals #(
             ) i_err (.clk_i, .rst_ni, .test_i(1'b0),
                      .slv_req_i(q[i]), .slv_resp_o(r[i]));
         end
-
+ 
         assign axi_iommu_tr_req.ar_valid = 1'b0;
         assign axi_iommu_tr_req.aw_valid = 1'b0;
         assign axi_iommu_tr_req.w_valid  = 1'b0;
         assign axi_iommu_tr_req.b_ready  = 1'b0;
         assign axi_iommu_tr_req.r_ready  = 1'b0;
-
+ 
     end // gen_dma / gen_dma_disabled
 
     // -----------------------------------------------------------------------
