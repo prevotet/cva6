@@ -50,3 +50,4 @@ __pycache__
 corev_apu/fpga/**/*.dcp
 *.dcp
 corev_apu/fpga/**/*.dcp
+*.dcp
