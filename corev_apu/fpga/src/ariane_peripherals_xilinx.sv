@@ -474,7 +474,6 @@ module ariane_peripherals #(
         );
     end
 
-    
     // =======================================================================
     //  7. Accélérateurs DMA + security wrappers + IOMMU (DPR-ready)
     // =======================================================================
@@ -484,23 +483,26 @@ module ariane_peripherals #(
     //    DMA:  │ accel_wrap │──► rp_boundary_regs_mmu ──► wrapper (sec)
     //                       │── RP ──│
     //
- 
+
     ariane_axi_soc::req_mmu_t  axi_iommu_tr_req;
     ariane_axi_soc::resp_t     axi_iommu_tr_rsp;
- 
+
     ariane_axi_soc::req_slv_t  axi_iommu_cfg_req;
     ariane_axi_soc::resp_slv_t axi_iommu_cfg_rsp;
     `AXI_ASSIGN_TO_REQ(axi_iommu_cfg_req, iommu_cfg)
     `AXI_ASSIGN_FROM_RESP(iommu_cfg, axi_iommu_cfg_rsp)
- 
+
     if (InclDMA) begin : gen_dma
- 
+
         // ===================================================================
         //  Accélérateur 1 — with DPR boundary registers
         // ===================================================================
- 
+
+        // Signaux intermédiaires pour les boutons pipelinés
+        logic btnu_accel1, btnd_accel1, btnl_accel1, btnr_accel1, btnc_accel1;
+
         // --- Internal buses (all STATIC) ---
- 
+
         // CFG path: dma_cfg → boundary_regs → accel_wrap.axi_cfg
         AXI_BUS #(
             .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
@@ -508,7 +510,7 @@ module ariane_peripherals #(
             .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
             .AXI_USER_WIDTH ( AxiUserWidth             )
         ) accel1_cfg_to_rp ();
- 
+
         // DMA path: accel_wrap.axi_dma → boundary_regs_mmu → wrapper
         AXI_BUS_MMU #(
             .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
@@ -516,16 +518,17 @@ module ariane_peripherals #(
             .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
             .AXI_USER_WIDTH ( AxiUserWidth            )
         ) accel1_dma_from_rp ();
- 
+
         AXI_BUS_MMU #(
             .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
             .AXI_DATA_WIDTH ( AxiDataWidth            ),
             .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
             .AXI_USER_WIDTH ( AxiUserWidth            )
         ) accel1_dma (), accel1_sec ();
- 
+
         // ----- DPR boundary: CFG (STATIC) -----
         // XBAR(dma_cfg) → rp_boundary_regs → accel_wrap.axi_cfg
+        // Les boutons sont pipelinés ici dans la région statique
         rp_boundary_regs #(
             .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
             .AXI_DATA_WIDTH ( AxiDataWidth             ),
@@ -535,10 +538,20 @@ module ariane_peripherals #(
         ) i_boundary_cfg_accel1 (
             .clk_i  ( clk_i            ),
             .rst_ni ( rst_ni           ),
+            .btnu_i ( btnu_i           ),
+            .btnd_i ( btnd_i           ),
+            .btnl_i ( btnl_i           ),
+            .btnr_i ( btnr_i           ),
+            .btnc_i ( btnc_i           ),
+            .btnu_o ( btnu_accel1      ),
+            .btnd_o ( btnd_accel1      ),
+            .btnl_o ( btnl_accel1      ),
+            .btnr_o ( btnr_accel1      ),
+            .btnc_o ( btnc_accel1      ),
             .s      ( dma_cfg          ),
             .m      ( accel1_cfg_to_rp )
         );
- 
+
         // ----- DPR boundary: DMA (STATIC) -----
         // accel_wrap.axi_dma → rp_boundary_regs_mmu → accel1_dma (→ wrapper)
         rp_boundary_regs_mmu #(
@@ -553,7 +566,7 @@ module ariane_peripherals #(
             .s      ( accel1_dma_from_rp ),
             .m      ( accel1_dma         )
         );
- 
+
         // ----- accel_wrap #1 (RECONFIGURABLE — RP1) -----
         // Instance path: gen_dma.i_accel1
         accel_wrap #(
@@ -565,15 +578,15 @@ module ariane_peripherals #(
             .STREAM_ID        ( 24'd1                    )
         ) i_accel1 (
             .clk_i, .rst_ni, .testmode_i(1'b0),
-            .axi_cfg ( accel1_cfg_to_rp  ),
+            .axi_cfg ( accel1_cfg_to_rp   ),
             .axi_dma ( accel1_dma_from_rp ),
-            .btnu_i  ( btnu_i     ),
-            .btnd_i  ( btnd_i     ),
-            .btnl_i  ( btnl_i     ),
-            .btnr_i  ( btnr_i     ),
-            .btnc_i  ( btnc_i     )
+            .btnu_i  ( btnu_accel1        ),
+            .btnd_i  ( btnd_accel1        ),
+            .btnl_i  ( btnl_accel1        ),
+            .btnr_i  ( btnr_accel1        ),
+            .btnc_i  ( btnc_accel1        )
         );
- 
+
         // ----- Struct conversion: accel1_dma (AXI_BUS_MMU) → wrapper structs -----
         ariane_axi_soc::req_mmu_t  req_accel1_in;
         ariane_axi_soc::resp_slv_t resp_accel1_in;
@@ -581,7 +594,7 @@ module ariane_peripherals #(
         ariane_axi_soc::resp_t     resp_accel1_out;
         ariane_axi_soc::req_slv_t  req_cpu_wrap1;
         ariane_axi_soc::resp_slv_t resp_cpu_wrap1;
- 
+
         // accel1_dma → req_accel1_in (input to wrapper)
         assign req_accel1_in.aw_valid        = accel1_dma.aw_valid;
         assign req_accel1_in.aw.id           = accel1_dma.aw_id;
@@ -621,7 +634,7 @@ module ariane_peripherals #(
         assign req_accel1_in.w.user   = accel1_dma.w_user;
         assign req_accel1_in.b_ready  = accel1_dma.b_ready;
         assign req_accel1_in.r_ready  = accel1_dma.r_ready;
- 
+
         // resp_accel1_in → accel1_dma (response back from wrapper)
         assign accel1_dma.aw_ready = resp_accel1_in.aw_ready;
         assign accel1_dma.w_ready  = resp_accel1_in.w_ready;
@@ -636,7 +649,7 @@ module ariane_peripherals #(
         assign accel1_dma.r_resp   = resp_accel1_in.r.resp;
         assign accel1_dma.r_last   = resp_accel1_in.r.last;
         assign accel1_dma.r_user   = resp_accel1_in.r.user;
- 
+
         // req_accel1_out → accel1_sec (output from wrapper to mux)
         assign accel1_sec.aw_valid          = req_accel1_out.aw_valid;
         assign accel1_sec.aw_id             = req_accel1_out.aw.id;
@@ -676,7 +689,7 @@ module ariane_peripherals #(
         assign accel1_sec.w_user   = req_accel1_out.w.user;
         assign accel1_sec.b_ready  = req_accel1_out.b_ready;
         assign accel1_sec.r_ready  = req_accel1_out.r_ready;
- 
+
         assign resp_accel1_out.aw_ready = accel1_sec.aw_ready;
         assign resp_accel1_out.w_ready  = accel1_sec.w_ready;
         assign resp_accel1_out.ar_ready = accel1_sec.ar_ready;
@@ -690,10 +703,10 @@ module ariane_peripherals #(
         assign resp_accel1_out.r.resp   = accel1_sec.r_resp;
         assign resp_accel1_out.r.last   = accel1_sec.r_last;
         assign resp_accel1_out.r.user   = accel1_sec.r_user;
- 
+
         `AXI_ASSIGN_TO_REQ(req_cpu_wrap1, wrapper_cfg1)
         `AXI_ASSIGN_FROM_RESP(wrapper_cfg1, resp_cpu_wrap1)
- 
+
         // ----- Security wrapper #1 (STATIC) -----
         wrapper #(
             .IdWidth            ( ariane_soc::IdWidth - 1        ),
@@ -729,12 +742,15 @@ module ariane_peripherals #(
             .req_CPU_Wrapper__i  ( req_cpu_wrap1    ),
             .resp_CPU_Wrapper_o  ( resp_cpu_wrap1   )
         );
- 
+
         // ===================================================================
         //  Accélérateur 2 + axi_mux 2:1
         // ===================================================================
         if (InclDMA2) begin : gen_accel2
- 
+
+            // Signaux intermédiaires pour les boutons pipelinés accel2
+            logic btnu_accel2, btnd_accel2, btnl_accel2, btnr_accel2, btnc_accel2;
+
             // --- Internal buses ---
             AXI_BUS #(
                 .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
@@ -742,22 +758,23 @@ module ariane_peripherals #(
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
                 .AXI_USER_WIDTH ( AxiUserWidth             )
             ) accel2_cfg_to_rp ();
- 
+
             AXI_BUS_MMU #(
                 .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
                 .AXI_DATA_WIDTH ( AxiDataWidth            ),
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
                 .AXI_USER_WIDTH ( AxiUserWidth            )
             ) accel2_dma_from_rp ();
- 
+
             AXI_BUS_MMU #(
                 .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
                 .AXI_DATA_WIDTH ( AxiDataWidth            ),
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
                 .AXI_USER_WIDTH ( AxiUserWidth            )
             ) accel2_dma (), accel2_sec ();
- 
+
             // ----- DPR boundary: CFG (STATIC) -----
+            // Les boutons sont pipelinés ici dans la région statique pour accel2
             rp_boundary_regs #(
                 .AXI_ADDR_WIDTH ( AxiAddrWidth             ),
                 .AXI_DATA_WIDTH ( AxiDataWidth             ),
@@ -767,10 +784,20 @@ module ariane_peripherals #(
             ) i_boundary_cfg_accel2 (
                 .clk_i  ( clk_i            ),
                 .rst_ni ( rst_ni           ),
+                .btnu_i ( btnu_i           ),
+                .btnd_i ( btnd_i           ),
+                .btnl_i ( btnl_i           ),
+                .btnr_i ( btnr_i           ),
+                .btnc_i ( btnc_i           ),
+                .btnu_o ( btnu_accel2      ),
+                .btnd_o ( btnd_accel2      ),
+                .btnl_o ( btnl_accel2      ),
+                .btnr_o ( btnr_accel2      ),
+                .btnc_o ( btnc_accel2      ),
                 .s      ( dma_cfg2         ),
                 .m      ( accel2_cfg_to_rp )
             );
- 
+
             // ----- DPR boundary: DMA (STATIC) -----
             rp_boundary_regs_mmu #(
                 .AXI_ADDR_WIDTH ( AxiAddrWidth            ),
@@ -784,7 +811,7 @@ module ariane_peripherals #(
                 .s      ( accel2_dma_from_rp ),
                 .m      ( accel2_dma         )
             );
- 
+
             // ----- accel_wrap #2 (RECONFIGURABLE — RP2) -----
             // Instance path: gen_dma.gen_accel2.i_accel2
             accel_wrap #(
@@ -796,15 +823,15 @@ module ariane_peripherals #(
                 .STREAM_ID        ( 24'd2                    )
             ) i_accel2 (
                 .clk_i, .rst_ni, .testmode_i(1'b0),
-                .axi_cfg ( accel2_cfg_to_rp  ),
+                .axi_cfg ( accel2_cfg_to_rp   ),
                 .axi_dma ( accel2_dma_from_rp ),
-                .btnu_i  ( 1'b0       ),
-                .btnd_i  ( 1'b0       ),
-                .btnl_i  ( 1'b0       ),
-                .btnr_i  ( 1'b0       ),
-                .btnc_i  ( 1'b0       )
+                .btnu_i  ( btnu_accel2        ),
+                .btnd_i  ( btnd_accel2        ),
+                .btnl_i  ( btnl_accel2        ),
+                .btnr_i  ( btnr_accel2        ),
+                .btnc_i  ( btnc_accel2        )
             );
- 
+
             // ----- Struct conversion: accel2_dma → wrapper structs -----
             ariane_axi_soc::req_mmu_t  req_accel2_in;
             ariane_axi_soc::resp_slv_t resp_accel2_in;
@@ -812,7 +839,7 @@ module ariane_peripherals #(
             ariane_axi_soc::resp_t     resp_accel2_out;
             ariane_axi_soc::req_slv_t  req_cpu_wrap2;
             ariane_axi_soc::resp_slv_t resp_cpu_wrap2;
- 
+
             assign req_accel2_in.aw_valid        = accel2_dma.aw_valid;
             assign req_accel2_in.aw.id           = accel2_dma.aw_id;
             assign req_accel2_in.aw.addr         = accel2_dma.aw_addr;
@@ -851,7 +878,7 @@ module ariane_peripherals #(
             assign req_accel2_in.w.user   = accel2_dma.w_user;
             assign req_accel2_in.b_ready  = accel2_dma.b_ready;
             assign req_accel2_in.r_ready  = accel2_dma.r_ready;
- 
+
             assign accel2_dma.aw_ready = resp_accel2_in.aw_ready;
             assign accel2_dma.w_ready  = resp_accel2_in.w_ready;
             assign accel2_dma.b_valid  = resp_accel2_in.b_valid;
@@ -865,7 +892,7 @@ module ariane_peripherals #(
             assign accel2_dma.r_resp   = resp_accel2_in.r.resp;
             assign accel2_dma.r_last   = resp_accel2_in.r.last;
             assign accel2_dma.r_user   = resp_accel2_in.r.user;
- 
+
             assign accel2_sec.aw_valid          = req_accel2_out.aw_valid;
             assign accel2_sec.aw_id             = req_accel2_out.aw.id;
             assign accel2_sec.aw_addr           = req_accel2_out.aw.addr;
@@ -904,7 +931,7 @@ module ariane_peripherals #(
             assign accel2_sec.w_user   = req_accel2_out.w.user;
             assign accel2_sec.b_ready  = req_accel2_out.b_ready;
             assign accel2_sec.r_ready  = req_accel2_out.r_ready;
- 
+
             assign resp_accel2_out.aw_ready = accel2_sec.aw_ready;
             assign resp_accel2_out.w_ready  = accel2_sec.w_ready;
             assign resp_accel2_out.ar_ready = accel2_sec.ar_ready;
@@ -918,10 +945,10 @@ module ariane_peripherals #(
             assign resp_accel2_out.r.resp   = accel2_sec.r_resp;
             assign resp_accel2_out.r.last   = accel2_sec.r_last;
             assign resp_accel2_out.r.user   = accel2_sec.r_user;
- 
+
             `AXI_ASSIGN_TO_REQ(req_cpu_wrap2, wrapper_cfg2)
             `AXI_ASSIGN_FROM_RESP(wrapper_cfg2, resp_cpu_wrap2)
- 
+
             // ----- Security wrapper #2 (STATIC) -----
             wrapper #(
                 .IdWidth            ( ariane_soc::IdWidth - 1        ),
@@ -957,7 +984,7 @@ module ariane_peripherals #(
                 .req_CPU_Wrapper__i  ( req_cpu_wrap2    ),
                 .resp_CPU_Wrapper_o  ( resp_cpu_wrap2   )
             );
- 
+
             // ----- axi_mux 2:1 -----
             AXI_BUS #(
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidth - 1 ),
@@ -965,17 +992,17 @@ module ariane_peripherals #(
                 .AXI_DATA_WIDTH ( AxiDataWidth            ),
                 .AXI_USER_WIDTH ( AxiUserWidth            )
             ) accel1_std (), accel2_std ();
- 
+
             `AXI_ASSIGN(accel1_std, accel1_sec)
             `AXI_ASSIGN(accel2_std, accel2_sec)
- 
+
             AXI_BUS #(
                 .AXI_ID_WIDTH   ( ariane_soc::IdWidth ),
                 .AXI_ADDR_WIDTH ( AxiAddrWidth        ),
                 .AXI_DATA_WIDTH ( AxiDataWidth        ),
                 .AXI_USER_WIDTH ( AxiUserWidth        )
             ) dma_muxed ();
- 
+
             axi_mux_intf #(
                 .SLV_AXI_ID_WIDTH ( ariane_soc::IdWidth - 1 ),
                 .MST_AXI_ID_WIDTH ( ariane_soc::IdWidth     ),
@@ -992,7 +1019,7 @@ module ariane_peripherals #(
                 .slv ( {accel2_std, accel1_std} ),
                 .mst ( dma_muxed               )
             );
- 
+
             // dma_muxed → IOMMU TR IF
             assign axi_iommu_tr_req.aw_valid        = dma_muxed.aw_valid;
             assign dma_muxed.aw_ready               = axi_iommu_tr_rsp.aw_ready;
@@ -1013,20 +1040,20 @@ module ariane_peripherals #(
                     accel2_sec.aw_stream_id : accel1_sec.aw_stream_id;
             assign axi_iommu_tr_req.aw.ss_id_valid  = 1'b0;
             assign axi_iommu_tr_req.aw.substream_id = 20'd0;
- 
+
             assign axi_iommu_tr_req.w_valid  = dma_muxed.w_valid;
             assign dma_muxed.w_ready         = axi_iommu_tr_rsp.w_ready;
             assign axi_iommu_tr_req.w.data   = dma_muxed.w_data;
             assign axi_iommu_tr_req.w.strb   = dma_muxed.w_strb;
             assign axi_iommu_tr_req.w.last   = dma_muxed.w_last;
             assign axi_iommu_tr_req.w.user   = dma_muxed.w_user;
- 
+
             assign dma_muxed.b_valid         = axi_iommu_tr_rsp.b_valid;
             assign axi_iommu_tr_req.b_ready  = dma_muxed.b_ready;
             assign dma_muxed.b_id            = axi_iommu_tr_rsp.b.id;
             assign dma_muxed.b_resp          = axi_iommu_tr_rsp.b.resp;
             assign dma_muxed.b_user          = axi_iommu_tr_rsp.b.user;
- 
+
             assign axi_iommu_tr_req.ar_valid        = dma_muxed.ar_valid;
             assign dma_muxed.ar_ready               = axi_iommu_tr_rsp.ar_ready;
             assign axi_iommu_tr_req.ar.id           = dma_muxed.ar_id;
@@ -1045,7 +1072,7 @@ module ariane_peripherals #(
                     accel2_sec.ar_stream_id : accel1_sec.ar_stream_id;
             assign axi_iommu_tr_req.ar.ss_id_valid  = 1'b0;
             assign axi_iommu_tr_req.ar.substream_id = 20'd0;
- 
+
             assign dma_muxed.r_valid         = axi_iommu_tr_rsp.r_valid;
             assign axi_iommu_tr_req.r_ready  = dma_muxed.r_ready;
             assign dma_muxed.r_id            = axi_iommu_tr_rsp.r.id;
@@ -1053,9 +1080,9 @@ module ariane_peripherals #(
             assign dma_muxed.r_resp          = axi_iommu_tr_rsp.r.resp;
             assign dma_muxed.r_last          = axi_iommu_tr_rsp.r.last;
             assign dma_muxed.r_user          = axi_iommu_tr_rsp.r.user;
- 
+
         end else begin : gen_accel2_disabled
- 
+
             // Single accelerator — accel1_sec → IOMMU directly
             `AXI_ASSIGN_TO_REQ(axi_iommu_tr_req, accel1_sec)
             `AXI_ASSIGN_FROM_RESP(accel1_sec, axi_iommu_tr_rsp)
@@ -1067,7 +1094,7 @@ module ariane_peripherals #(
             assign axi_iommu_tr_req.ar.stream_id    = accel1_sec.ar_stream_id;
             assign axi_iommu_tr_req.ar.ss_id_valid  = accel1_sec.ar_ss_id_valid;
             assign axi_iommu_tr_req.ar.substream_id = accel1_sec.ar_substream_id;
- 
+
             // dma_cfg2 and wrapper_cfg2 unused → error slaves
             for (genvar i = 0; i < 2; i++) begin : gen_disabled_err
                 ariane_axi_soc::req_slv_t  q; ariane_axi_soc::resp_slv_t r;
@@ -1085,18 +1112,18 @@ module ariane_peripherals #(
                 ) i_err (.clk_i, .rst_ni, .test_i(1'b0),
                          .slv_req_i(q), .slv_resp_o(r));
             end
- 
+
         end // gen_accel2 / gen_accel2_disabled
- 
+
     end else begin : gen_dma_disabled
- 
+
         // All ports → error slaves
         ariane_axi_soc::req_slv_t  q[4]; ariane_axi_soc::resp_slv_t r[4];
         `AXI_ASSIGN_TO_REQ(q[0], dma_cfg)      `AXI_ASSIGN_FROM_RESP(dma_cfg,      r[0])
         `AXI_ASSIGN_TO_REQ(q[1], dma_cfg2)     `AXI_ASSIGN_FROM_RESP(dma_cfg2,     r[1])
         `AXI_ASSIGN_TO_REQ(q[2], wrapper_cfg1) `AXI_ASSIGN_FROM_RESP(wrapper_cfg1, r[2])
         `AXI_ASSIGN_TO_REQ(q[3], wrapper_cfg2) `AXI_ASSIGN_FROM_RESP(wrapper_cfg2, r[3])
- 
+
         for (genvar i = 0; i < 4; i++) begin : gen_err
             axi_err_slv #(
                 .AxiIdWidth(ariane_soc::IdWidthSlave),
@@ -1105,13 +1132,13 @@ module ariane_peripherals #(
             ) i_err (.clk_i, .rst_ni, .test_i(1'b0),
                      .slv_req_i(q[i]), .slv_resp_o(r[i]));
         end
- 
+
         assign axi_iommu_tr_req.ar_valid = 1'b0;
         assign axi_iommu_tr_req.aw_valid = 1'b0;
         assign axi_iommu_tr_req.w_valid  = 1'b0;
         assign axi_iommu_tr_req.b_ready  = 1'b0;
         assign axi_iommu_tr_req.r_ready  = 1'b0;
- 
+
     end // gen_dma / gen_dma_disabled
 
     // -----------------------------------------------------------------------
@@ -1135,46 +1162,46 @@ module ariane_peripherals #(
             ariane_axi_soc::strb_t)
 
         riscv_iommu #(
-    .IOTLB_ENTRIES   ( 8                              ),
-    .DDTC_ENTRIES    ( 4                              ),
-    .PDTC_ENTRIES    ( 4                              ),
-    .MRIFC_ENTRIES   ( 4                              ),  // [NEW]
-    .InclPC          ( 1'b0                           ),
-    .InclBC          ( 1'b1                           ),
-    .InclDBG         ( 1'b0                           ),  // [NEW]
-    .MSITrans        ( rv_iommu::MSI_FLAT_MRIF        ),  // [CHANGED] était InclMSITrans=1
-    .IGS             ( rv_iommu::BOTH                 ),
-    .N_INT_VEC       ( ariane_soc::IOMMUNumWires      ),
-    .N_IOHPMCTR      ( 8                              ),
-    .ADDR_WIDTH      ( AxiAddrWidth                   ),
-    .DATA_WIDTH      ( AxiDataWidth                   ),
-    .ID_WIDTH        ( ariane_soc::IdWidth            ),
-    .ID_SLV_WIDTH    ( ariane_soc::IdWidthSlave       ),
-    .USER_WIDTH      ( AxiUserWidth                   ),
-    .aw_chan_t       ( ariane_axi_soc::aw_chan_t      ),
-    .w_chan_t        ( ariane_axi_soc::w_chan_t       ),
-    .b_chan_t        ( ariane_axi_soc::b_chan_t       ),
-    .ar_chan_t       ( ariane_axi_soc::ar_chan_t      ),
-    .r_chan_t        ( ariane_axi_soc::r_chan_t       ),
-    .axi_req_t       ( ariane_axi_soc::req_t         ),
-    .axi_rsp_t       ( ariane_axi_soc::resp_t        ),
-    .axi_req_slv_t   ( ariane_axi_soc::req_slv_t     ),
-    .axi_rsp_slv_t   ( ariane_axi_soc::resp_slv_t    ),
-    .axi_req_iommu_t ( ariane_axi_soc::req_mmu_t     ),  // [CHANGED] était axi_req_mmu_t
-    .reg_req_t       ( iommu_reg_req_t                ),
-    .reg_rsp_t       ( iommu_reg_rsp_t                )
-) i_riscv_iommu (
-    .clk_i, .rst_ni,
-    .dev_tr_req_i    ( axi_iommu_tr_req   ),
-    .dev_tr_resp_o   ( axi_iommu_tr_rsp   ),
-    .dev_comp_resp_i ( axi_iommu_comp_rsp ),
-    .dev_comp_req_o  ( axi_iommu_comp_req ),
-    .ds_resp_i       ( axi_iommu_ds_rsp   ),
-    .ds_req_o        ( axi_iommu_ds_req   ),
-    .prog_req_i      ( axi_iommu_cfg_req  ),
-    .prog_resp_o     ( axi_iommu_cfg_rsp  ),
-    .wsi_wires_o     ( irq_sources[(ariane_soc::IOMMUNumWires-1)+8:8] )
-);
+            .IOTLB_ENTRIES   ( 8                              ),
+            .DDTC_ENTRIES    ( 4                              ),
+            .PDTC_ENTRIES    ( 4                              ),
+            .MRIFC_ENTRIES   ( 4                              ),
+            .InclPC          ( 1'b0                           ),
+            .InclBC          ( 1'b1                           ),
+            .InclDBG         ( 1'b0                           ),
+            .MSITrans        ( rv_iommu::MSI_FLAT_MRIF        ),
+            .IGS             ( rv_iommu::BOTH                 ),
+            .N_INT_VEC       ( ariane_soc::IOMMUNumWires      ),
+            .N_IOHPMCTR      ( 8                              ),
+            .ADDR_WIDTH      ( AxiAddrWidth                   ),
+            .DATA_WIDTH      ( AxiDataWidth                   ),
+            .ID_WIDTH        ( ariane_soc::IdWidth            ),
+            .ID_SLV_WIDTH    ( ariane_soc::IdWidthSlave       ),
+            .USER_WIDTH      ( AxiUserWidth                   ),
+            .aw_chan_t       ( ariane_axi_soc::aw_chan_t      ),
+            .w_chan_t        ( ariane_axi_soc::w_chan_t       ),
+            .b_chan_t        ( ariane_axi_soc::b_chan_t       ),
+            .ar_chan_t       ( ariane_axi_soc::ar_chan_t      ),
+            .r_chan_t        ( ariane_axi_soc::r_chan_t       ),
+            .axi_req_t       ( ariane_axi_soc::req_t         ),
+            .axi_rsp_t       ( ariane_axi_soc::resp_t        ),
+            .axi_req_slv_t   ( ariane_axi_soc::req_slv_t     ),
+            .axi_rsp_slv_t   ( ariane_axi_soc::resp_slv_t    ),
+            .axi_req_iommu_t ( ariane_axi_soc::req_mmu_t     ),
+            .reg_req_t       ( iommu_reg_req_t                ),
+            .reg_rsp_t       ( iommu_reg_rsp_t                )
+        ) i_riscv_iommu (
+            .clk_i, .rst_ni,
+            .dev_tr_req_i    ( axi_iommu_tr_req   ),
+            .dev_tr_resp_o   ( axi_iommu_tr_rsp   ),
+            .dev_comp_resp_i ( axi_iommu_comp_rsp ),
+            .dev_comp_req_o  ( axi_iommu_comp_req ),
+            .ds_resp_i       ( axi_iommu_ds_rsp   ),
+            .ds_req_o        ( axi_iommu_ds_req   ),
+            .prog_req_i      ( axi_iommu_cfg_req  ),
+            .prog_resp_o     ( axi_iommu_cfg_rsp  ),
+            .wsi_wires_o     ( irq_sources[(ariane_soc::IOMMUNumWires-1)+8:8] )
+        );
 
     end else begin : gen_iommu_disabled
 
