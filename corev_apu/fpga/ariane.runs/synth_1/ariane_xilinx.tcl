@@ -399,6 +399,11 @@ set_property used_in_synthesis false [get_files -all /home/jc/tmp/riscv-iommu-de
 set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_clock_converter/xlnx_axi_clock_converter.gen/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter_clocks.xdc]
 set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_clock_converter/xlnx_axi_clock_converter.gen/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter_ooc.xdc]
 
+read_ip -quiet /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_hwicap/xlnx_axi_hwicap.srcs/sources_1/ip/xlnx_axi_hwicap/xlnx_axi_hwicap.xci
+set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_hwicap/xlnx_axi_hwicap.gen/sources_1/ip/xlnx_axi_hwicap/xlnx_axi_hwicap.xdc]
+set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_hwicap/xlnx_axi_hwicap.gen/sources_1/ip/xlnx_axi_hwicap/xlnx_axi_hwicap_clocks.xdc]
+set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_hwicap/xlnx_axi_hwicap.gen/sources_1/ip/xlnx_axi_hwicap/xlnx_axi_hwicap_ooc.xdc]
+
 read_ip -quiet /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.srcs/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio.xci
 set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.gen/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio_board.xdc]
 set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.gen/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio_ooc.xdc]
@@ -433,10 +438,12 @@ set_property used_in_implementation false [get_files /home/jc/tmp/riscv-iommu-de
 read_xdc dont_touch.xdc
 set_property used_in_implementation false [get_files dont_touch.xdc]
 set_param ips.enableIPCacheLiteLoad 1
+
+read_checkpoint -auto_incremental -incremental /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.srcs/utils_1/imports/synth_1/ariane_xilinx.dcp
 close [open __synthesis_is_running__ w]
 
 OPTRACE "synth_design" START { }
-synth_design -top ariane_xilinx -part xc7k325tffg900-2 -flatten_hierarchy none -retiming
+synth_design -top ariane_xilinx -part xc7k325tffg900-2 -flatten_hierarchy none
 OPTRACE "synth_design" END { }
 if { [get_msg_config -count -severity {CRITICAL WARNING}] > 0 } {
  send_msg_id runtcl-6 info "Synthesis results are not added to the cache due to CRITICAL_WARNING"

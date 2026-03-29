@@ -20,6 +20,9 @@ set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==xlnx_clk_ge
 # IP: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_clock_converter/xlnx_axi_clock_converter.srcs/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter.xci
 set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==xlnx_axi_clock_converter || ORIG_REF_NAME==xlnx_axi_clock_converter} -quiet] -quiet
 
+# IP: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_hwicap/xlnx_axi_hwicap.srcs/sources_1/ip/xlnx_axi_hwicap/xlnx_axi_hwicap.xci
+set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==xlnx_axi_hwicap || ORIG_REF_NAME==xlnx_axi_hwicap} -quiet] -quiet
+
 # IP: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.srcs/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio.xci
 set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==xlnx_axi_gpio || ORIG_REF_NAME==xlnx_axi_gpio} -quiet] -quiet
 

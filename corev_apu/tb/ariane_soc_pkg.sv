@@ -52,10 +52,11 @@ package ariane_soc;
     PLIC      =  11,
     CLINT     =  12,
     ROM       =  13,
-    Debug     =  14
+    Debug     =  14,
+    HWICAP    =  15
   } axi_slaves_t;
 
-  localparam NB_PERIPHERALS = Debug + 1;
+  localparam NB_PERIPHERALS = HWICAP + 1;
 
 
   localparam logic[63:0] DebugLength    = 64'h1000;
@@ -70,6 +71,7 @@ package ariane_soc;
   localparam logic[63:0] DMALength      = 64'h1000;  
   localparam logic[63:0] DMA2Length      = 64'h1000;   
   localparam logic[63:0] IOMMULength    = 64'h1000;     // Regmap occupies 4kiB of memory address space
+  localparam logic[63:0] HWICAPLength   = 64'h1000;
   localparam logic[63:0] DRAMLength     = 64'h40000000; // 1GByte of DDR (split between two chips on Genesys2)
   localparam logic[63:0] SRAMLength     = 64'h1800000;  // 24 MByte of SRAM
   // Instantiate AXI protocol checkers
@@ -85,6 +87,7 @@ package ariane_soc;
     SPIBase      = 64'h2000_0000,
     EthernetBase = 64'h3000_0000,
     GPIOBase     = 64'h4000_0000,
+    HWICAPBase   = 64'h4001_0000,
     DMABase      = 64'h5000_0000,
     DMA2Base     = 64'h5000_1000,
     Wrap1Base  = 64'h5000_2000,
