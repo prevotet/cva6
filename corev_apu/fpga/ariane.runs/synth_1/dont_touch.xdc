@@ -31,3 +31,8 @@ set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==xlnx_axi_dw
 
 # IP: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_quad_spi/xlnx_axi_quad_spi.srcs/sources_1/ip/xlnx_axi_quad_spi/xlnx_axi_quad_spi.xci
 set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==xlnx_axi_quad_spi || ORIG_REF_NAME==xlnx_axi_quad_spi} -quiet] -quiet
+
+# XDC: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_clock_converter/xlnx_axi_clock_converter.gen/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter_clocks.xdc
+set_property KEEP_HIERARCHY SOFT [get_cells [split [join [get_cells -hier -filter {REF_NAME==xlnx_axi_clock_converter || ORIG_REF_NAME==xlnx_axi_clock_converter} -quiet] {/inst } ]/inst ] -quiet] -quiet
+
+# XDC: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_clock_converter/xlnx_axi_clock_converter.gen/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter_ooc.xdc

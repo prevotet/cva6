@@ -1,8 +1,7 @@
-// accel_blank.sv - RM vide (configuration de base DPR)
-// Interface AXI tirée à idle / SLVERR.
-// Remplacer par accel_A_wrap.sv ou accel_B_wrap.sv.
-// Ce module a la même interface que accel_wrap dans ariane_peripherals.
-
+// accel_A — registre identifiant
+// r_data = { 0xDEAD, STREAM_ID[23:0], 0xAAAAAA }
+// accel1 (STREAM_ID=1) -> 0xDEAD_000001_AAAAAA
+// accel2 (STREAM_ID=2) -> 0xDEAD_000002_AAAAAA
 (* keep_hierarchy = "yes" *)
 module accel_wrap #(
     parameter int unsigned AXI_ADDR_WIDTH   = 64,
@@ -17,22 +16,31 @@ module accel_wrap #(
     AXI_BUS.Slave      axi_cfg,
     AXI_BUS_MMU.Master axi_dma
 );
-    // cfg slave : SLVERR
-    assign axi_cfg.aw_ready = 1'b1;
-    assign axi_cfg.w_ready  = 1'b1;
+    // Constante identifiant : RM=A, instance identifiée par STREAM_ID
+    localparam logic [63:0] ACCEL_ID = {16'hDEAD, STREAM_ID, 24'hAAAAAA};
+
+    // ----------------------------------------------------------------
+    // CFG slave — registre en lecture seule, réponse combinatoire
+    // ----------------------------------------------------------------
     assign axi_cfg.ar_ready = 1'b1;
-    assign axi_cfg.b_valid  = axi_cfg.aw_valid;
-    assign axi_cfg.b_id     = axi_cfg.aw_id;
-    assign axi_cfg.b_resp   = 2'b10;
-    assign axi_cfg.b_user   = '0;
     assign axi_cfg.r_valid  = axi_cfg.ar_valid;
     assign axi_cfg.r_id     = axi_cfg.ar_id;
-    assign axi_cfg.r_data   = '0;
-    assign axi_cfg.r_resp   = 2'b10;
+    assign axi_cfg.r_data   = ACCEL_ID;
+    assign axi_cfg.r_resp   = 2'b00;
     assign axi_cfg.r_last   = 1'b1;
     assign axi_cfg.r_user   = '0;
 
-    // DMA master : idle
+    // Écriture : acceptée mais ignorée
+    assign axi_cfg.aw_ready = 1'b1;
+    assign axi_cfg.w_ready  = 1'b1;
+    assign axi_cfg.b_valid  = axi_cfg.aw_valid;
+    assign axi_cfg.b_id     = axi_cfg.aw_id;
+    assign axi_cfg.b_resp   = 2'b00;
+    assign axi_cfg.b_user   = '0;
+
+    // ----------------------------------------------------------------
+    // DMA master — idle
+    // ----------------------------------------------------------------
     assign axi_dma.aw_valid        = 1'b0;
     assign axi_dma.aw_id           = '0;
     assign axi_dma.aw_addr         = '0;
@@ -71,4 +79,5 @@ module accel_wrap #(
     assign axi_dma.ar_ss_id_valid  = 1'b0;
     assign axi_dma.ar_substream_id = '0;
     assign axi_dma.r_ready         = 1'b0;
+
 endmodule
