@@ -404,15 +404,15 @@ set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iom
 set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_hwicap/xlnx_axi_hwicap.gen/sources_1/ip/xlnx_axi_hwicap/xlnx_axi_hwicap_clocks.xdc]
 set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_hwicap/xlnx_axi_hwicap.gen/sources_1/ip/xlnx_axi_hwicap/xlnx_axi_hwicap_ooc.xdc]
 
-read_ip -quiet /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.srcs/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio.xci
-set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.gen/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio_board.xdc]
-set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.gen/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio_ooc.xdc]
-set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.gen/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio.xdc]
-
 read_ip -quiet /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_dwidth_converter/xlnx_axi_dwidth_converter.srcs/sources_1/ip/xlnx_axi_dwidth_converter/xlnx_axi_dwidth_converter.xci
 set_property used_in_synthesis false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_dwidth_converter/xlnx_axi_dwidth_converter.gen/sources_1/ip/xlnx_axi_dwidth_converter/xlnx_axi_dwidth_converter_clocks.xdc]
 set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_dwidth_converter/xlnx_axi_dwidth_converter.gen/sources_1/ip/xlnx_axi_dwidth_converter/xlnx_axi_dwidth_converter_clocks.xdc]
 set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_dwidth_converter/xlnx_axi_dwidth_converter.gen/sources_1/ip/xlnx_axi_dwidth_converter/xlnx_axi_dwidth_converter_ooc.xdc]
+
+read_ip -quiet /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.srcs/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio.xci
+set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.gen/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio_board.xdc]
+set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.gen/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio_ooc.xdc]
+set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.gen/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio.xdc]
 
 read_ip -quiet /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_quad_spi/xlnx_axi_quad_spi.srcs/sources_1/ip/xlnx_axi_quad_spi/xlnx_axi_quad_spi.xci
 set_property used_in_implementation false [get_files -all /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_quad_spi/xlnx_axi_quad_spi.gen/sources_1/ip/xlnx_axi_quad_spi/xlnx_axi_quad_spi_board.xdc]

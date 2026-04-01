@@ -1,4 +1,4 @@
-// accel_A — registre identifiant
+// accel_B — registre identifiant
 // r_data = { 0xDEAD, STREAM_ID[23:0], 0xAAAAAA }
 // accel1 (STREAM_ID=1) -> 0xDEAD_000001_AAAAAA
 // accel2 (STREAM_ID=2) -> 0xDEAD_000002_AAAAAA
@@ -16,8 +16,8 @@ module accel_wrap #(
     AXI_BUS.Slave      axi_cfg,
     AXI_BUS_MMU.Master axi_dma
 );
-    // Constante identifiant : RM=A, instance identifiée par STREAM_ID
-    localparam logic [63:0] ACCEL_ID = {16'hDEAD, STREAM_ID, 24'hAAAAAA};
+    // Constante identifiant : RM=B, instance identifiée par STREAM_ID
+    localparam logic [63:0] ACCEL_ID = {16'hDEAD, STREAM_ID, 24'hBBBBBB};
 
     // ----------------------------------------------------------------
     // CFG slave — registre en lecture seule, réponse combinatoire
