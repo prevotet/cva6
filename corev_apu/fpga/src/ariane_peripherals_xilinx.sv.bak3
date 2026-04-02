@@ -476,117 +476,122 @@ module ariane_peripherals #(
         );
     end
 
-// =======================================================================
+
+    // =======================================================================
     //  7b. AXI HWICAP — Reconfiguration Partielle Dynamique
-    //  Adaptateur simple 64→32 bits sans dwidth converter
-    //  Le CPU CVA6 envoie des transactions AXI 64 bits.
-    //  On extrait le bon mot 32 bits selon le bit d'adresse [2] :
-    //    addr[2]=0 → bits [31:0]  (mot bas)
-    //    addr[2]=1 → bits [63:32] (mot haut)
+    //  Convertisseur 64→32 bits (crossbar 64 bits, HWICAP 32 bits)
     // =======================================================================
     assign hwicap.b_user = 1'b0;
     assign hwicap.r_user = 1'b0;
-
     if (InclHWICAP) begin : gen_hwicap
+        logic [31:0] s_axi_hwicap_awaddr, s_axi_hwicap_araddr;
+        logic [31:0] s_axi_hwicap_wdata,  s_axi_hwicap_rdata;
+        logic [7:0]  s_axi_hwicap_awlen,  s_axi_hwicap_arlen;
+        logic [2:0]  s_axi_hwicap_awsize, s_axi_hwicap_arsize;
+        logic [1:0]  s_axi_hwicap_awburst,s_axi_hwicap_arburst;
+        logic [1:0]  s_axi_hwicap_bresp,  s_axi_hwicap_rresp;
+        logic [3:0]  s_axi_hwicap_wstrb;
+        logic        s_axi_hwicap_awvalid, s_axi_hwicap_awready;
+        logic        s_axi_hwicap_wvalid,  s_axi_hwicap_wready;
+        logic        s_axi_hwicap_bvalid,  s_axi_hwicap_bready;
+        logic        s_axi_hwicap_arvalid, s_axi_hwicap_arready;
+        logic        s_axi_hwicap_rlast,   s_axi_hwicap_rvalid, s_axi_hwicap_rready;
 
-        logic [8:0]  hwicap_awaddr;
-        logic [31:0] hwicap_wdata;
-        logic [3:0]  hwicap_wstrb;
-        logic        hwicap_awvalid, hwicap_awready;
-        logic        hwicap_wvalid,  hwicap_wready;
-        logic [1:0]  hwicap_bresp;
-        logic        hwicap_bvalid,  hwicap_bready;
-        logic [8:0]  hwicap_araddr;
-        logic        hwicap_arvalid, hwicap_arready;
-        logic [31:0] hwicap_rdata;
-        logic [1:0]  hwicap_rresp;
-        logic        hwicap_rvalid,  hwicap_rready;
-
-        // Write address
-        assign hwicap_awaddr  = hwicap.aw_addr[8:0];
-        assign hwicap_awvalid = hwicap.aw_valid;
-        assign hwicap.aw_ready = hwicap_awready;
-
-        // Write data — extraction du bon mot 32 bits selon addr[2]
-        assign hwicap_wdata  = hwicap.aw_addr[2] ? hwicap.w_data[63:32]
-                                                  : hwicap.w_data[31:0];
-        assign hwicap_wstrb  = hwicap.aw_addr[2] ? hwicap.w_strb[7:4]
-                                                  : hwicap.w_strb[3:0];
-        assign hwicap_wvalid = hwicap.w_valid;
-        assign hwicap.w_ready = hwicap_wready;
-
-        // Write response
-        assign hwicap.b_resp  = hwicap_bresp;
-        assign hwicap.b_valid = hwicap_bvalid;
-        assign hwicap.b_id    = '0;
-        assign hwicap_bready  = hwicap.b_ready;
-
-        // Read address
-        assign hwicap_araddr  = hwicap.ar_addr[8:0];
-        assign hwicap_arvalid = hwicap.ar_valid;
-        assign hwicap.ar_ready = hwicap_arready;
-
-        // Read data — retourner dans les deux moitiés 32 bits
-        assign hwicap.r_data  = {hwicap_rdata, hwicap_rdata};
-        assign hwicap.r_resp  = hwicap_rresp;
-        assign hwicap.r_valid = hwicap_rvalid;
-        assign hwicap.r_id    = '0;
-        assign hwicap.r_last  = 1'b1;
-        assign hwicap_rready  = hwicap.r_ready;
-
-        xlnx_axi_hwicap i_hwicap (
-            .s_axi_aclk    ( clk_i           ),
-            .s_axi_aresetn ( rst_ni          ),
-            .s_axi_awaddr  ( hwicap_awaddr   ),
-            .s_axi_awvalid ( hwicap_awvalid  ),
-            .s_axi_awready ( hwicap_awready  ),
-            .s_axi_wdata   ( hwicap_wdata    ),
-            .s_axi_wstrb   ( hwicap_wstrb    ),
-            .s_axi_wvalid  ( hwicap_wvalid   ),
-            .s_axi_wready  ( hwicap_wready   ),
-            .s_axi_bresp   ( hwicap_bresp    ),
-            .s_axi_bvalid  ( hwicap_bvalid   ),
-            .s_axi_bready  ( hwicap_bready   ),
-            .s_axi_araddr  ( hwicap_araddr   ),
-            .s_axi_arvalid ( hwicap_arvalid  ),
-            .s_axi_arready ( hwicap_arready  ),
-            .s_axi_rdata   ( hwicap_rdata    ),
-            .s_axi_rresp   ( hwicap_rresp    ),
-            .s_axi_rvalid  ( hwicap_rvalid   ),
-            .s_axi_rready  ( hwicap_rready   ),
-            .icap_clk      ( clk_i           ),
-            .eos_in        ( 1'b1            ),
-            .ip2intc_irpt  ( irq_sources[7]  )
+        xlnx_axi_dwidth_converter i_xlnx_axi_dwidth_converter_hwicap (
+            .s_axi_aclk     ( clk_i                    ),
+            .s_axi_aresetn  ( rst_ni                   ),
+            .s_axi_awid     ( hwicap.aw_id             ),
+            .s_axi_awaddr   ( hwicap.aw_addr[31:0]     ),
+            .s_axi_awlen    ( hwicap.aw_len            ),
+            .s_axi_awsize   ( hwicap.aw_size           ),
+            .s_axi_awburst  ( hwicap.aw_burst          ),
+            .s_axi_awlock   ( hwicap.aw_lock           ),
+            .s_axi_awcache  ( hwicap.aw_cache          ),
+            .s_axi_awprot   ( hwicap.aw_prot           ),
+            .s_axi_awregion ( hwicap.aw_region         ),
+            .s_axi_awqos    ( hwicap.aw_qos            ),
+            .s_axi_awvalid  ( hwicap.aw_valid          ),
+            .s_axi_awready  ( hwicap.aw_ready          ),
+            .s_axi_wdata    ( hwicap.w_data            ),
+            .s_axi_wstrb    ( hwicap.w_strb            ),
+            .s_axi_wlast    ( hwicap.w_last            ),
+            .s_axi_wvalid   ( hwicap.w_valid           ),
+            .s_axi_wready   ( hwicap.w_ready           ),
+            .s_axi_bid      ( hwicap.b_id              ),
+            .s_axi_bresp    ( hwicap.b_resp            ),
+            .s_axi_bvalid   ( hwicap.b_valid           ),
+            .s_axi_bready   ( hwicap.b_ready           ),
+            .s_axi_arid     ( hwicap.ar_id             ),
+            .s_axi_araddr   ( hwicap.ar_addr[31:0]     ),
+            .s_axi_arlen    ( hwicap.ar_len            ),
+            .s_axi_arsize   ( hwicap.ar_size           ),
+            .s_axi_arburst  ( hwicap.ar_burst          ),
+            .s_axi_arlock   ( hwicap.ar_lock           ),
+            .s_axi_arcache  ( hwicap.ar_cache          ),
+            .s_axi_arprot   ( hwicap.ar_prot           ),
+            .s_axi_arregion ( hwicap.ar_region         ),
+            .s_axi_arqos    ( hwicap.ar_qos            ),
+            .s_axi_arvalid  ( hwicap.ar_valid          ),
+            .s_axi_arready  ( hwicap.ar_ready          ),
+            .s_axi_rid      ( hwicap.r_id              ),
+            .s_axi_rdata    ( hwicap.r_data            ),
+            .s_axi_rresp    ( hwicap.r_resp            ),
+            .s_axi_rlast    ( hwicap.r_last            ),
+            .s_axi_rvalid   ( hwicap.r_valid           ),
+            .s_axi_rready   ( hwicap.r_ready           ),
+            .m_axi_awaddr   ( s_axi_hwicap_awaddr      ),
+            .m_axi_awlen    ( s_axi_hwicap_awlen       ),
+            .m_axi_awsize   ( s_axi_hwicap_awsize      ),
+            .m_axi_awburst  ( s_axi_hwicap_awburst     ),
+            .m_axi_awvalid  ( s_axi_hwicap_awvalid     ),
+            .m_axi_awready  ( s_axi_hwicap_awready     ),
+            .m_axi_wdata    ( s_axi_hwicap_wdata       ),
+            .m_axi_wstrb    ( s_axi_hwicap_wstrb       ),
+            .m_axi_wvalid   ( s_axi_hwicap_wvalid      ),
+            .m_axi_wready   ( s_axi_hwicap_wready      ),
+            .m_axi_bresp    ( s_axi_hwicap_bresp       ),
+            .m_axi_bvalid   ( s_axi_hwicap_bvalid      ),
+            .m_axi_bready   ( s_axi_hwicap_bready      ),
+            .m_axi_araddr   ( s_axi_hwicap_araddr      ),
+            .m_axi_arlen    ( s_axi_hwicap_arlen       ),
+            .m_axi_arsize   ( s_axi_hwicap_arsize      ),
+            .m_axi_arburst  ( s_axi_hwicap_arburst     ),
+            .m_axi_arvalid  ( s_axi_hwicap_arvalid     ),
+            .m_axi_arready  ( s_axi_hwicap_arready     ),
+            .m_axi_rdata    ( s_axi_hwicap_rdata       ),
+            .m_axi_rresp    ( s_axi_hwicap_rresp       ),
+            .m_axi_rlast    ( s_axi_hwicap_rlast       ),
+            .m_axi_rvalid   ( s_axi_hwicap_rvalid      ),
+            .m_axi_rready   ( s_axi_hwicap_rready      )
         );
 
+        xlnx_axi_hwicap i_hwicap (
+            .s_axi_aclk    ( clk_i                    ),
+            .s_axi_aresetn ( rst_ni                   ),
+            .s_axi_awaddr  ( s_axi_hwicap_awaddr[8:0] ),
+            .s_axi_awvalid ( s_axi_hwicap_awvalid     ),
+            .s_axi_awready ( s_axi_hwicap_awready     ),
+            .s_axi_wdata   ( s_axi_hwicap_wdata       ),
+            .s_axi_wstrb   ( s_axi_hwicap_wstrb       ),
+            .s_axi_wvalid  ( s_axi_hwicap_wvalid      ),
+            .s_axi_wready  ( s_axi_hwicap_wready      ),
+            .s_axi_bresp   ( s_axi_hwicap_bresp       ),
+            .s_axi_bvalid  ( s_axi_hwicap_bvalid      ),
+            .s_axi_bready  ( s_axi_hwicap_bready      ),
+            .s_axi_araddr  ( s_axi_hwicap_araddr[8:0] ),
+            .s_axi_arvalid ( s_axi_hwicap_arvalid     ),
+            .s_axi_arready ( s_axi_hwicap_arready     ),
+            .s_axi_rdata   ( s_axi_hwicap_rdata       ),
+            .s_axi_rresp   ( s_axi_hwicap_rresp       ),
+            .s_axi_rvalid  ( s_axi_hwicap_rvalid      ),
+            .s_axi_rready  ( s_axi_hwicap_rready      ),
+            .icap_clk      ( clk_i                    ),
+            .eos_in        ( 1'b1                 ),
+            .ip2intc_irpt  ( irq_sources[7]           )
+        );
+        assign s_axi_hwicap_rlast = 1'b1;
     end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
 
 
 
