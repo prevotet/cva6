@@ -9,7 +9,7 @@ set_property -dict [list \
     CONFIG.C_ICAP_EXTERNAL   {0} \
     CONFIG.C_DEVICE_ID       {0x03647093} \
     CONFIG.C_OPERATION       {1} \
-    CONFIG.C_INCLUDE_STARTUP {1} \
+    CONFIG.C_INCLUDE_STARTUP {0} \
 ] [get_ips $ipName]
 generate_target {instantiation_template} \
     [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]

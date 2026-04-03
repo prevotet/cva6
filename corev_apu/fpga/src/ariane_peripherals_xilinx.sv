@@ -476,117 +476,170 @@ module ariane_peripherals #(
         );
     end
 
-// =======================================================================
+
+    // =======================================================================
     //  7b. AXI HWICAP — Reconfiguration Partielle Dynamique
-    //  Adaptateur simple 64→32 bits sans dwidth converter
-    //  Le CPU CVA6 envoie des transactions AXI 64 bits.
-    //  On extrait le bon mot 32 bits selon le bit d'adresse [2] :
-    //    addr[2]=0 → bits [31:0]  (mot bas)
-    //    addr[2]=1 → bits [63:32] (mot haut)
+    //
+    //  Le crossbar CVA6 est en 64 bits : même un SW 32 bits génère une
+    //  transaction AXI 64 bits (wstrb=8'h0F). Le xlnx_axi_dwidth_converter
+    //  attend les deux moitiés d'un beat 64 bits avant de libérer — ce qui
+    //  bloque l'écriture mot par mot dans la FIFO HWICAP.
+    //
+    //  Solution : axi2apb_64_32 (même chemin que UART/PLIC/Timer) qui
+    //  sélectionne le bon mot 32 bits via AWADDR[2] et les byte strobes,
+    //  puis apb_to_axilite adapte APB→AXI-Lite pour l'IP HWICAP.
+    //
+    //  AXI 64b (crossbar) → axi2apb_64_32 → APB 32b
+    //                                       → apb_to_axilite → AXI-Lite 32b
+    //                                                         → xlnx_axi_hwicap
     // =======================================================================
     assign hwicap.b_user = 1'b0;
     assign hwicap.r_user = 1'b0;
-
     if (InclHWICAP) begin : gen_hwicap
+        // Signaux APB entre axi2apb_64_32 et apb_to_axilite
+        logic [31:0] hwicap_paddr, hwicap_pwdata, hwicap_prdata;
+        logic        hwicap_penable, hwicap_pwrite, hwicap_psel;
+        logic        hwicap_pready, hwicap_pslverr;
 
-        logic [8:0]  hwicap_awaddr;
-        logic [31:0] hwicap_wdata;
-        logic [3:0]  hwicap_wstrb;
-        logic        hwicap_awvalid, hwicap_awready;
-        logic        hwicap_wvalid,  hwicap_wready;
-        logic [1:0]  hwicap_bresp;
-        logic        hwicap_bvalid,  hwicap_bready;
-        logic [8:0]  hwicap_araddr;
-        logic        hwicap_arvalid, hwicap_arready;
-        logic [31:0] hwicap_rdata;
-        logic [1:0]  hwicap_rresp;
-        logic        hwicap_rvalid,  hwicap_rready;
+        // Signaux AXI-Lite entre apb_to_axilite et xlnx_axi_hwicap
+        logic [31:0] s_axi_hwicap_awaddr, s_axi_hwicap_araddr;
+        logic [31:0] s_axi_hwicap_wdata,  s_axi_hwicap_rdata;
+        logic [1:0]  s_axi_hwicap_bresp,  s_axi_hwicap_rresp;
+        logic [3:0]  s_axi_hwicap_wstrb;
+        logic        s_axi_hwicap_awvalid, s_axi_hwicap_awready;
+        logic        s_axi_hwicap_wvalid,  s_axi_hwicap_wready;
+        logic        s_axi_hwicap_bvalid,  s_axi_hwicap_bready;
+        logic        s_axi_hwicap_arvalid, s_axi_hwicap_arready;
+        logic        s_axi_hwicap_rvalid,  s_axi_hwicap_rready;
 
-        // Write address
-        assign hwicap_awaddr  = hwicap.aw_addr[8:0];
-        assign hwicap_awvalid = hwicap.aw_valid;
-        assign hwicap.aw_ready = hwicap_awready;
-
-        // Write data — extraction du bon mot 32 bits selon addr[2]
-        assign hwicap_wdata  = hwicap.aw_addr[2] ? hwicap.w_data[63:32]
-                                                  : hwicap.w_data[31:0];
-        assign hwicap_wstrb  = hwicap.aw_addr[2] ? hwicap.w_strb[7:4]
-                                                  : hwicap.w_strb[3:0];
-        assign hwicap_wvalid = hwicap.w_valid;
-        assign hwicap.w_ready = hwicap_wready;
-
-        // Write response
-        assign hwicap.b_resp  = hwicap_bresp;
-        assign hwicap.b_valid = hwicap_bvalid;
-        assign hwicap.b_id    = '0;
-        assign hwicap_bready  = hwicap.b_ready;
-
-        // Read address
-        assign hwicap_araddr  = hwicap.ar_addr[8:0];
-        assign hwicap_arvalid = hwicap.ar_valid;
-        assign hwicap.ar_ready = hwicap_arready;
-
-        // Read data — retourner dans les deux moitiés 32 bits
-        assign hwicap.r_data  = {hwicap_rdata, hwicap_rdata};
-        assign hwicap.r_resp  = hwicap_rresp;
-        assign hwicap.r_valid = hwicap_rvalid;
-        assign hwicap.r_id    = '0;
-        assign hwicap.r_last  = 1'b1;
-        assign hwicap_rready  = hwicap.r_ready;
-
-        xlnx_axi_hwicap i_hwicap (
-            .s_axi_aclk    ( clk_i           ),
-            .s_axi_aresetn ( rst_ni          ),
-            .s_axi_awaddr  ( hwicap_awaddr   ),
-            .s_axi_awvalid ( hwicap_awvalid  ),
-            .s_axi_awready ( hwicap_awready  ),
-            .s_axi_wdata   ( hwicap_wdata    ),
-            .s_axi_wstrb   ( hwicap_wstrb    ),
-            .s_axi_wvalid  ( hwicap_wvalid   ),
-            .s_axi_wready  ( hwicap_wready   ),
-            .s_axi_bresp   ( hwicap_bresp    ),
-            .s_axi_bvalid  ( hwicap_bvalid   ),
-            .s_axi_bready  ( hwicap_bready   ),
-            .s_axi_araddr  ( hwicap_araddr   ),
-            .s_axi_arvalid ( hwicap_arvalid  ),
-            .s_axi_arready ( hwicap_arready  ),
-            .s_axi_rdata   ( hwicap_rdata    ),
-            .s_axi_rresp   ( hwicap_rresp    ),
-            .s_axi_rvalid  ( hwicap_rvalid   ),
-            .s_axi_rready  ( hwicap_rready   ),
-            .icap_clk      ( clk_i           ),
-            .eos_in        ( 1'b1            ),
-            .ip2intc_irpt  ( irq_sources[7]  )
+        // Étage 1 : AXI 64b → APB 32b (même IP que UART/PLIC/Timer)
+        axi2apb_64_32 #(
+            .AXI4_ADDRESS_WIDTH ( AxiAddrWidth ),
+            .AXI4_RDATA_WIDTH   ( AxiDataWidth ),
+            .AXI4_WDATA_WIDTH   ( AxiDataWidth ),
+            .AXI4_ID_WIDTH      ( AxiIdWidth   ),
+            .AXI4_USER_WIDTH    ( AxiUserWidth ),
+            .BUFF_DEPTH_SLAVE   ( 2            ),
+            .APB_ADDR_WIDTH     ( 32           )
+        ) i_axi2apb_64_32_hwicap (
+            .ACLK       ( clk_i              ),
+            .ARESETn    ( rst_ni             ),
+            .test_en_i  ( 1'b0              ),
+            .AWID_i     ( hwicap.aw_id      ),
+            .AWADDR_i   ( hwicap.aw_addr    ),
+            .AWLEN_i    ( hwicap.aw_len     ),
+            .AWSIZE_i   ( hwicap.aw_size    ),
+            .AWBURST_i  ( hwicap.aw_burst   ),
+            .AWLOCK_i   ( hwicap.aw_lock    ),
+            .AWCACHE_i  ( hwicap.aw_cache   ),
+            .AWPROT_i   ( hwicap.aw_prot    ),
+            .AWREGION_i ( hwicap.aw_region  ),
+            .AWUSER_i   ( hwicap.aw_user    ),
+            .AWQOS_i    ( hwicap.aw_qos     ),
+            .AWVALID_i  ( hwicap.aw_valid   ),
+            .AWREADY_o  ( hwicap.aw_ready   ),
+            .WDATA_i    ( hwicap.w_data     ),
+            .WSTRB_i    ( hwicap.w_strb     ),
+            .WLAST_i    ( hwicap.w_last     ),
+            .WUSER_i    ( hwicap.w_user     ),
+            .WVALID_i   ( hwicap.w_valid    ),
+            .WREADY_o   ( hwicap.w_ready    ),
+            .BID_o      ( hwicap.b_id       ),
+            .BRESP_o    ( hwicap.b_resp     ),
+            .BVALID_o   ( hwicap.b_valid    ),
+            .BUSER_o    (                   ),
+            .BREADY_i   ( hwicap.b_ready    ),
+            .ARID_i     ( hwicap.ar_id      ),
+            .ARADDR_i   ( hwicap.ar_addr    ),
+            .ARLEN_i    ( hwicap.ar_len     ),
+            .ARSIZE_i   ( hwicap.ar_size    ),
+            .ARBURST_i  ( hwicap.ar_burst   ),
+            .ARLOCK_i   ( hwicap.ar_lock    ),
+            .ARCACHE_i  ( hwicap.ar_cache   ),
+            .ARPROT_i   ( hwicap.ar_prot    ),
+            .ARREGION_i ( hwicap.ar_region  ),
+            .ARUSER_i   ( hwicap.ar_user    ),
+            .ARQOS_i    ( hwicap.ar_qos     ),
+            .ARVALID_i  ( hwicap.ar_valid   ),
+            .ARREADY_o  ( hwicap.ar_ready   ),
+            .RID_o      ( hwicap.r_id       ),
+            .RDATA_o    ( hwicap.r_data     ),
+            .RRESP_o    ( hwicap.r_resp     ),
+            .RLAST_o    ( hwicap.r_last     ),
+            .RVALID_o   ( hwicap.r_valid    ),
+            .RUSER_o    (                   ),
+            .RREADY_i   ( hwicap.r_ready    ),
+            .PENABLE    ( hwicap_penable    ),
+            .PWRITE     ( hwicap_pwrite     ),
+            .PADDR      ( hwicap_paddr      ),
+            .PSEL       ( hwicap_psel       ),
+            .PWDATA     ( hwicap_pwdata     ),
+            .PRDATA     ( hwicap_prdata     ),
+            .PREADY     ( hwicap_pready     ),
+            .PSLVERR    ( hwicap_pslverr    )
         );
 
+        // Étage 2 : APB 32b → AXI-Lite 32b
+        apb_to_axilite #(
+            .ADDR_WIDTH ( 32 ),
+            .DATA_WIDTH ( 32 )
+        ) i_apb_to_axilite_hwicap (
+            .clk_i      ( clk_i                    ),
+            .rst_ni     ( rst_ni                   ),
+            .psel_i     ( hwicap_psel              ),
+            .penable_i  ( hwicap_penable           ),
+            .pwrite_i   ( hwicap_pwrite            ),
+            .paddr_i    ( hwicap_paddr             ),
+            .pwdata_i   ( hwicap_pwdata            ),
+            .prdata_o   ( hwicap_prdata            ),
+            .pready_o   ( hwicap_pready            ),
+            .pslverr_o  ( hwicap_pslverr           ),
+            .awaddr_o   ( s_axi_hwicap_awaddr      ),
+            .awvalid_o  ( s_axi_hwicap_awvalid     ),
+            .awready_i  ( s_axi_hwicap_awready     ),
+            .wdata_o    ( s_axi_hwicap_wdata       ),
+            .wstrb_o    ( s_axi_hwicap_wstrb       ),
+            .wvalid_o   ( s_axi_hwicap_wvalid      ),
+            .wready_i   ( s_axi_hwicap_wready      ),
+            .bresp_i    ( s_axi_hwicap_bresp       ),
+            .bvalid_i   ( s_axi_hwicap_bvalid      ),
+            .bready_o   ( s_axi_hwicap_bready      ),
+            .araddr_o   ( s_axi_hwicap_araddr      ),
+            .arvalid_o  ( s_axi_hwicap_arvalid     ),
+            .arready_i  ( s_axi_hwicap_arready     ),
+            .rdata_i    ( s_axi_hwicap_rdata       ),
+            .rresp_i    ( s_axi_hwicap_rresp       ),
+            .rvalid_i   ( s_axi_hwicap_rvalid      ),
+            .rready_o   ( s_axi_hwicap_rready      )
+        );
+
+        // Étage 3 : IP HWICAP (AXI-Lite 32b)
+        xlnx_axi_hwicap i_hwicap (
+            .s_axi_aclk    ( clk_i                    ),
+            .s_axi_aresetn ( rst_ni                   ),
+            .s_axi_awaddr  ( s_axi_hwicap_awaddr[8:0] ),
+            .s_axi_awvalid ( s_axi_hwicap_awvalid     ),
+            .s_axi_awready ( s_axi_hwicap_awready     ),
+            .s_axi_wdata   ( s_axi_hwicap_wdata       ),
+            .s_axi_wstrb   ( s_axi_hwicap_wstrb       ),
+            .s_axi_wvalid  ( s_axi_hwicap_wvalid      ),
+            .s_axi_wready  ( s_axi_hwicap_wready      ),
+            .s_axi_bresp   ( s_axi_hwicap_bresp       ),
+            .s_axi_bvalid  ( s_axi_hwicap_bvalid      ),
+            .s_axi_bready  ( s_axi_hwicap_bready      ),
+            .s_axi_araddr  ( s_axi_hwicap_araddr[8:0] ),
+            .s_axi_arvalid ( s_axi_hwicap_arvalid     ),
+            .s_axi_arready ( s_axi_hwicap_arready     ),
+            .s_axi_rdata   ( s_axi_hwicap_rdata       ),
+            .s_axi_rresp   ( s_axi_hwicap_rresp       ),
+            .s_axi_rvalid  ( s_axi_hwicap_rvalid      ),
+            .s_axi_rready  ( s_axi_hwicap_rready      ),
+            .icap_clk      ( clk_i                    ),
+            .eos_in        ( 1'b1                     ),
+            .ip2intc_irpt  ( irq_sources[7]           )
+        );
     end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
 
 
 
