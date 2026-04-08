@@ -1,7 +1,8 @@
-// accel_B — registre identifiant
-// r_data = { 0xDEAD, STREAM_ID[23:0], 0xAAAAAA }
-// accel1 (STREAM_ID=1) -> 0xDEAD_000001_AAAAAA
-// accel2 (STREAM_ID=2) -> 0xDEAD_000002_AAAAAA
+// accel_blank.sv - RM vide (configuration de base DPR)
+// Interface AXI tirée à idle / SLVERR.
+// Remplacer par accel_A_wrap.sv ou accel_B_wrap.sv.
+// Ce module a la même interface que accel_wrap dans ariane_peripherals.
+
 (* keep_hierarchy = "yes" *)
 module accel_wrap #(
     parameter int unsigned AXI_ADDR_WIDTH   = 64,
@@ -16,50 +17,43 @@ module accel_wrap #(
     AXI_BUS.Slave      axi_cfg,
     AXI_BUS_MMU.Master axi_dma
 );
-    // Constante identifiant : RM=B, instance identifiée par STREAM_ID
-    localparam logic [63:0] ACCEL_ID = {16'hDEAD, STREAM_ID, 24'hBBBBBB};
-
-    // ----------------------------------------------------------------
-    // CFG slave — registre en lecture seule
-    // r_id, r_valid, b_id, b_valid sont registrés DANS le RP pour éviter
-    // les feedthrough nets (HDPostRouteDRC-02 / PPLOC manquant).
-    // ----------------------------------------------------------------
-    (* dont_touch = "true" *) logic [AXI_SLV_ID_WIDTH-1:0] r_id_ff, b_id_ff;
-    (* dont_touch = "true" *) logic                    r_valid_ff, b_valid_ff;
+    // cfg slave : SLVERR
+    // b_id/r_id DOIVENT être pilotés par des FFs internes au pblock.
+    // Un assign combinatoire depuis aw_id/ar_id crée un "feedthrough net"
+    // qui entre ET sort du pblock sur le même net — Vivado ne peut pas
+    // placer les PPLOCs DFX avec CONTAIN_ROUTING=true (HDPostRouteDRC-02).
+    (* dont_touch = "true" *) logic [AXI_SLV_ID_WIDTH-1:0] b_id_ff, r_id_ff;
+    (* dont_touch = "true" *) logic                    b_valid_ff, r_valid_ff;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
-            r_id_ff    <= '0;
             b_id_ff    <= '0;
-            r_valid_ff <= 1'b0;
+            r_id_ff    <= '0;
             b_valid_ff <= 1'b0;
+            r_valid_ff <= 1'b0;
         end else begin
-            r_id_ff    <= axi_cfg.ar_id;
-            r_valid_ff <= axi_cfg.ar_valid;
             b_id_ff    <= axi_cfg.aw_id;
+            r_id_ff    <= axi_cfg.ar_id;
             b_valid_ff <= axi_cfg.aw_valid;
+            r_valid_ff <= axi_cfg.ar_valid;
         end
     end
 
+    assign axi_cfg.aw_ready = 1'b1;
+    assign axi_cfg.w_ready  = 1'b1;
     assign axi_cfg.ar_ready = 1'b1;
+    assign axi_cfg.b_valid  = b_valid_ff;
+    assign axi_cfg.b_id     = b_id_ff;
+    assign axi_cfg.b_resp   = 2'b10;
+    assign axi_cfg.b_user   = '0;
     assign axi_cfg.r_valid  = r_valid_ff;
     assign axi_cfg.r_id     = r_id_ff;
-    assign axi_cfg.r_data   = ACCEL_ID;
-    assign axi_cfg.r_resp   = 2'b00;
+    assign axi_cfg.r_data   = '0;
+    assign axi_cfg.r_resp   = 2'b10;
     assign axi_cfg.r_last   = 1'b1;
     assign axi_cfg.r_user   = '0;
 
-    // Écriture : acceptée mais ignorée
-    assign axi_cfg.aw_ready = 1'b1;
-    assign axi_cfg.w_ready  = 1'b1;
-    assign axi_cfg.b_valid  = b_valid_ff;
-    assign axi_cfg.b_id     = b_id_ff;
-    assign axi_cfg.b_resp   = 2'b00;
-    assign axi_cfg.b_user   = '0;
-
-    // ----------------------------------------------------------------
-    // DMA master — idle
-    // ----------------------------------------------------------------
+    // DMA master : idle
     assign axi_dma.aw_valid        = 1'b0;
     assign axi_dma.aw_id           = '0;
     assign axi_dma.aw_addr         = '0;
@@ -98,5 +92,4 @@ module accel_wrap #(
     assign axi_dma.ar_ss_id_valid  = 1'b0;
     assign axi_dma.ar_substream_id = '0;
     assign axi_dma.r_ready         = 1'b0;
-
 endmodule
