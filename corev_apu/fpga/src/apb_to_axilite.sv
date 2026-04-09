@@ -89,7 +89,10 @@ module apb_to_axilite #(
         state_d   = state_q;
         pready_o  = 1'b0;
         pslverr_o = 1'b0;
-        prdata_o  = rdata_q;
+        // Bypass rdata_q quand pready est asserté : rdata_q n'est enregistré
+        // qu'au prochain front d'horloge, donc on présente rdata_i directement
+        // pour que axi2apb_64_32 échantillonne la bonne donnée.
+        prdata_o  = (state_q == RD_DATA && rvalid_i) ? rdata_i : rdata_q;
 
         awaddr_o  = paddr_i;
         awvalid_o = 1'b0;
