@@ -48,6 +48,3 @@ __pycache__
 .runs/
 *.dcp
 corev_apu/fpga/**/*.dcp
-*.dcp
-corev_apu/fpga/**/*.dcp
-*.dcp
