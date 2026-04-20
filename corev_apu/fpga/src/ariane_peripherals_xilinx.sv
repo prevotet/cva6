@@ -635,7 +635,6 @@ module ariane_peripherals #(
             .s_axi_rvalid  ( s_axi_hwicap_rvalid      ),
             .s_axi_rready  ( s_axi_hwicap_rready      ),
             .icap_clk      ( clk_i                    ),
-            .eos_in        ( 1'b1                     ),
             .ip2intc_irpt  ( irq_sources[7]           )
         );
     end

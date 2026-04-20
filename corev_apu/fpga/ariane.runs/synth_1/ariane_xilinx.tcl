@@ -439,8 +439,6 @@ set_property used_in_implementation false [get_files /home/jc/tmp/riscv-iommu-de
 read_xdc dont_touch.xdc
 set_property used_in_implementation false [get_files dont_touch.xdc]
 set_param ips.enableIPCacheLiteLoad 1
-
-read_checkpoint -auto_incremental -incremental /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.srcs/utils_1/imports/synth_1/ariane_xilinx.dcp
 close [open __synthesis_is_running__ w]
 
 OPTRACE "synth_design" START { }

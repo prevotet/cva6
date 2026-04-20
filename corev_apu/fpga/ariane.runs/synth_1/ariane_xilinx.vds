@@ -2,27 +2,24 @@
 # Vivado v2022.2 (64-bit)
 # SW Build 3671981 on Fri Oct 14 04:59:54 MDT 2022
 # IP Build 3669848 on Fri Oct 14 08:30:02 MDT 2022
-# Start of session at: Fri Apr 10 17:40:58 2026
-# Process ID: 7464
+# Start of session at: Tue Apr 21 00:20:23 2026
+# Process ID: 191060
 # Current directory: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/synth_1
 # Command line: vivado -log ariane_xilinx.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source ariane_xilinx.tcl
 # Log file: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/synth_1/ariane_xilinx.vds
 # Journal file: /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/synth_1/vivado.jou
-# Running On: jc-VirtualBox, OS: Linux, CPU Frequency: 2903.996 MHz, CPU Physical cores: 8, Host memory: 53124 MB
+# Running On: jc-VirtualBox, OS: Linux, CPU Frequency: 2995.198 MHz, CPU Physical cores: 24, Host memory: 21134 MB
 #-----------------------------------------------------------
 source ariane_xilinx.tcl -notrace
-Command: read_checkpoint -auto_incremental -incremental /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.srcs/utils_1/imports/synth_1/ariane_xilinx.dcp
-INFO: [Vivado 12-5825] Read reference checkpoint from /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.srcs/utils_1/imports/synth_1/ariane_xilinx.dcp for incremental synthesis
-INFO: [Vivado 12-7989] Please ensure there are no constraint changes
 Command: synth_design -top ariane_xilinx -part xc7k325tffg900-2 -flatten_hierarchy none
 Starting synth_design
 Attempting to get a license for feature 'Synthesis' and/or device 'xc7k325t'
 INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7k325t'
-INFO: [Common 17-1540] The version limit for your license is '2025.06' and has expired for new software. A version limit expiration means that, although you may be able to continue to use the current version of tools or IP with this license, you will not be eligible for new releases.
+INFO: [Common 17-1540] The version limit for your license is '2025.10' and has expired for new software. A version limit expiration means that, although you may be able to continue to use the current version of tools or IP with this license, you will not be eligible for new releases.
 INFO: [Device 21-403] Loading part xc7k325tffg900-2
 INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
 INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
-INFO: [Synth 8-7075] Helper process launched with PID 7489
+INFO: [Synth 8-7075] Helper process launched with PID 191067
 INFO: [Synth 8-11241] undeclared symbol 'REGCCE', assumed default net type 'wire' [/tools/Xilinx/Vivado/2022.2/data/verilog/src/unimacro/BRAM_SINGLE_MACRO.v:2170]
 WARNING: [Synth 8-11067] parameter 'BurstWidth' declared inside package 'axi_pkg' shall be treated as localparam [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/armor/SRC/axi_pkg.sv:27]
 WARNING: [Synth 8-11067] parameter 'RespWidth' declared inside package 'axi_pkg' shall be treated as localparam [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/armor/SRC/axi_pkg.sv:29]
@@ -102,9 +99,9 @@ WARNING: [Synth 8-11067] parameter 'IOMMU_MSI_DATA_OFFSET' declared inside packa
 WARNING: [Synth 8-11067] parameter 'IOMMU_MSI_VEC_CTL_OFFSET' declared inside package 'rv_iommu_reg_pkg' shall be treated as localparam [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/rv_iommu/packages/rv_iommu/rv_iommu_reg_pkg.sv:519]
 WARNING: [Synth 8-11067] parameter 'IOMMU_PERMIT' declared inside package 'rv_iommu_reg_pkg' shall be treated as localparam [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/rv_iommu/packages/rv_iommu/rv_iommu_reg_pkg.sv:522]
 ---------------------------------------------------------------------------------
-Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:05 . Memory (MB): peak = 2535.672 ; gain = 378.801 ; free physical = 41556 ; free virtual = 48019
-Synthesis current peak Physical Memory [PSS] (MB): peak = 1974.972; parent = 1770.395; children = 204.577
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 3539.016; parent = 2558.488; children = 980.527
+Starting RTL Elaboration : Time (s): cpu = 00:00:01 ; elapsed = 00:00:03 . Memory (MB): peak = 2171.570 ; gain = 373.801 ; free physical = 11455 ; free virtual = 17822
+Synthesis current peak Physical Memory [PSS] (MB): peak = 1609.324; parent = 1404.695; children = 204.629
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 3237.535; parent = 2195.387; children = 1042.148
 ---------------------------------------------------------------------------------
 INFO: [Synth 8-6157] synthesizing module 'ariane_xilinx' [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/ariane_xilinx.sv:14]
 INFO: [Synth 8-6157] synthesizing module 'AXI_BUS' [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/armor/SRC/axi_intf.sv:21]
@@ -2651,6 +2648,8 @@ INFO: [Synth 8-155] case statement is not full and has no default [/home/jc/tmp/
 INFO: [Synth 8-155] case statement is not full and has no default [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/apb_timer/timer.sv:116]
 	Parameter ADDR_WIDTH bound to: 32'b00000000000000000000000000100000 
 	Parameter DATA_WIDTH bound to: 32'b00000000000000000000000000100000 
+WARNING: [Synth 8-7071] port 'eos_in' of module 'xlnx_axi_hwicap' is unconnected for instance 'i_hwicap' [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/ariane_peripherals_xilinx.sv:617]
+WARNING: [Synth 8-7023] instance 'i_hwicap' of module 'xlnx_axi_hwicap' has 22 connections declared, but only 21 given [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/ariane_peripherals_xilinx.sv:617]
 	Parameter AXI_ADDR_WIDTH bound to: 64 - type: integer 
 	Parameter AXI_DATA_WIDTH bound to: 64 - type: integer 
 	Parameter AXI_ID_WIDTH bound to: 32'b00000000000000000000000000000110 
@@ -3295,126 +3294,126 @@ WARNING: [Synth 8-3848] Net master_to_dm\.ar_user in module/entity ariane_xilinx
 WARNING: [Synth 8-3848] Net master_to_dm\.ar_valid in module/entity ariane_xilinx does not have driver. [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/armor/SRC/axi_intf.sv:75]
 WARNING: [Synth 8-3848] Net master_to_dm\.r_ready in module/entity ariane_xilinx does not have driver. [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/src/armor/SRC/axi_intf.sv:84]
 INFO: [Common 17-14] Message 'Synth 8-3848' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
-WARNING: [Synth 8-7129] Port ALMOST_FULL_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port ALMOST_EMPTY_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_ACK_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port VALID_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port OVERFLOW_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port UNDERFLOW_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port DATA_COUNT_I[4] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port DATA_COUNT_I[3] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port DATA_COUNT_I[2] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port DATA_COUNT_I[1] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port DATA_COUNT_I[0] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_DATA_COUNT_I[4] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_DATA_COUNT_I[3] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_DATA_COUNT_I[2] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_DATA_COUNT_I[1] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_DATA_COUNT_I[0] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_DATA_COUNT_I[4] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_DATA_COUNT_I[3] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_DATA_COUNT_I[2] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_DATA_COUNT_I[1] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_DATA_COUNT_I[0] in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SBITERR_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port DBITERR_I in module output_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_RST in module wr_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SRST in module wr_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SAFETY_CKT_WR_RST in module wr_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_PNTR_PLUS3[3] in module wr_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_PNTR_PLUS3[2] in module wr_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_PNTR_PLUS3[1] in module wr_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_PNTR_PLUS3[0] in module wr_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SRST in module wr_bin_cntr is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_EN_INTO_LOGIC in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_RST_INTO_LOGIC in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_EN in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SRST_FULL_FF in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_RST_BUSY in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port EMPTY in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RAM_RD_EN in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port ALMOST_EMPTY in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH[3] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH[2] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH[1] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH[0] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH_ASSERT[3] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH_ASSERT[2] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH_ASSERT[1] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH_ASSERT[0] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH_NEGATE[3] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH_NEGATE[2] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH_NEGATE[1] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_FULL_THRESH_NEGATE[0] in module wr_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SRST in module rd_fwft is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SAFETY_CKT_RD_RST in module rd_fwft is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RAM_ALMOST_EMPTY in module rd_fwft is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SRST in module rd_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SAFETY_CKT_RD_RST in module rd_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_PNTR_PLUS2[3] in module rd_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_PNTR_PLUS2[2] in module rd_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_PNTR_PLUS2[1] in module rd_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_PNTR_PLUS2[0] in module rd_status_flags_as is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SRST in module rd_bin_cntr is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_EN_INTO_LOGIC in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_RST_INTO_LOGIC in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_RST_BUSY in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RAM_WR_EN in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RST_FULL_FF in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port ALMOST_FULL_FB in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port FULL in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_PNTR_PLUS1_RD[3] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_PNTR_PLUS1_RD[2] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_PNTR_PLUS1_RD[1] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_PNTR_PLUS1_RD[0] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH[3] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH[2] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH[1] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH[0] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH_ASSERT[3] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH_ASSERT[2] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH_ASSERT[1] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH_ASSERT[0] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH_NEGATE[3] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH_NEGATE[2] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH_NEGATE[1] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH_NEGATE[0] in module rd_logic is either unconnected or has no load
-WARNING: [Synth 8-7129] Port WR_RST in module clk_x_pntrs is either unconnected or has no load
-WARNING: [Synth 8-7129] Port RD_RST in module clk_x_pntrs is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SRST in module dmem__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port FAB_REGOUT_EN in module memory__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SFT_RST in module memory__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SRST in module memory__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SAFETY_CKT_RD_RST in module memory__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port SLEEP in module memory__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port INJECTDBITERR in module memory__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port INJECTSBITERR in module memory__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port CLK in module input_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port INT_CLK in module input_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH[3] in module input_blk__parameterized0 is either unconnected or has no load
-WARNING: [Synth 8-7129] Port PROG_EMPTY_THRESH[2] in module input_blk__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rr_i[0] in module rr_arb_tree__parameterized18 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port testmode_i in module fifo_v3__parameterized16 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port testmode_i in module fifo_v3__parameterized15 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port testmode_i in module fifo_v3__parameterized14 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port PSLVERR in module axi2apb_64_32 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port req_i[wdata][31] in module plic_regs is either unconnected or has no load
+WARNING: [Synth 8-7129] Port req_i[wstrb][3] in module plic_regs is either unconnected or has no load
+WARNING: [Synth 8-7129] Port req_i[wstrb][2] in module plic_regs is either unconnected or has no load
+WARNING: [Synth 8-7129] Port req_i[wstrb][1] in module plic_regs is either unconnected or has no load
+WARNING: [Synth 8-7129] Port req_i[wstrb][0] in module plic_regs is either unconnected or has no load
+WARNING: [Synth 8-7129] Port reg_o\.clk_i in module apb_to_reg__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port clk_i in module apb_to_reg__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rst_ni in module apb_to_reg__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port testmode_i in module fifo_v3__parameterized21 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port testmode_i in module fifo_v3__parameterized2 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port testmode_i in module fifo_v3__parameterized20 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port testmode_i in module fifo_v3__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port slv_req_i[aw][atop][3] in module axi_atop_filter__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port slv_req_i[aw][atop][2] in module axi_atop_filter__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port slv_req_i[aw][atop][1] in module axi_atop_filter__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port slv_req_i[aw][atop][0] in module axi_atop_filter__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port testmode_i in module fifo_v3__parameterized19 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[ar_ready] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[b][id][3] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[b][id][2] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[b][id][1] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[b][id][0] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[b][user][0] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r_valid] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][id][3] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][id][2] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][id][1] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][id][0] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][63] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][62] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][61] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][60] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][59] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][58] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][57] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][56] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][55] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][54] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][53] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][52] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][51] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][50] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][49] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][48] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][47] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][46] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][45] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][44] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][43] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][42] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][41] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][40] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][39] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][38] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][37] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][36] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][35] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][34] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][33] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][32] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][31] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][30] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][29] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][28] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][27] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][26] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][25] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][24] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][23] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][22] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][21] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][20] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][19] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][18] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][17] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][16] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][15] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][14] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][13] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][12] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][11] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][10] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][9] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][8] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][7] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][6] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][5] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][4] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][3] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][2] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][1] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][data][0] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][resp][1] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][resp][0] in module rv_iommu_fq_handler is either unconnected or has no load
+WARNING: [Synth 8-7129] Port mem_resp_i[r][last] in module rv_iommu_fq_handler is either unconnected or has no load
 INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
 ---------------------------------------------------------------------------------
-Finished RTL Elaboration : Time (s): cpu = 00:00:27 ; elapsed = 00:00:38 . Memory (MB): peak = 3600.008 ; gain = 1443.137 ; free physical = 40578 ; free virtual = 47061
-Synthesis current peak Physical Memory [PSS] (MB): peak = 2878.704; parent = 2674.127; children = 204.577
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 4580.539; parent = 3600.012; children = 980.527
+Finished RTL Elaboration : Time (s): cpu = 00:00:12 ; elapsed = 00:00:22 . Memory (MB): peak = 3129.906 ; gain = 1332.137 ; free physical = 10720 ; free virtual = 17107
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2314.725; parent = 2110.096; children = 204.629
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 4172.059; parent = 3129.910; children = 1042.148
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Handling Custom Attributes
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Handling Custom Attributes : Time (s): cpu = 00:00:29 ; elapsed = 00:00:41 . Memory (MB): peak = 3600.008 ; gain = 1443.137 ; free physical = 40591 ; free virtual = 47075
-Synthesis current peak Physical Memory [PSS] (MB): peak = 2878.704; parent = 2674.127; children = 204.577
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 4580.539; parent = 3600.012; children = 980.527
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:13 ; elapsed = 00:00:23 . Memory (MB): peak = 3144.750 ; gain = 1346.980 ; free physical = 10723 ; free virtual = 17110
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2315.697; parent = 2111.068; children = 204.629
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 4186.902; parent = 3144.754; children = 1042.148
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:29 ; elapsed = 00:00:41 . Memory (MB): peak = 3600.008 ; gain = 1443.137 ; free physical = 40591 ; free virtual = 47075
-Synthesis current peak Physical Memory [PSS] (MB): peak = 2878.704; parent = 2674.127; children = 204.577
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 4580.539; parent = 3600.012; children = 980.527
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:13 ; elapsed = 00:00:23 . Memory (MB): peak = 3144.750 ; gain = 1346.980 ; free physical = 10723 ; free virtual = 17110
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2315.697; parent = 2111.068; children = 204.629
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 4186.902; parent = 3144.754; children = 1042.148
 ---------------------------------------------------------------------------------
-Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 3606.977 ; gain = 0.000 ; free physical = 40599 ; free virtual = 47082
+Netlist sorting complete. Time (s): cpu = 00:00:00.91 ; elapsed = 00:00:01 . Memory (MB): peak = 3179.680 ; gain = 0.000 ; free physical = 10541 ; free virtual = 16928
 INFO: [Netlist 29-17] Analyzing 28 Unisim elements for replacement
 INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
 INFO: [Project 1-570] Preparing netlist for logic optimization
@@ -3425,6 +3424,8 @@ Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_
 Finished Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3.gen/sources_1/ip/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3_in_context.xdc] for cell 'i_ddr'
 Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen/xlnx_clk_gen_in_context.xdc] for cell 'i_xlnx_clk_gen'
 Finished Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen/xlnx_clk_gen_in_context.xdc] for cell 'i_xlnx_clk_gen'
+Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_clock_converter/xlnx_axi_clock_converter.gen/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter/xlnx_axi_clock_converter_in_context.xdc] for cell 'i_xlnx_axi_clock_converter_ddr'
+Finished Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_clock_converter/xlnx_axi_clock_converter.gen/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter/xlnx_axi_clock_converter_in_context.xdc] for cell 'i_xlnx_axi_clock_converter_ddr'
 Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_hwicap/xlnx_axi_hwicap.gen/sources_1/ip/xlnx_axi_hwicap/xlnx_axi_hwicap/xlnx_axi_hwicap_in_context.xdc] for cell 'i_ariane_peripherals/gen_hwicap.i_hwicap'
 Finished Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_hwicap/xlnx_axi_hwicap.gen/sources_1/ip/xlnx_axi_hwicap/xlnx_axi_hwicap/xlnx_axi_hwicap_in_context.xdc] for cell 'i_ariane_peripherals/gen_hwicap.i_hwicap'
 Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_axi_gpio/xlnx_axi_gpio.gen/sources_1/ip/xlnx_axi_gpio/xlnx_axi_gpio/xlnx_axi_gpio_in_context.xdc] for cell 'i_ariane_peripherals/gen_gpio.i_xlnx_axi_gpio'
@@ -3454,38 +3455,32 @@ INFO: [Project 1-236] Implementation specific constraints were found while readi
 Resolution: To avoid this warning, move constraints listed in [.Xil/ariane_xilinx_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
 Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/synth_1/dont_touch.xdc]
 Finished Parsing XDC File [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/synth_1/dont_touch.xdc]
-INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/synth_1/dont_touch.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/ariane_xilinx_propImpl.xdc].
-Resolution: To avoid this warning, move constraints listed in [.Xil/ariane_xilinx_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
-INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/tools/Xilinx/Vivado/2022.2/data/ip/xpm/xpm_cdc/tcl/xpm_cdc_gray.tcl]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/ariane_xilinx_propImpl.xdc].
-Resolution: To avoid this warning, move constraints listed in [.Xil/ariane_xilinx_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
-INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/tools/Xilinx/Vivado/2022.2/data/ip/xpm/xpm_cdc/tcl/xpm_cdc_single.tcl]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/ariane_xilinx_propImpl.xdc].
-Resolution: To avoid this warning, move constraints listed in [.Xil/ariane_xilinx_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
-INFO: [Project 1-1714] 33 XPM XDC files have been applied to the design.
 Completed Processing XDC Constraints
 
-Netlist sorting complete. Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.02 . Memory (MB): peak = 4051.383 ; gain = 0.000 ; free physical = 40223 ; free virtual = 46706
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3673.039 ; gain = 0.000 ; free physical = 10133 ; free virtual = 16519
 INFO: [Project 1-111] Unisim Transformation Summary:
   A total of 11 instances were transformed.
   IOBUF => IOBUF (IBUF, OBUFT): 1 instance 
   RAMB16_S9_S36 => RAMB36E1: 10 instances
 
-Constraint Validation Runtime : Time (s): cpu = 00:00:00.62 ; elapsed = 00:00:00.62 . Memory (MB): peak = 4051.383 ; gain = 0.000 ; free physical = 40231 ; free virtual = 46714
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.37 ; elapsed = 00:00:00.37 . Memory (MB): peak = 3673.039 ; gain = 0.000 ; free physical = 10133 ; free virtual = 16520
+WARNING: [Timing 38-316] Clock period '100.000' specified during out-of-context synthesis of instance 'i_xlnx_axi_clock_converter_ddr' at clock pin 'm_axi_aclk' is different from the actual clock period '5.000', this can lead to different synthesis results.
 WARNING: [Timing 38-316] Clock period '100.000' specified during out-of-context synthesis of instance 'i_ariane_peripherals/gen_gpio.i_xlnx_axi_dwidth_converter_gpio' at clock pin 's_axi_aclk' is different from the actual clock period '20.000', this can lead to different synthesis results.
 WARNING: [Timing 38-316] Clock period '100.000' specified during out-of-context synthesis of instance 'i_ariane_peripherals/gen_spi.i_xlnx_axi_dwidth_converter_spi' at clock pin 's_axi_aclk' is different from the actual clock period '20.000', this can lead to different synthesis results.
 INFO: [Synth 8-11241] undeclared symbol 'REGCCE', assumed default net type 'wire' [/tools/Xilinx/Vivado/2022.2/data/verilog/src/unimacro/BRAM_SINGLE_MACRO.v:2170]
 ---------------------------------------------------------------------------------
-Finished Constraint Validation : Time (s): cpu = 00:01:11 ; elapsed = 00:01:17 . Memory (MB): peak = 4051.383 ; gain = 1894.512 ; free physical = 40914 ; free virtual = 47398
-Synthesis current peak Physical Memory [PSS] (MB): peak = 3313.771; parent = 3109.226; children = 204.577
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 4999.898; parent = 4019.371; children = 980.527
+Finished Constraint Validation : Time (s): cpu = 00:00:41 ; elapsed = 00:00:48 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 10874 ; free virtual = 17261
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2770.029; parent = 2565.432; children = 204.629
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 4683.176; parent = 3641.027; children = 1042.148
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Loading Part and Timing Information
 ---------------------------------------------------------------------------------
 Loading part: xc7k325tffg900-2
 ---------------------------------------------------------------------------------
-Finished Loading Part and Timing Information : Time (s): cpu = 00:01:12 ; elapsed = 00:01:17 . Memory (MB): peak = 4051.383 ; gain = 1894.512 ; free physical = 40913 ; free virtual = 47397
-Synthesis current peak Physical Memory [PSS] (MB): peak = 3313.771; parent = 3109.226; children = 204.577
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 5011.820; parent = 4023.289; children = 988.531
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:41 ; elapsed = 00:00:48 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 10874 ; free virtual = 17261
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2770.029; parent = 2565.432; children = 204.629
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 4691.188; parent = 3641.035; children = 1050.152
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Applying 'set_property' XDC Constraints
@@ -3636,7 +3631,6 @@ Applied set_property IO_BUFFER_TYPE = NONE for sys_clk_n. (constraint file  /hom
 Applied set_property CLOCK_BUFFER_TYPE = NONE for sys_clk_n. (constraint file  /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3.gen/sources_1/ip/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3_in_context.xdc, line 146).
 Applied set_property IO_BUFFER_TYPE = NONE for sys_clk_p. (constraint file  /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3.gen/sources_1/ip/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3_in_context.xdc, line 147).
 Applied set_property CLOCK_BUFFER_TYPE = NONE for sys_clk_p. (constraint file  /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/xilinx/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3.gen/sources_1/ip/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3/xlnx_mig_7_ddr3_in_context.xdc, line 148).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst. (constraint file  /home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/synth_1/dont_touch.xdc, line 36).
 Applied set_property KEEP_HIERARCHY = SOFT for i_ddr. (constraint file  auto generated constraint).
 Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_clk_gen. (constraint file  auto generated constraint).
 Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr. (constraint file  auto generated constraint).
@@ -3645,58 +3639,10 @@ Applied set_property KEEP_HIERARCHY = SOFT for i_ariane_peripherals/\gen_gpio.i_
 Applied set_property KEEP_HIERARCHY = SOFT for i_ariane_peripherals/\gen_gpio.i_xlnx_axi_dwidth_converter_gpio . (constraint file  auto generated constraint).
 Applied set_property KEEP_HIERARCHY = SOFT for i_ariane_peripherals/\gen_spi.i_xlnx_axi_dwidth_converter_spi . (constraint file  auto generated constraint).
 Applied set_property KEEP_HIERARCHY = SOFT for i_ariane_peripherals/\gen_spi.i_xlnx_axi_quad_spi . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwach2.axi_wach /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.rst_rd_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.rst_rd_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwrch2.axi_wrch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.rst_rd_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grach2.axi_rach /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.rst_rd_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grdch2.axi_rdch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.rst_rd_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwach2.axi_wach /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.rst_wr_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.rst_wr_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwrch2.axi_wrch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.rst_wr_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grach2.axi_rach /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.rst_wr_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grdch2.axi_rdch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.rst_wr_reg2_inst . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwach2.axi_wach /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /rd_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /rd_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwrch2.axi_wrch /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /rd_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grach2.axi_rach /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /rd_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grdch2.axi_rdch /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /rd_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwach2.axi_wach /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /wr_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /wr_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwrch2.axi_wrch /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /wr_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grach2.axi_rach /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /wr_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grdch2.axi_rdch /\grf.rf /\gntv_or_sync_fifo.gcx.clkx /wr_pntr_cdc_inst. (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grach2.cdc_wr_rst_busy_ic_3.xpm_cdc_single_inst3 . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwach2.cdc_wr_rst_busy_ic_1.xpm_cdc_single_inst1 . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwdch2.cdc_wr_rst_busy_ic_2.xpm_cdc_single_inst2 . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwach2.axi_wach /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_rrst_wr . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_rrst_wr . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwrch2.axi_wrch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_rrst_wr . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grach2.axi_rach /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_rrst_wr . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grdch2.axi_rdch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_rrst_wr . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwach2.axi_wach /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_wrst_rd . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_wrst_rd . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwrch2.axi_wrch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_wrst_rd . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grach2.axi_rach /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_wrst_rd . (constraint file  auto generated constraint).
-Applied set_property KEEP_HIERARCHY = SOFT for i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grdch2.axi_rdch /\grf.rf /rstblk/\ngwrdrst.grst.g7serrst.gnsckt_wrst.gic_rst.xpm_cdc_single_inst_wrst_rd . (constraint file  auto generated constraint).
 ---------------------------------------------------------------------------------
-Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:01:12 ; elapsed = 00:01:18 . Memory (MB): peak = 4051.383 ; gain = 1894.512 ; free physical = 40923 ; free virtual = 47407
-Synthesis current peak Physical Memory [PSS] (MB): peak = 3313.771; parent = 3109.226; children = 229.713
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 5205.652; parent = 4023.289; children = 1182.363
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
-Start Preparing Guide Design
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
-Finished Doing Graph Differ : Time (s): cpu = 00:01:31 ; elapsed = 00:01:36 . Memory (MB): peak = 4259.562 ; gain = 2102.691 ; free physical = 35632 ; free virtual = 42139
-Synthesis current peak Physical Memory [PSS] (MB): peak = 7536.595; parent = 3261.598; children = 4715.921
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 13362.570; parent = 4255.652; children = 9106.918
----------------------------------------------------------------------------------
-WARNING: [Synth 8-6702] IncrSynth : Over 50% of partitions are impacted by design changes. Reverting to default synthesis
-WARNING: [Synth 8-6702] IncrSynth : Reverting to default synthesis
-rv_iommu_sw_if_wrapper__GB1rv_iommu_translation_wrapperfpnew_top__GB1axi_riscv_atomics_wrapariane_xilinx__GCB2fpu_wrap__GC0pmpfpnew_top__GB0ariane_peripherals__GCB1rv_iommu_sw_if_wrapper__GB0ariane_xilinx__GCB1riscv_iommu__GCB1---------------------------------------------------------------------------------
-Finished Preparing Guide Design : Time (s): cpu = 00:01:40 ; elapsed = 00:01:45 . Memory (MB): peak = 4259.562 ; gain = 2102.691 ; free physical = 34495 ; free virtual = 41001
-Synthesis current peak Physical Memory [PSS] (MB): peak = 8922.197; parent = 3311.164; children = 5931.438
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 14646.121; parent = 4255.652; children = 10390.469
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:41 ; elapsed = 00:00:48 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 10871 ; free virtual = 17258
+Synthesis current peak Physical Memory [PSS] (MB): peak = 2770.029; parent = 2565.432; children = 225.353
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 4888.926; parent = 3644.945; children = 1243.980
 ---------------------------------------------------------------------------------
 INFO: [Synth 8-802] inferred FSM for state register 'r_state_q_reg' in module 'axi_atop_filter'
 INFO: [Synth 8-802] inferred FSM for state register 'w_state_q_reg' in module 'axi_atop_filter'
@@ -3742,7 +3688,6 @@ INFO: [Synth 8-802] inferred FSM for state register 'ar_state_q_reg' in module '
 INFO: [Synth 8-802] inferred FSM for state register 'r_state_q_reg' in module 'axi_riscv_amos'
 INFO: [Synth 8-802] inferred FSM for state register 'r_state_q_reg' in module 'axi_riscv_lrsc'
 INFO: [Synth 8-802] inferred FSM for state register 'w_state_q_reg' in module 'axi_riscv_lrsc'
-INFO: [Synth 8-802] inferred FSM for state register 'gpregsm1.curr_fwft_state_reg' in module 'rd_fwft'
 ---------------------------------------------------------------------------------------------------
                    State |                     New Encoding |                Previous Encoding 
 ---------------------------------------------------------------------------------------------------
@@ -4214,30 +4159,11 @@ INFO: [Synth 8-3354] encoded FSM with state register 'w_state_q_reg' using encod
                 R_WAIT_R |                               10 |                               10
 ---------------------------------------------------------------------------------------------------
 INFO: [Synth 8-3354] encoded FSM with state register 'r_state_q_reg' using encoding 'sequential' in module 'axi_riscv_lrsc'
-INFO: [Synth 8-6159] Found Keep on FSM register 'gpregsm1.curr_fwft_state_reg' in module 'rd_fwft', re-encoding will not be performed
----------------------------------------------------------------------------------------------------
-                   State |                     New Encoding |                Previous Encoding 
----------------------------------------------------------------------------------------------------
-                 invalid |                               00 |                               00
-            stage1_valid |                               10 |                               10
-       both_stages_valid |                               11 |                               11
-            stage2_valid |                               01 |                               01
----------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished RTL Optimization Phase 2 : Time (s): cpu = 00:02:33 ; elapsed = 00:02:46 . Memory (MB): peak = 4259.562 ; gain = 2102.691 ; free physical = 34280 ; free virtual = 40787
-Synthesis current peak Physical Memory [PSS] (MB): peak = 9444.770; parent = 3311.164; children = 6482.502
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 15295.828; parent = 4255.652; children = 11040.176
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:01:21 ; elapsed = 00:01:28 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 6078 ; free virtual = 12488
+Synthesis current peak Physical Memory [PSS] (MB): peak = 6975.289; parent = 2565.432; children = 5024.359
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 13293.609; parent = 3644.945; children = 9652.582
 ---------------------------------------------------------------------------------
-
-
-Incremental Synthesis Report Summary:
-
-1. Incremental synthesis run: no
-
-   Reason for not running incremental synthesis : Change is too high
-
-
-INFO: [Synth 8-7130] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
 ---------------------------------------------------------------------------------
 Start RTL Component Statistics 
 ---------------------------------------------------------------------------------
@@ -4295,7 +4221,7 @@ Detailed RTL Component Info :
 	   3 Input    5 Bit       Adders := 1     
 	   2 Input    5 Bit       Adders := 5     
 	   3 Input    4 Bit       Adders := 160   
-	   2 Input    4 Bit       Adders := 41    
+	   2 Input    4 Bit       Adders := 31    
 	   4 Input    4 Bit       Adders := 1     
 	   2 Input    3 Bit       Adders := 91    
 	   3 Input    3 Bit       Adders := 7     
@@ -4309,9 +4235,8 @@ Detailed RTL Component Info :
 	   2 Input     64 Bit         XORs := 5     
 	   2 Input     32 Bit         XORs := 3     
 	   2 Input      8 Bit         XORs := 2     
-	   2 Input      4 Bit         XORs := 10    
 	   2 Input      2 Bit         XORs := 1     
-	   2 Input      1 Bit         XORs := 172   
+	   2 Input      1 Bit         XORs := 62    
 	   4 Input      1 Bit         XORs := 15    
 	   3 Input      1 Bit         XORs := 10    
 	   7 Input      1 Bit         XORs := 14    
@@ -4329,11 +4254,9 @@ Detailed RTL Component Info :
 	              163 Bit    Registers := 1     
 	              128 Bit    Registers := 1     
 	              100 Bit    Registers := 20    
-	               99 Bit    Registers := 4     
 	               76 Bit    Registers := 1     
 	               74 Bit    Registers := 20    
-	               73 Bit    Registers := 4     
-	               64 Bit    Registers := 645   
+	               64 Bit    Registers := 639   
 	               58 Bit    Registers := 1     
 	               57 Bit    Registers := 1     
 	               56 Bit    Registers := 22    
@@ -4361,14 +4284,14 @@ Detailed RTL Component Info :
 	               11 Bit    Registers := 124   
 	               10 Bit    Registers := 95    
 	                9 Bit    Registers := 116   
-	                8 Bit    Registers := 351   
+	                8 Bit    Registers := 343   
 	                7 Bit    Registers := 13    
-	                6 Bit    Registers := 248   
-	                5 Bit    Registers := 219   
-	                4 Bit    Registers := 755   
-	                3 Bit    Registers := 429   
-	                2 Bit    Registers := 904   
-	                1 Bit    Registers := 2911  
+	                6 Bit    Registers := 244   
+	                5 Bit    Registers := 209   
+	                4 Bit    Registers := 660   
+	                3 Bit    Registers := 421   
+	                2 Bit    Registers := 885   
+	                1 Bit    Registers := 2817  
 +---Multipliers : 
 	              65x65  Multipliers := 1     
 	              53x53  Multipliers := 1     
@@ -4565,23 +4488,23 @@ Detailed RTL Component Info :
 	  16 Input    3 Bit        Muxes := 1     
 	   9 Input    3 Bit        Muxes := 1     
 	   6 Input    2 Bit        Muxes := 166   
-	   2 Input    2 Bit        Muxes := 1425  
+	   2 Input    2 Bit        Muxes := 1375  
 	   3 Input    2 Bit        Muxes := 170   
 	   7 Input    2 Bit        Muxes := 19    
 	   8 Input    2 Bit        Muxes := 3     
-	   5 Input    2 Bit        Muxes := 15    
+	   5 Input    2 Bit        Muxes := 10    
 	  20 Input    2 Bit        Muxes := 3     
 	  34 Input    2 Bit        Muxes := 3     
-	   4 Input    2 Bit        Muxes := 48    
+	   4 Input    2 Bit        Muxes := 43    
 	  10 Input    2 Bit        Muxes := 1     
 	  18 Input    2 Bit        Muxes := 1     
 	  40 Input    2 Bit        Muxes := 3     
 	  41 Input    2 Bit        Muxes := 3     
 	  16 Input    1 Bit        Muxes := 9     
-	   2 Input    1 Bit        Muxes := 11755 
+	   2 Input    1 Bit        Muxes := 11740 
 	   6 Input    1 Bit        Muxes := 383   
-	   4 Input    1 Bit        Muxes := 342   
-	   3 Input    1 Bit        Muxes := 299   
+	   4 Input    1 Bit        Muxes := 332   
+	   3 Input    1 Bit        Muxes := 294   
 	   7 Input    1 Bit        Muxes := 152   
 	   5 Input    1 Bit        Muxes := 111   
 	   8 Input    1 Bit        Muxes := 35    
@@ -4658,29 +4581,7 @@ INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_
 INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][37]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][38]'
 INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][38]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][39]'
 INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][39]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][40]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][40]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][41]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][41]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][42]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][42]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][43]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][43]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][44]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][44]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][45]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][45]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][46]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][46]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][47]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][47]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][48]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][48]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][49]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][49]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][50]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][50]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][51]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][51]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][52]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][52]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][53]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][53]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][54]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][54]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][55]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][55]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][56]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][56]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][57]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][57]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][58]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][58]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][59]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][59]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][60]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][60]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][61]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][61]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][62]'
-INFO: [Synth 8-3886] merging instance 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][62]' (FDC) to 'i_issue_read_operands/gen_asic_regfile.i_ariane_regfile/mem_reg[0][63]'
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
 INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_issue_read_operands/\gen_asic_regfile.i_ariane_regfile /\mem_reg[0][63] )
 DSP Report: Generating DSP product, operation Mode is: A*B.
 DSP Report: operator product is absorbed into DSP product.
@@ -4759,8 +4660,38 @@ INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/g
 INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][31]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][32]'
 INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][32]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][33]'
 INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][33]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][34]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][34]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][35]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][35]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][36]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][36]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][37]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][37]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][38]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][38]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][39]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][39]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][40]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][40]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][41]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][41]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][42]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][42]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][43]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][43]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][44]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][44]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][45]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][45]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][46]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][46]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][47]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][47]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][48]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][48]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][49]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][49]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][50]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_operation_groups[0].i_opgroup_block /\gen_parallel_slices[1].active_format.i_fmt_slice /\gen_num_lanes[0].active_lane.lane_instance.i_fma /\gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][50] )
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][0]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][1]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][1]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][2]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][2]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][3]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][3]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][4]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][4]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][5]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][5]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][6]'
+INFO: [Synth 8-3886] merging instance 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][6]' (FDCE) to 'gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][exponent][7]'
 INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
-INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_operation_groups[2].i_opgroup_block /\gen_parallel_slices[1].active_format.i_fmt_slice /\gen_num_lanes[0].active_lane.lane_instance.i_noncomp /\gen_input_pipeline[0].inp_pipe_aux_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_operation_groups[2].i_opgroup_block /\gen_parallel_slices[0].active_format.i_fmt_slice /\gen_num_lanes[0].active_lane.lane_instance.i_noncomp /\gen_input_pipeline[0].inp_pipe_aux_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_operation_groups[0].i_opgroup_block /\gen_parallel_slices[0].active_format.i_fmt_slice /\gen_num_lanes[0].active_lane.lane_instance.i_fma /\gen_inside_pipeline[0].mid_pipe_spec_res_q_reg[1][mantissa][21] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_operation_groups[0].i_opgroup_block /i_arbiter/\gen_arbiter.gen_int_rr.rr_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_operation_groups[2].i_opgroup_block /i_arbiter/\gen_arbiter.gen_int_rr.rr_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_operation_groups[3].i_opgroup_block /i_arbiter/\gen_arbiter.gen_int_rr.rr_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_operation_groups[0].i_opgroup_block /\gen_parallel_slices[1].active_format.i_fmt_slice /\gen_num_lanes[0].active_lane.lane_instance.i_fma /\gen_output_pipeline[0].out_pipe_status_q_reg[1][DZ] )
 INFO: [Synth 8-5544] ROM "C_BIAS_AONE" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
 INFO: [Synth 8-5544] ROM "C_HALF_BIAS" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
 INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_operation_groups[1].i_opgroup_block /\gen_merged_slice.i_multifmt_slice /\gen_num_lanes[0].active_lane.lane_instance.i_fpnew_divsqrt_multi /\gen_input_pipeline[0].inp_pipe_aux_q_reg[1][4] )
@@ -4926,6 +4857,8 @@ WARNING: [Synth 8-3332] Sequential element (mult_result_q_reg[36]__2) is unused 
 WARNING: [Synth 8-3332] Sequential element (mult_result_q_reg[35]__2) is unused and will be removed from module multiplier.
 WARNING: [Synth 8-3332] Sequential element (mult_result_q_reg[34]__2) is unused and will be removed from module multiplier.
 WARNING: [Synth 8-3332] Sequential element (mult_result_q_reg[33]__2) is unused and will be removed from module multiplier.
+WARNING: [Synth 8-3332] Sequential element (mult_result_q_reg[32]__2) is unused and will be removed from module multiplier.
+INFO: [Common 17-14] Message 'Synth 8-3332' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
 INFO: [Common 17-14] Message 'Synth 8-3332' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
 INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
 WARNING: [Synth 8-3917] design wt_dcache_wbuffer has port req_port_o[data_rvalid] driven by constant 0
@@ -5031,8 +4964,6 @@ INFO: [Synth 8-3333] propagating constant 0 across sequential element (\wbuffer_
 INFO: [Synth 8-3333] propagating constant 0 across sequential element (\wbuffer_q_reg[2][user][0] )
 INFO: [Synth 8-3333] propagating constant 0 across sequential element (\wbuffer_q_reg[1][user][0] )
 INFO: [Synth 8-3333] propagating constant 0 across sequential element (\wbuffer_q_reg[0][user][0] )
-WARNING: [Synth 8-3332] Sequential element (FSM_sequential_wr_state_q_reg[1]) is unused and will be removed from module axi_shim.
-INFO: [Common 17-14] Message 'Synth 8-3332' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
 INFO: [Synth 8-5546] ROM "hedeleg_d" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5546] ROM "scounteren_d" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5546] ROM "vsstatus_d" won't be mapped to RAM because it is too sparse
@@ -5111,91 +5042,8 @@ INFO: [Synth 8-5546] ROM "mtval2_d" won't be mapped to RAM because it is too spa
 INFO: [Synth 8-5546] ROM "dcache_d" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5546] ROM "icache_d" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5546] ROM "perf_we_o" won't be mapped to RAM because it is too sparse
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[wpri0][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[uie] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri0][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri0][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[wpri0][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri0][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\stvec_q_reg[1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vstvec_q_reg[1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri0][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri0][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[wpri0][2] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri0][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[wpri0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri0][2] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri0][2] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[wpri0][3] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri0][2] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[mie] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[cbie][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[cbie][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[wpri0][4] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[cbie][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[upie] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[cbie][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[cbie][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[cbie][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[cbcfe] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[cbcfe] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[cbcfe] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[ube] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[cbze] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[cbze] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[cbze] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[mpie] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][8] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][8] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][8] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][9] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][9] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][9] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[wpri2][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][10] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][10] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[wpri1][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][10] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\dcsr_q_reg[stopcount] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[wpri2][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][11] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][11] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[wpri1][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][11] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[mpp][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][12] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][12] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[vgein][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][12] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[mpp][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][13] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][13] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[vgein][1] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][13] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][14] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][14] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[vgein][2] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][14] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][15] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][15] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[vgein][3] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][15] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][16] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][16] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[vgein][4] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][16] )
 INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][17] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][17] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[vgein][5] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][17] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\vsstatus_q_reg[mprv] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\menvcfg_q_reg[wpri1][18] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\henvcfg_q_reg[wpri1][18] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\hstatus_q_reg[wpri2][0] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (csr_regfile_i/\senvcfg_q_reg[wpri1][18] )
-INFO: [Common 17-14] Message 'Synth 8-3333' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
-INFO: [Common 17-14] Message 'Synth 8-3333' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_frontend/i_instr_realign/\unaligned_address_q_reg[0] )
 INFO: [Synth 8-5546] ROM "illegal_instr_non_bm" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5546] ROM "instruction_o" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5587] ROM size for "instruction_o" is below threshold of ROM address width. It will be mapped to LUTs
@@ -5206,18 +5054,93 @@ INFO: [Synth 8-5587] ROM size for "instruction_o" is below threshold of ROM addr
 INFO: [Synth 8-5546] ROM "instruction_o" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5544] ROM "instruction_o1" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
 INFO: [Synth 8-5544] ROM "instruction_o1" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
-INFO: [Common 17-14] Message 'Synth 8-3333' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (id_stage_i/\issue_q_reg[sbe][trans_id][2] )
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_cq_handler/\cq_pptr_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][12] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][13] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][14] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][15] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][16] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][17] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][18] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][19] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][20] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][21] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][22] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][23] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][24] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][25] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][26] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][27] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][28] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][29] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][30] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[custom][31] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][12] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][13] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][14] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][15] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][16] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][17] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][18] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][19] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][20] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][21] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][22] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][23] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][24] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][25] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][26] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][27] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][28] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][29] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][30] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_entry_q_reg[reserved][31] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_rv_iommu_fq_handler/\fq_pptr_q_reg[4] )
 INFO: [Synth 8-5544] ROM "mem_req_o" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
 INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
-INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_pc_support_disabled.i_rv_iommu_tw_sv39x4 /i_rv_iommu_ptw_sv39x4/\gpa_x_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_pc_support_disabled.i_rv_iommu_tw_sv39x4 /\gen_msi_support.i_rv_iommu_msiptw /\flat_cause_q_reg[11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_pc_support_disabled.i_rv_iommu_tw_sv39x4 /\gen_msi_support.i_rv_iommu_msiptw /\gen_mrif_support.mrif_cause_q_reg[11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_pc_support_disabled.i_rv_iommu_tw_sv39x4 /i_rv_iommu_ptw_sv39x4/\cause_q_reg[11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_pc_support_disabled.i_rv_iommu_tw_sv39x4 /i_rv_iommu_cdw/\cause_q_reg[11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\gen_pc_support_disabled.i_rv_iommu_tw_sv39x4 /\gen_mrif_support.i_rv_iommu_mrif_handler /\pptr_q_reg[3] )
+INFO: [Common 17-14] Message 'Synth 8-3333' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Common 17-14] Message 'Synth 8-3333' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
 INFO: [Synth 8-5546] ROM "resp_o" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5546] ROM "ip_re_o" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5546] ROM "resp_o" won't be mapped to RAM because it is too sparse
 INFO: [Synth 8-5546] ROM "ip_re_o" won't be mapped to RAM because it is too sparse
 ---------------------------------------------------------------------------------
-Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:04:50 ; elapsed = 00:05:09 . Memory (MB): peak = 4275.586 ; gain = 2118.715 ; free physical = 33453 ; free virtual = 40194
-Synthesis current peak Physical Memory [PSS] (MB): peak = 10024.371; parent = 3311.164; children = 7226.785
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 16920.164; parent = 4271.672; children = 12648.496
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:02:53 ; elapsed = 00:03:07 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 5432 ; free virtual = 12052
+Synthesis current peak Physical Memory [PSS] (MB): peak = 7782.687; parent = 2565.432; children = 5892.593
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 15072.219; parent = 3644.945; children = 11431.191
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start ROM, RAM, DSP, Shift Register and Retiming Reporting
@@ -5278,16 +5201,11 @@ Block RAM: Preliminary Mapping Report (see note below)
 Note: The table above is a preliminary report that shows the Block RAMs at the current stage of the synthesis flow. Some Block RAMs may be reimplemented as non Block RAM primitives later in the synthesis flow. Multiple instantiated Block RAMs are reported only once. 
 
 Distributed RAM: Preliminary Mapping Report (see note below)
-+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------+----------------+----------------------+--------------+
-|Module Name                                                                                                                                                                                     | RTL Object         | Inference      | Size (Depth x Width) | Primitives   | 
-+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------+----------------+----------------------+--------------+
-|\gen_ethernet.eth_rgmii                                                                                                                                                                         | rx_length_axis_reg | Implied        | 8 x 11               | RAM32M x 2   | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwach2.axi_wach /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm  | RAM_reg            | User Attribute | 16 x 99              | RAM32M x 17  | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm  | RAM_reg            | User Attribute | 16 x 73              | RAM32M x 13  | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwrch2.axi_wrch /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm  | RAM_reg            | User Attribute | 16 x 8               | RAM32M x 2   | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grach2.axi_rach /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm   | RAM_reg            | User Attribute | 16 x 99              | RAM32M x 17  | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grdch2.axi_rdch /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm   | RAM_reg            | User Attribute | 16 x 73              | RAM32M x 13  | 
-+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------+----------------+----------------------+--------------+
++-------------------------+--------------------+-----------+----------------------+-------------+
+|Module Name              | RTL Object         | Inference | Size (Depth x Width) | Primitives  | 
++-------------------------+--------------------+-----------+----------------------+-------------+
+|\gen_ethernet.eth_rgmii  | rx_length_axis_reg | Implied   | 8 x 11               | RAM32M x 2  | 
++-------------------------+--------------------+-----------+----------------------+-------------+
 
 Note: The table above is a preliminary report that shows the Distributed RAMs at the current stage of the synthesis flow. Some Distributed RAMs may be reimplemented as non Distributed RAM primitives later in the synthesis flow. Multiple instantiated RAMs are reported only once.
 
@@ -5332,17 +5250,17 @@ Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
 Start Applying XDC Timing Constraints
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Applying XDC Timing Constraints : Time (s): cpu = 00:05:26 ; elapsed = 00:05:44 . Memory (MB): peak = 4275.586 ; gain = 2118.715 ; free physical = 33249 ; free virtual = 40176
-Synthesis current peak Physical Memory [PSS] (MB): peak = 10084.883; parent = 3311.164; children = 7226.785
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 16920.164; parent = 4271.672; children = 12648.496
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:03:10 ; elapsed = 00:03:24 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 5081 ; free virtual = 11871
+Synthesis current peak Physical Memory [PSS] (MB): peak = 7782.687; parent = 2565.432; children = 5892.593
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 15072.219; parent = 3644.945; children = 11431.191
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Timing Optimization
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Timing Optimization : Time (s): cpu = 00:08:39 ; elapsed = 00:09:00 . Memory (MB): peak = 4481.914 ; gain = 2325.043 ; free physical = 32887 ; free virtual = 39815
-Synthesis current peak Physical Memory [PSS] (MB): peak = 10450.305; parent = 3445.810; children = 7226.785
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 17130.414; parent = 4481.918; children = 12648.496
+Finished Timing Optimization : Time (s): cpu = 00:04:58 ; elapsed = 00:05:11 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 4775 ; free virtual = 11566
+Synthesis current peak Physical Memory [PSS] (MB): peak = 8053.025; parent = 2565.432; children = 5892.593
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 15072.219; parent = 3644.945; children = 11431.191
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start ROM, RAM, DSP, Shift Register and Retiming Reporting
@@ -5392,16 +5310,11 @@ Block RAM: Final Mapping Report
 
 
 Distributed RAM: Final Mapping Report
-+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------+----------------+----------------------+--------------+
-|Module Name                                                                                                                                                                                     | RTL Object         | Inference      | Size (Depth x Width) | Primitives   | 
-+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------+----------------+----------------------+--------------+
-|\gen_ethernet.eth_rgmii                                                                                                                                                                         | rx_length_axis_reg | Implied        | 8 x 11               | RAM32M x 2   | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwach2.axi_wach /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm  | RAM_reg            | User Attribute | 16 x 99              | RAM32M x 17  | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm  | RAM_reg            | User Attribute | 16 x 73              | RAM32M x 13  | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gwrite_ch.gwrch2.axi_wrch /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm  | RAM_reg            | User Attribute | 16 x 8               | RAM32M x 2   | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grach2.axi_rach /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm   | RAM_reg            | User Attribute | 16 x 99              | RAM32M x 17  | 
-|i_0/i_xlnx_axi_clock_converter_ddr/inst/\gen_clock_conv.gen_async_conv.asyncfifo_axi /inst_fifo_gen/\gaxi_full_lite.gread_ch.grdch2.axi_rdch /\grf.rf /\gntv_or_sync_fifo.mem /\gdm.dm_gen.dm   | RAM_reg            | User Attribute | 16 x 73              | RAM32M x 13  | 
-+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------+----------------+----------------------+--------------+
++-------------------------+--------------------+-----------+----------------------+-------------+
+|Module Name              | RTL Object         | Inference | Size (Depth x Width) | Primitives  | 
++-------------------------+--------------------+-----------+----------------------+-------------+
+|\gen_ethernet.eth_rgmii  | rx_length_axis_reg | Implied   | 8 x 11               | RAM32M x 2  | 
++-------------------------+--------------------+-----------+----------------------+-------------+
 
 ---------------------------------------------------------------------------------
 Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
@@ -5452,9 +5365,9 @@ INFO: [Synth 8-5844] Detected registers with asynchronous reset at DSP/BRAM bloc
 INFO: [Synth 8-5844] Detected registers with asynchronous reset at DSP/BRAM block boundary. Consider using synchronous reset for optimal packing [/home/jc/tmp/riscv-iommu-demo/cva6/core/multiplier.sv:138]
 INFO: [Synth 8-5844] Detected registers with asynchronous reset at DSP/BRAM block boundary. Consider using synchronous reset for optimal packing [/home/jc/tmp/riscv-iommu-demo/cva6/core/multiplier.sv:138]
 ---------------------------------------------------------------------------------
-Finished Technology Mapping : Time (s): cpu = 00:09:28 ; elapsed = 00:09:52 . Memory (MB): peak = 4493.840 ; gain = 2336.969 ; free physical = 31925 ; free virtual = 38861
-Synthesis current peak Physical Memory [PSS] (MB): peak = 11348.331; parent = 3445.810; children = 8099.883
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 17574.371; parent = 4489.926; children = 13084.449
+Finished Technology Mapping : Time (s): cpu = 00:05:18 ; elapsed = 00:05:35 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 3907 ; free virtual = 10700
+Synthesis current peak Physical Memory [PSS] (MB): peak = 8823.788; parent = 2565.432; children = 6571.299
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 15310.020; parent = 3649.035; children = 11660.988
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start IO Insertion
@@ -5510,26 +5423,27 @@ INFO: [Synth 8-4649] Removing BlackBox instance i_unread_instr_fifo of module un
 ---------------------------------------------------------------------------------
 Finished Final Netlist Cleanup
 ---------------------------------------------------------------------------------
+CRITICAL WARNING: [Synth 8-4442] BlackBox module \gen_hwicap.i_hwicap  has unconnected pin eos_in
 ---------------------------------------------------------------------------------
-Finished IO Insertion : Time (s): cpu = 00:09:48 ; elapsed = 00:10:17 . Memory (MB): peak = 4493.840 ; gain = 2336.969 ; free physical = 31968 ; free virtual = 39102
-Synthesis current peak Physical Memory [PSS] (MB): peak = 11348.331; parent = 3445.810; children = 8099.883
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 17574.371; parent = 4489.926; children = 13084.449
+Finished IO Insertion : Time (s): cpu = 00:05:29 ; elapsed = 00:05:49 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 3916 ; free virtual = 10892
+Synthesis current peak Physical Memory [PSS] (MB): peak = 8827.015; parent = 2565.432; children = 6571.299
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 15310.020; parent = 3649.035; children = 11660.988
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Instances
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Instances : Time (s): cpu = 00:09:49 ; elapsed = 00:10:18 . Memory (MB): peak = 4493.840 ; gain = 2336.969 ; free physical = 31968 ; free virtual = 39102
-Synthesis current peak Physical Memory [PSS] (MB): peak = 11348.331; parent = 3445.810; children = 8099.883
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 17574.371; parent = 4489.926; children = 13084.449
+Finished Renaming Generated Instances : Time (s): cpu = 00:05:29 ; elapsed = 00:05:49 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 3916 ; free virtual = 10892
+Synthesis current peak Physical Memory [PSS] (MB): peak = 8827.015; parent = 2565.432; children = 6571.299
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 15310.020; parent = 3649.035; children = 11660.988
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Handling Custom Attributes
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Handling Custom Attributes : Time (s): cpu = 00:10:07 ; elapsed = 00:10:37 . Memory (MB): peak = 4493.840 ; gain = 2336.969 ; free physical = 31997 ; free virtual = 39131
-Synthesis current peak Physical Memory [PSS] (MB): peak = 11348.331; parent = 3445.810; children = 8099.883
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 17574.371; parent = 4489.926; children = 13084.449
+Finished Handling Custom Attributes : Time (s): cpu = 00:05:39 ; elapsed = 00:05:59 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 3952 ; free virtual = 10928
+Synthesis current peak Physical Memory [PSS] (MB): peak = 8827.015; parent = 2565.432; children = 6571.299
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 15310.020; parent = 3649.035; children = 11660.988
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start ROM, RAM, DSP, Shift Register and Retiming Reporting
@@ -5594,80 +5508,80 @@ Report BlackBoxes:
 |2     |xlnx_axi_dwidth_converter |         2|
 |3     |xlnx_axi_quad_spi         |         1|
 |4     |xlnx_axi_hwicap           |         1|
-|5     |xlnx_mig_7_ddr3           |         1|
-|6     |xlnx_clk_gen              |         1|
+|5     |xlnx_axi_clock_converter  |         1|
+|6     |xlnx_mig_7_ddr3           |         1|
+|7     |xlnx_clk_gen              |         1|
 +------+--------------------------+----------+
 
 Report Cell Usage: 
 +------+--------------------------+------+
 |      |Cell                      |Count |
 +------+--------------------------+------+
-|1     |xlnx_axi_dwidth_converter |     2|
-|3     |xlnx_axi_gpio             |     1|
-|4     |xlnx_axi_hwicap           |     1|
-|5     |xlnx_axi_quad_spi         |     1|
-|6     |xlnx_clk_gen              |     1|
-|7     |xlnx_mig_7_ddr3           |     1|
-|8     |BUFG                      |     1|
-|9     |BUFIO                     |     1|
-|10    |BUFR                      |     1|
-|11    |CARRY4                    |  4725|
-|12    |DSP48E1                   |    27|
-|15    |IDDR                      |     5|
-|16    |IDELAYCTRL                |     1|
-|17    |IDELAYE2                  |     5|
-|18    |LUT1                      |  2948|
-|19    |LUT2                      | 17743|
-|20    |LUT3                      | 21066|
-|21    |LUT4                      | 13643|
-|22    |LUT5                      | 14305|
-|23    |LUT6                      | 35342|
-|24    |MUXF7                     |  3970|
-|25    |MUXF8                     |   387|
-|26    |ODDR                      |     6|
-|27    |RAM32M                    |    47|
-|28    |RAM32X1D                  |     4|
+|1     |xlnx_axi_clock_converter  |     1|
+|2     |xlnx_axi_dwidth_converter |     2|
+|4     |xlnx_axi_gpio             |     1|
+|5     |xlnx_axi_hwicap           |     1|
+|6     |xlnx_axi_quad_spi         |     1|
+|7     |xlnx_clk_gen              |     1|
+|8     |xlnx_mig_7_ddr3           |     1|
+|9     |BUFG                      |     1|
+|10    |BUFIO                     |     1|
+|11    |BUFR                      |     1|
+|12    |CARRY4                    |  4725|
+|13    |DSP48E1                   |    27|
+|16    |IDDR                      |     5|
+|17    |IDELAYCTRL                |     1|
+|18    |IDELAYE2                  |     5|
+|19    |LUT1                      |  2870|
+|20    |LUT2                      | 17667|
+|21    |LUT3                      | 21026|
+|22    |LUT4                      | 13573|
+|23    |LUT5                      | 14275|
+|24    |LUT6                      | 35342|
+|25    |MUXF7                     |  3970|
+|26    |MUXF8                     |   387|
+|27    |ODDR                      |     6|
+|28    |RAM32M                    |     2|
 |29    |RAMB16_S9_S36             |    10|
 |30    |RAMB36E1                  |    38|
 |33    |SRL16E                    |    11|
-|34    |FDCE                      | 49356|
-|35    |FDPE                      |   189|
-|36    |FDRE                      |  2436|
+|34    |FDCE                      | 49198|
+|35    |FDPE                      |    74|
+|36    |FDRE                      |  1169|
 |37    |FDSE                      |   141|
 |38    |IBUF                      |    26|
 |39    |IOBUF                     |     1|
 |40    |OBUF                      |    22|
 +------+--------------------------+------+
 ---------------------------------------------------------------------------------
-Finished Writing Synthesis Report : Time (s): cpu = 00:10:08 ; elapsed = 00:10:37 . Memory (MB): peak = 4493.840 ; gain = 2336.969 ; free physical = 31997 ; free virtual = 39131
-Synthesis current peak Physical Memory [PSS] (MB): peak = 11348.331; parent = 3445.810; children = 8099.883
-Synthesis current peak Virtual Memory [VSS] (MB): peak = 17574.371; parent = 4489.926; children = 13084.449
+Finished Writing Synthesis Report : Time (s): cpu = 00:05:39 ; elapsed = 00:05:59 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 3957 ; free virtual = 10933
+Synthesis current peak Physical Memory [PSS] (MB): peak = 8827.015; parent = 2565.432; children = 6571.299
+Synthesis current peak Virtual Memory [VSS] (MB): peak = 15310.020; parent = 3649.035; children = 11660.988
 ---------------------------------------------------------------------------------
-Synthesis finished with 0 errors, 0 critical warnings and 1313 warnings.
-Synthesis Optimization Runtime : Time (s): cpu = 00:09:35 ; elapsed = 00:10:10 . Memory (MB): peak = 4493.840 ; gain = 1885.594 ; free physical = 39795 ; free virtual = 46929
-Synthesis Optimization Complete : Time (s): cpu = 00:10:09 ; elapsed = 00:10:38 . Memory (MB): peak = 4493.840 ; gain = 2336.969 ; free physical = 39859 ; free virtual = 46946
+Synthesis finished with 0 errors, 1 critical warnings and 1312 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:05:19 ; elapsed = 00:05:41 . Memory (MB): peak = 3673.039 ; gain = 1346.980 ; free physical = 10214 ; free virtual = 17190
+Synthesis Optimization Complete : Time (s): cpu = 00:05:40 ; elapsed = 00:06:00 . Memory (MB): peak = 3673.039 ; gain = 1875.270 ; free physical = 10250 ; free virtual = 17191
 INFO: [Project 1-571] Translating synthesized netlist
-Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 4493.840 ; gain = 0.000 ; free physical = 39800 ; free virtual = 46886
-INFO: [Netlist 29-17] Analyzing 9226 Unisim elements for replacement
+Netlist sorting complete. Time (s): cpu = 00:00:00.96 ; elapsed = 00:00:00.96 . Memory (MB): peak = 3673.039 ; gain = 0.000 ; free physical = 10209 ; free virtual = 17150
+INFO: [Netlist 29-17] Analyzing 9177 Unisim elements for replacement
 INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
 INFO: [Project 1-570] Preparing netlist for logic optimization
 INFO: [Opt 31-138] Pushed 1 inverter(s) to 2 load pin(s).
-Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.03 . Memory (MB): peak = 4529.938 ; gain = 0.000 ; free physical = 39749 ; free virtual = 46836
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3689.047 ; gain = 0.000 ; free physical = 10167 ; free virtual = 17108
 INFO: [Project 1-111] Unisim Transformation Summary:
-  A total of 62 instances were transformed.
+  A total of 13 instances were transformed.
   IOBUF => IOBUF (IBUF, OBUFT): 1 instance 
-  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 47 instances
-  RAM32X1D => RAM32X1D (RAMD32(x2)): 4 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 2 instances
   RAMB16_S9_S36 => RAMB36E1: 8 instances
   RAMB16_S9_S36 => RAMB36E1 (inverted pins: CLKARDCLK): 2 instances
 
-Synth Design complete, checksum: 887ec246
+Synth Design complete, checksum: c6bf70a9
 INFO: [Common 17-83] Releasing license: Synthesis
-935 Infos, 701 Warnings, 9 Critical Warnings and 0 Errors encountered.
+926 Infos, 702 Warnings, 10 Critical Warnings and 0 Errors encountered.
 synth_design completed successfully
-synth_design: Time (s): cpu = 00:10:41 ; elapsed = 00:11:07 . Memory (MB): peak = 4529.938 ; gain = 2739.016 ; free physical = 40154 ; free virtual = 47241
+synth_design: Time (s): cpu = 00:05:56 ; elapsed = 00:06:16 . Memory (MB): peak = 3689.047 ; gain = 2268.109 ; free physical = 10524 ; free virtual = 17465
 INFO: [runtcl-6] Synthesis results are not added to the cache due to CRITICAL_WARNING
 INFO: [Common 17-1381] The checkpoint '/home/jc/tmp/riscv-iommu-demo/cva6/corev_apu/fpga/ariane.runs/synth_1/ariane_xilinx.dcp' has been generated.
-write_checkpoint: Time (s): cpu = 00:00:24 ; elapsed = 00:00:20 . Memory (MB): peak = 4601.973 ; gain = 72.035 ; free physical = 40036 ; free virtual = 47249
+write_checkpoint: Time (s): cpu = 00:00:13 ; elapsed = 00:00:11 . Memory (MB): peak = 3761.082 ; gain = 72.035 ; free physical = 10452 ; free virtual = 17503
 INFO: [runtcl-4] Executing : report_utilization -file ariane_xilinx_utilization_synth.rpt -pb ariane_xilinx_utilization_synth.pb
-INFO: [Common 17-206] Exiting Vivado at Fri Apr 10 17:52:37 2026...
+INFO: [Common 17-206] Exiting Vivado at Tue Apr 21 00:26:58 2026...
