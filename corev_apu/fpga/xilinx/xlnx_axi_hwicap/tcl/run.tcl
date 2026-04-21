@@ -7,7 +7,7 @@ create_ip -name axi_hwicap -vendor xilinx.com -library ip \
     -version 3.0 -module_name $ipName
 set_property -dict [list \
     CONFIG.C_ICAP_EXTERNAL   {0} \
-    CONFIG.C_DEVICE_ID       {0x03647093} \
+    CONFIG.C_DEVICE_ID       {0x0362D093} \
     CONFIG.C_INCLUDE_STARTUP {1} \
     CONFIG.C_OPERATION       {1} \
 ] [get_ips $ipName]
