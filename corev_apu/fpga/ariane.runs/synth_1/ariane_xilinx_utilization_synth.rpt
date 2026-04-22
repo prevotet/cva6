@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.2 (lin64) Build 3671981 Fri Oct 14 04:59:54 MDT 2022
-| Date         : Tue Apr 21 20:24:07 2026
+| Date         : Wed Apr 22 17:37:43 2026
 | Host         : jc-VirtualBox running 64-bit Ubuntu 22.04.5 LTS
 | Command      : report_utilization -file ariane_xilinx_utilization_synth.rpt -pb ariane_xilinx_utilization_synth.pb
 | Design       : ariane_xilinx
@@ -31,13 +31,13 @@ Table of Contents
 +----------------------------+-------+-------+------------+-----------+-------+
 |          Site Type         |  Used | Fixed | Prohibited | Available | Util% |
 +----------------------------+-------+-------+------------+-----------+-------+
-| Slice LUTs*                | 83402 |     0 |          0 |    203800 | 40.92 |
-|   LUT as Logic             | 83383 |     0 |          0 |    203800 | 40.91 |
-|   LUT as Memory            |    19 |     0 |          0 |     64000 |  0.03 |
-|     LUT as Distributed RAM |     8 |     0 |            |           |       |
+| Slice LUTs*                | 83861 |     0 |          0 |    203800 | 41.15 |
+|   LUT as Logic             | 83654 |     0 |          0 |    203800 | 41.05 |
+|   LUT as Memory            |   207 |     0 |          0 |     64000 |  0.32 |
+|     LUT as Distributed RAM |   196 |     0 |            |           |       |
 |     LUT as Shift Register  |    11 |     0 |            |           |       |
-| Slice Registers            | 50582 |     0 |          0 |    407600 | 12.41 |
-|   Register as Flip Flop    | 50582 |     0 |          0 |    407600 | 12.41 |
+| Slice Registers            | 51580 |     0 |          0 |    407600 | 12.65 |
+|   Register as Flip Flop    | 51580 |     0 |          0 |    407600 | 12.65 |
 |   Register as Latch        |     0 |     0 |          0 |    407600 |  0.00 |
 | F7 Muxes                   |  3970 |     0 |          0 |    101900 |  3.90 |
 | F8 Muxes                   |   387 |     0 |          0 |     50950 |  0.76 |
@@ -58,10 +58,10 @@ Warning! LUT value is adjusted to account for LUT combining.
 | 0     |            _ |         Set |            - |
 | 0     |            _ |       Reset |            - |
 | 0     |          Yes |           - |            - |
-| 74    |          Yes |           - |          Set |
-| 49198 |          Yes |           - |        Reset |
+| 189   |          Yes |           - |          Set |
+| 49328 |          Yes |           - |        Reset |
 | 141   |          Yes |         Set |            - |
-| 1169  |          Yes |       Reset |            - |
+| 1922  |          Yes |       Reset |            - |
 +-------+--------------+-------------+--------------+
 
 
@@ -161,29 +161,29 @@ Warning! LUT value is adjusted to account for LUT combining.
 +------------+-------+---------------------+
 |  Ref Name  |  Used | Functional Category |
 +------------+-------+---------------------+
-| FDCE       | 49198 |        Flop & Latch |
+| FDCE       | 49328 |        Flop & Latch |
 | LUT6       | 35342 |                 LUT |
-| LUT3       | 21026 |                 LUT |
-| LUT2       | 17667 |                 LUT |
-| LUT5       | 14275 |                 LUT |
-| LUT4       | 13573 |                 LUT |
+| LUT3       | 21066 |                 LUT |
+| LUT2       | 17743 |                 LUT |
+| LUT5       | 14305 |                 LUT |
+| LUT4       | 13643 |                 LUT |
 | CARRY4     |  4725 |          CarryLogic |
 | MUXF7      |  3970 |               MuxFx |
-| LUT1       |  2869 |                 LUT |
-| FDRE       |  1169 |        Flop & Latch |
+| LUT1       |  2945 |                 LUT |
+| FDRE       |  1922 |        Flop & Latch |
 | MUXF8      |   387 |               MuxFx |
+| RAMD32     |   290 |  Distributed Memory |
+| FDPE       |   189 |        Flop & Latch |
 | FDSE       |   141 |        Flop & Latch |
-| FDPE       |    74 |        Flop & Latch |
+| RAMS32     |    94 |  Distributed Memory |
 | RAMB36E1   |    48 |        Block Memory |
 | IBUF       |    27 |                  IO |
 | DSP48E1    |    27 |    Block Arithmetic |
 | OBUF       |    22 |                  IO |
-| RAMD32     |    12 |  Distributed Memory |
 | SRL16E     |    11 |  Distributed Memory |
 | ODDR       |     6 |                  IO |
 | IDELAYE2   |     5 |                  IO |
 | IDDR       |     5 |                  IO |
-| RAMS32     |     4 |  Distributed Memory |
 | OBUFT      |     1 |                  IO |
 | IDELAYCTRL |     1 |                  IO |
 | BUFR       |     1 |               Clock |
@@ -204,7 +204,6 @@ Warning! LUT value is adjusted to account for LUT combining.
 | xlnx_axi_quad_spi         |    1 |
 | xlnx_axi_hwicap           |    1 |
 | xlnx_axi_gpio             |    1 |
-| xlnx_axi_clock_converter  |    1 |
 +---------------------------+------+
 
 
