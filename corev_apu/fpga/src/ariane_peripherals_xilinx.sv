@@ -367,6 +367,15 @@ module ariane_peripherals #(
     assign gpio.b_user = 1'b0;
     assign gpio.r_user = 1'b0;
 
+    // gpio_out_val au scope module : connecté au GPIO IP (gen_gpio) quand
+    // InclGPIO=1, sinon non pilotée → synthèse le tire à 0 (LEDs éteintes,
+    // decouple inactif — comportement correct sans GPIO).
+    logic [31:0] gpio_out_val;
+    logic dpr_decouple_accel1, dpr_decouple_accel2;
+    assign leds_o              = gpio_out_val[7:0];
+    assign dpr_decouple_accel1 = gpio_out_val[31];
+    assign dpr_decouple_accel2 = gpio_out_val[30];
+
     if (InclGPIO) begin : gen_gpio
         logic [31:0] s_axi_gpio_awaddr, s_axi_gpio_araddr, s_axi_gpio_wdata, s_axi_gpio_rdata;
         logic [7:0]  s_axi_gpio_awlen, s_axi_gpio_arlen;
@@ -429,7 +438,7 @@ module ariane_peripherals #(
             .s_axi_arready(s_axi_gpio_arready),    .s_axi_rdata(s_axi_gpio_rdata),
             .s_axi_rresp(s_axi_gpio_rresp),        .s_axi_rvalid(s_axi_gpio_rvalid),
             .s_axi_rready(s_axi_gpio_rready),
-            .gpio_io_i('0), .gpio_io_o(leds_o), .gpio_io_t(),
+            .gpio_io_i('0), .gpio_io_o(gpio_out_val), .gpio_io_t(),
             .gpio2_io_i(dip_switches_i)
         );
         assign s_axi_gpio_rlast = 1'b1;
@@ -704,9 +713,10 @@ module ariane_peripherals #(
             .AXI_USER_WIDTH ( AxiUserWidth             ),
             .PASS_THROUGH   ( 0                        )
         ) i_boundary_cfg_accel1 (
-            .clk_i  ( clk_i            ),
-            .rst_ni ( rst_ni           ),
-            .btnu_i ( btnu_i           ),
+            .clk_i      ( clk_i               ),
+            .rst_ni     ( rst_ni              ),
+            .decouple_i ( dpr_decouple_accel1 ),
+            .btnu_i     ( btnu_i              ),
             .btnd_i ( btnd_i           ),
             .btnl_i ( btnl_i           ),
             .btnr_i ( btnr_i           ),
@@ -729,10 +739,11 @@ module ariane_peripherals #(
             .AXI_USER_WIDTH ( AxiUserWidth            ),
             .PASS_THROUGH   ( 0                       )
         ) i_boundary_dma_accel1 (
-            .clk_i  ( clk_i              ),
-            .rst_ni ( rst_ni             ),
-            .s      ( accel1_dma_from_rp ),
-            .m      ( accel1_dma         )
+            .clk_i      ( clk_i               ),
+            .rst_ni     ( rst_ni              ),
+            .decouple_i ( dpr_decouple_accel1 ),
+            .s          ( accel1_dma_from_rp  ),
+            .m          ( accel1_dma          )
         );
 
         // ----- accel_wrap #1 (RECONFIGURABLE — RP1) -----
@@ -950,9 +961,10 @@ module ariane_peripherals #(
                 .AXI_USER_WIDTH ( AxiUserWidth             ),
                 .PASS_THROUGH   ( 0                        )
             ) i_boundary_cfg_accel2 (
-                .clk_i  ( clk_i            ),
-                .rst_ni ( rst_ni           ),
-                .btnu_i ( btnu_i           ),
+                .clk_i      ( clk_i               ),
+                .rst_ni     ( rst_ni              ),
+                .decouple_i ( dpr_decouple_accel2 ),
+                .btnu_i     ( btnu_i              ),
                 .btnd_i ( btnd_i           ),
                 .btnl_i ( btnl_i           ),
                 .btnr_i ( btnr_i           ),
@@ -974,10 +986,11 @@ module ariane_peripherals #(
                 .AXI_USER_WIDTH ( AxiUserWidth            ),
                 .PASS_THROUGH   ( 0                       )
             ) i_boundary_dma_accel2 (
-                .clk_i  ( clk_i              ),
-                .rst_ni ( rst_ni             ),
-                .s      ( accel2_dma_from_rp ),
-                .m      ( accel2_dma         )
+                .clk_i      ( clk_i               ),
+                .rst_ni     ( rst_ni              ),
+                .decouple_i ( dpr_decouple_accel2 ),
+                .s          ( accel2_dma_from_rp  ),
+                .m          ( accel2_dma          )
             );
 
             // ----- accel_wrap #2 (RECONFIGURABLE — RP2) -----
