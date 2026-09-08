@@ -501,6 +501,10 @@ module ariane_peripherals #(
             .AXI_USER_WIDTH ( AxiUserWidth            )
         ) accel1_dma (), accel1_sec ();
 
+        // Verdicts ARMOR du sec_wrapper #1, reboucles vers le registre STATUS
+        // de l'accelerateur (bits 3..7). Declare ici pour precede son usage.
+        logic [4:0] armor_verdict1;
+
         accel_wrap #(
             .AXI_ADDR_WIDTH   ( AxiAddrWidth             ),
             .AXI_DATA_WIDTH   ( AxiDataWidth             ),
@@ -512,6 +516,7 @@ module ariane_peripherals #(
             .clk_i, .rst_ni, .testmode_i(1'b0),
             .axi_cfg ( dma_cfg    ),
             .axi_dma ( accel1_dma ),
+            .armor_status_i ( armor_verdict1 ),
             .btnu_i  ( btnu_i     ),
             .btnd_i  ( btnd_i     ),
             .btnl_i  ( btnl_i     ),
@@ -665,7 +670,8 @@ module ariane_peripherals #(
             .resp_wrapper_iommu_i( resp_accel1_out  ),
             .req_wrapper_iommu_o ( req_accel1_out   ),
             .req_CPU_Wrapper__i  ( req_cpu_wrap1    ),
-            .resp_CPU_Wrapper_o  ( resp_cpu_wrap1   )
+            .resp_CPU_Wrapper_o  ( resp_cpu_wrap1   ),
+            .armor_verdict_o     ( armor_verdict1   )
         );
 
         // -------------------------------------------------------------------
@@ -680,6 +686,8 @@ module ariane_peripherals #(
                 .AXI_USER_WIDTH ( AxiUserWidth            )
             ) accel2_dma (), accel2_sec ();
 
+            logic [4:0] armor_verdict2;
+
             accel_wrap #(
                 .AXI_ADDR_WIDTH   ( AxiAddrWidth             ),
                 .AXI_DATA_WIDTH   ( AxiDataWidth             ),
@@ -691,11 +699,15 @@ module ariane_peripherals #(
                 .clk_i, .rst_ni, .testmode_i(1'b0),
                 .axi_cfg ( dma_cfg2   ),
                 .axi_dma ( accel2_dma ),
-                .btnu_i  ( 1'b0       ),
-                .btnd_i  ( 1'b0       ),
-                .btnl_i  ( 1'b0       ),
-                .btnr_i  ( 1'b0       ),
-                .btnc_i  ( 1'b0       )
+                .armor_status_i ( armor_verdict2 ),
+                // main.c lit BTN_STATE a MHA_BASE+0x58 = 0x5000_1058, donc sur
+                // CET accelerateur : les boutons etaient cables a 1'b0 ici, la
+                // demo interactive ne pouvait pas les voir.
+                .btnu_i  ( btnu_i     ),
+                .btnd_i  ( btnd_i     ),
+                .btnl_i  ( btnl_i     ),
+                .btnr_i  ( btnr_i     ),
+                .btnc_i  ( btnc_i     )
             );
 
             ariane_axi_soc::req_mmu_t  req_accel2_in;
@@ -843,7 +855,8 @@ module ariane_peripherals #(
                 .resp_wrapper_iommu_i( resp_accel2_out  ),
                 .req_wrapper_iommu_o ( req_accel2_out   ),
                 .req_CPU_Wrapper__i  ( req_cpu_wrap2    ),
-                .resp_CPU_Wrapper_o  ( resp_cpu_wrap2   )
+                .resp_CPU_Wrapper_o  ( resp_cpu_wrap2   ),
+                .armor_verdict_o     ( armor_verdict2   )
             );
 
             // axi_mux 2:1 — entrées : accel1_sec, accel2_sec (sorties des wrappers)

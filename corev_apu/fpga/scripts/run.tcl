@@ -40,6 +40,17 @@ read_ip { \
 
 set_property include_dirs { "src/axi_sd_bridge/include" "../../vendor/pulp-platform/common_cells/include" "../../vendor/pulp-platform/axi/include" "../register_interface/include" "../iDMA/src/include"} [current_fileset]
 
+# Profil de bitstream ARMOR (localparam sous `ifdef dans src/armor/SRC/wrapper.sv) :
+#   BENCH_PROFILE=1 make fpga -> blocages courts (~2 ms), pour bench_runner.c
+#   sinon                     -> profil DEMO, blocages ~15 s, pour main.c
+if {[info exists ::env(BENCH_PROFILE)] &&
+    $::env(BENCH_PROFILE) ne "" && $::env(BENCH_PROFILE) ne "0"} {
+    set_property verilog_define {BENCH_PROFILE} [current_fileset]
+    puts "ARMOR : profil BENCH (+define+BENCH_PROFILE)"
+} else {
+    puts "ARMOR : profil DEMO (pas de define)"
+}
+
 source scripts/add_sources.tcl
 
 set_property top ${project}_xilinx [current_fileset]
